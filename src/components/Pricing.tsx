@@ -58,8 +58,8 @@ const plans = [
 
 export const Pricing = () => {
   return (
-    <section id="pricing" className="py-20 lg:py-32 bg-muted/30">
-      <div className="container mx-auto px-4">
+    <section id="pricing" className="py-20 lg:py-32 bg-white/80 backdrop-blur-md content-layer">
+      <div className="container mx-auto px-4 relative z-10">
         <div className="text-center mb-16 animate-fade-in">
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
             Simple, <span className="text-gradient-primary">Transparent Pricing</span>

@@ -36,8 +36,8 @@ const faqs = [
 
 export const FAQ = () => {
   return (
-    <section id="faq" className="py-20 lg:py-32 bg-muted/30">
-      <div className="container mx-auto px-4 max-w-4xl">
+    <section id="faq" className="py-20 lg:py-32 bg-white/80 backdrop-blur-md content-layer">
+      <div className="container mx-auto px-4 max-w-4xl relative z-10">
         <div className="text-center mb-16 animate-fade-in">
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
             Frequently Asked <span className="text-gradient-primary">Questions</span>

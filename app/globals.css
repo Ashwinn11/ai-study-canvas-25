@@ -8,7 +8,7 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Masterly Design System Colors */
+    /* Masterly Brand Colors - Web Optimized */
     --background: 0 0% 100%;
     --foreground: 0 0% 12%;
 
@@ -18,10 +18,11 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 12%;
 
-    --primary: 6 100% 70%;
+    /* Masterly Brand Colors - Exact hex values from design.json */
+    --primary: 6 100% 71%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 286 100% 79%;
+    --secondary: 286 100% 84%;
     --secondary-foreground: 0 0% 100%;
 
     --muted: 0 0% 96%;
@@ -30,78 +31,40 @@ All colors MUST be HSL.
     --accent: 214 100% 67%;
     --accent-foreground: 0 0% 100%;
 
-    --success: 142 52% 60%;
+    --success: 142 52% 63%;
     --success-foreground: 0 0% 100%;
 
-    --destructive: 6 100% 70%;
+    --destructive: 6 100% 71%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 0 0% 90%;
     --input: 0 0% 90%;
-    --ring: 6 100% 70%;
+    --ring: 6 100% 71%;
 
     --dark-surface: 222 47% 11%;
 
     --radius: 1.5rem;
 
-    /* Shadows */
-    --shadow-soft: 0 4px 16px hsla(6, 100%, 70%, 0.1);
-    --shadow-medium: 0 8px 24px hsla(6, 100%, 70%, 0.15);
-    --shadow-elevated: 0 12px 32px hsla(6, 100%, 70%, 0.2);
+    /* Web-optimized shadows */
+    --shadow-soft: 0 4px 16px hsla(6, 100%, 71%, 0.1);
+    --shadow-medium: 0 8px 24px hsla(6, 100%, 71%, 0.15);
+    --shadow-elevated: 0 12px 32px hsla(6, 100%, 71%, 0.2);
 
-    /* Transitions */
+    /* Web-optimized transitions */
     --transition-smooth: all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
     --transition-slow: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
-  .dark {
-    --background: 222 47% 11%;
-    --foreground: 0 0% 100%;
 
-    --card: 222 47% 11%;
-    --card-foreground: 0 0% 100%;
-
-    --popover: 222 47% 11%;
-    --popover-foreground: 0 0% 100%;
-
-    --primary: 6 100% 70%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 286 100% 79%;
-    --secondary-foreground: 0 0% 100%;
-
-    --muted: 0 0% 20%;
-    --muted-foreground: 0 0% 65%;
-
-    --accent: 214 100% 67%;
-    --accent-foreground: 0 0% 100%;
-
-    --success: 142 52% 60%;
-    --success-foreground: 0 0% 100%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 6 100% 70%;
-  }
 }
 
 @layer base {
@@ -111,7 +74,7 @@ All colors MUST be HSL.
 
   body {
     @apply bg-primary text-foreground font-sans;
-    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'Poppins';
     position: relative;
     min-height: 100vh;
   }
@@ -220,6 +183,24 @@ All colors MUST be HSL.
   }
 
   @keyframes blobBreathing {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+  }
+
+  @keyframes waveFadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes waveBreathing {
     0%, 100% {
       transform: scale(1);
     }

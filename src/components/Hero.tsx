@@ -1,10 +1,11 @@
 
 import heroImage from "@/assets/hero-study-ai.jpg";
-import { BlobBackground } from "@/components/ui/BlobBackground";
+import { WaveBackground } from "@/components/ui/WaveBackground";
 
 export const Hero = () => {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden content-layer">
+      <WaveBackground position="top" color="#ff7664" animate={true} />
       <div className="container mx-auto px-4 py-20 lg:py-32 relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left content */}

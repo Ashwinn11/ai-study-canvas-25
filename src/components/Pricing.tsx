@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Check } from "lucide-react";
-import { BlobBackground } from "@/components/ui/BlobBackground";
+import { WaveBackground } from "@/components/ui/WaveBackground";
 
 const plans = [
   {
@@ -60,7 +60,7 @@ const plans = [
 export const Pricing = () => {
   return (
     <section id="pricing" className="py-20 lg:py-32 content-layer relative">
-      <BlobBackground position="top" color="#ff7664" animate={true} />
+      <WaveBackground position="top" color="#ff7664" animate={true} />
       <div className="container mx-auto px-4 relative z-10">
         <div className="text-center mb-16 animate-fade-in">
           <h2 className="text-4xl md:text-5xl font-bold mb-4">

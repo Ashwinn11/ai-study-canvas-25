@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Star } from "lucide-react";
-import { BlobBackground } from "@/components/ui/BlobBackground";
+import { WaveBackground } from "@/components/ui/WaveBackground";
 
 const testimonials = [
   {
@@ -59,7 +59,7 @@ const examLogos = [
 export const Testimonials = () => {
   return (
     <section className="py-20 lg:py-32 content-layer relative">
-      <BlobBackground position="bottom" color="#ff7664" animate={true} />
+      <WaveBackground position="bottom" color="#ff7664" animate={true} />
       <div className="container mx-auto px-4 relative z-10">
         <div className="text-center mb-16 animate-fade-in">
           <h2 className="text-4xl md:text-5xl font-bold mb-4">

@@ -43,7 +43,7 @@ export const MasterlyLogo: React.FC<MasterlyLogoProps> = ({
         <text 
           x="120" 
           y="20" 
-          fontFamily="Poppins, sans-serif" 
+          fontFamily="Poppins" 
           fontSize="32" 
           fontWeight="700" 
           fill={textColor}
@@ -58,7 +58,7 @@ export const MasterlyLogo: React.FC<MasterlyLogoProps> = ({
         <text 
           x="120" 
           y="20" 
-          fontFamily="Poppins, sans-serif" 
+          fontFamily="Poppins" 
           fontSize="32" 
           fontWeight="700" 
           fill={textColor}

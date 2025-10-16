@@ -1,7 +1,9 @@
+'use client';
+
 import { useEffect } from 'react';
 import { BlobBackground } from '@/components/ui/BlobBackground';
 
-export const Privacy = () => {
+export default function PrivacyPage() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -91,4 +93,4 @@ export const Privacy = () => {
       </div>
     </div>
   );
-};
+}

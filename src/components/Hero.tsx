@@ -65,7 +65,7 @@ export const Hero = () => {
           <div className="relative animate-slide-in-right">
             <div className="relative z-10 bg-primary/10 backdrop-blur-md rounded-3xl p-4 border border-white/20">
               <img 
-                src={heroImage} 
+                src={heroImage.src} 
                 alt="AI-powered study platform showing flashcard generation from uploaded documents"
                 className="rounded-2xl shadow-elevated w-full"
               />

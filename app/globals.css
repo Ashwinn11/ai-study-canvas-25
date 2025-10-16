@@ -1,0 +1,230 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Masterly Design System Colors */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 12%;
+
+    --primary: 6 100% 70%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 286 100% 79%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 31%;
+
+    --accent: 214 100% 67%;
+    --accent-foreground: 0 0% 100%;
+
+    --success: 142 52% 60%;
+    --success-foreground: 0 0% 100%;
+
+    --destructive: 6 100% 70%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 6 100% 70%;
+
+    --dark-surface: 222 47% 11%;
+
+    --radius: 1.5rem;
+
+    /* Shadows */
+    --shadow-soft: 0 4px 16px hsla(6, 100%, 70%, 0.1);
+    --shadow-medium: 0 8px 24px hsla(6, 100%, 70%, 0.15);
+    --shadow-elevated: 0 12px 32px hsla(6, 100%, 70%, 0.2);
+
+    /* Transitions */
+    --transition-smooth: all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
+    --transition-slow: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222 47% 11%;
+    --foreground: 0 0% 100%;
+
+    --card: 222 47% 11%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 222 47% 11%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 6 100% 70%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 286 100% 79%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 0 0% 20%;
+    --muted-foreground: 0 0% 65%;
+
+    --accent: 214 100% 67%;
+    --accent-foreground: 0 0% 100%;
+
+    --success: 142 52% 60%;
+    --success-foreground: 0 0% 100%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 6 100% 70%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-primary text-foreground font-sans;
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    position: relative;
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, rgba(255, 118, 100, 0.8) 0%, rgba(255, 118, 100, 1) 100%);
+    z-index: -2;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+      repeating-linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.8),
+        rgba(255, 255, 255, 0.8) 1px,
+        transparent 1px,
+        transparent 35px
+      );
+    opacity: 0.06;
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold;
+  }
+}
+
+@layer utilities {
+  .glass-card {
+    @apply backdrop-blur-md bg-white/60 dark:bg-dark-surface/60;
+  }
+
+  .btn-touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  .content-layer {
+    position: relative;
+    z-index: 1;
+  }
+
+  .text-display-large {
+    @apply text-display-large font-bold;
+  }
+
+  .text-display-medium {
+    @apply text-display-medium font-bold;
+  }
+
+  .text-title-large {
+    @apply text-title-large font-semibold;
+  }
+
+  .text-title-medium {
+    @apply text-title-medium font-semibold;
+  }
+
+  .text-title-small {
+    @apply text-title-small font-medium;
+  }
+
+  .text-body-large {
+    @apply text-body-large;
+  }
+
+  .text-body-medium {
+    @apply text-body-medium;
+  }
+
+  .text-body-small {
+    @apply text-body-small;
+  }
+
+  .text-label-large {
+    @apply text-label-large font-medium;
+  }
+
+  .text-label-medium {
+    @apply text-label-medium font-medium;
+  }
+
+  .text-label-small {
+    @apply text-label-small font-medium;
+  }
+
+  @keyframes blobFadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes blobBreathing {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+  }
+}

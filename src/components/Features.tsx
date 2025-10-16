@@ -74,7 +74,7 @@ export const Features = () => {
               <CardHeader>
                 <div className="mb-4 relative h-48 overflow-hidden rounded-lg">
                   <img 
-                    src={feature.image} 
+                    src={feature.image.src} 
                     alt={feature.title}
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                   />

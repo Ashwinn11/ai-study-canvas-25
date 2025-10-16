@@ -1,7 +1,9 @@
+'use client';
+
 import { useEffect } from 'react';
 import { BlobBackground } from '@/components/ui/BlobBackground';
 
-export const Terms = () => {
+export default function TermsPage() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -96,4 +98,4 @@ export const Terms = () => {
       </div>
     </div>
   );
-};
+}

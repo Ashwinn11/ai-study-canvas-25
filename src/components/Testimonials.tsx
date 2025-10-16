@@ -6,9 +6,9 @@ import { BlobBackground } from "@/components/ui/BlobBackground";
 const testimonials = [
   {
     name: "Sarah Chen",
-    role: "SAT Prep Student",
+    role: "High School Senior",
     avatar: "SC",
-    content: "Masterly helped me improve my SAT score by 200 points! The spaced repetition flashcards made memorizing vocab so much easier.",
+    content: "The spaced repetition system with flashcards and quizzes made memorizing vocab so much easier. I feel way more confident going into my SATs.",
     rating: 5,
   },
   {
@@ -36,7 +36,7 @@ const testimonials = [
     name: "Olivia Thompson",
     role: "Medical Student",
     avatar: "OT",
-    content: "Always Works™ accuracy is no joke. The AI validation catches mistakes before they make it into my study cards. Lifesaver!",
+    content: "Always Works accuracy is no joke. The AI validation catches mistakes before they make it into my study cards. Lifesaver!",
     rating: 5,
   },
   {
@@ -63,10 +63,11 @@ export const Testimonials = () => {
       <div className="container mx-auto px-4 relative z-10">
         <div className="text-center mb-16 animate-fade-in">
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            Loved by <span className="text-white">10,000+ Students</span>
+            Real Students,{" "}
+            <span className="text-white">Real Results</span>
           </h2>
           <p className="text-lg text-foreground/70 max-w-2xl mx-auto">
-            See how Masterly is helping students ace their exams and save hundreds of study hours
+            Join thousands who transformed from stressed students to confident exam-crushers
           </p>
         </div>
 
@@ -106,13 +107,13 @@ export const Testimonials = () => {
         {/* Exam Trust Badges */}
         <div className="text-center animate-fade-in">
           <p className="text-sm text-foreground/70 mb-6 font-medium">
-            Trusted for exam preparation
+            Perfect for All Your Exams
           </p>
           <div className="flex flex-wrap justify-center items-center gap-8">
             {examLogos.map((exam) => (
               <div
                 key={exam.abbr}
-                className="px-6 py-3 bg-muted/50 rounded-lg font-bold text-lg text-foreground/70 hover:text-foreground transition-colors"
+                className="px-6 py-3 bg-white/10 backdrop-blur-sm rounded-lg font-bold text-lg text-white hover:bg-white/20 transition-colors"
               >
                 {exam.abbr}
               </div>

@@ -12,7 +12,7 @@ const plans = [
     description: "Perfect for short-term exam prep",
     features: [
       "Unlimited uploads",
-      "AI study guides & flashcards",
+      "AI study guides, flashcards & quizzes",
       "Adaptive quizzes",
       "Basic analytics",
     ],
@@ -64,10 +64,11 @@ export const Pricing = () => {
       <div className="container mx-auto px-4 relative z-10">
         <div className="text-center mb-16 animate-fade-in">
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            Simple, <span className="text-white">Transparent Pricing</span>
+            Invest in Your{" "}
+            <span className="text-white">Future Success</span>
           </h2>
           <p className="text-lg text-foreground/70 max-w-2xl mx-auto">
-            Choose the plan that fits your study schedule. All plans include our core AI features.
+            Choose your path to academic confidence. Every plan includes unlimited AI-powered learning.
           </p>
         </div>
 

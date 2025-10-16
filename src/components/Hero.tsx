@@ -12,13 +12,13 @@ export const Hero = () => {
 
             
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight text-white drop-shadow-lg">
-              Your Personal{" "}
-              <span className="text-secondary drop-shadow-md">AI Study Coach</span>
+              Stop Cramming.{" "}
+              <span className="text-secondary drop-shadow-md">Start Mastering.</span>
             </h1>
             
             <p className="text-lg md:text-xl text-white/90 leading-relaxed max-w-2xl drop-shadow-md">
-              Transform any study material into Feynman-style summaries, adaptive quizzes, 
-              SM2-based flashcards, and exam readiness analytics. Study smarter, not harder.
+              Finally understand complex topics, remember everything without stress, and walk into any exam with confidence. 
+              Your AI coach creates smart flashcards and adaptive quizzes that work together with spaced repetition.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
@@ -39,7 +39,7 @@ export const Hero = () => {
                 onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
                 className="text-base font-medium text-white hover:text-white/80 transition-colors underline-offset-4 hover:underline drop-shadow-md"
               >
-                See How It Works
+                See the Transformation
               </button>
             </div>
 
@@ -51,7 +51,7 @@ export const Hero = () => {
               <div className="h-12 w-px bg-primary/30"></div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-accent drop-shadow-md">98%</div>
-                <div className="text-sm text-white/80">Success Rate</div>
+                <div className="text-sm text-white/80">Accuracy Rate</div>
               </div>
               <div className="h-12 w-px bg-primary/30"></div>
               <div className="text-center">

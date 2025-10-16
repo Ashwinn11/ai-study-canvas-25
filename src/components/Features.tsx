@@ -9,41 +9,41 @@ import { BlobBackground } from "@/components/ui/BlobBackground";
 const features = [
   {
     icon: Upload,
-    title: "Upload Anything",
-    description: "Documents, images, audio, and YouTube links in any language",
-    details: "Seamlessly import study materials from multiple sources. Our AI processes PDFs, images, MP3s, and even YouTube videos to extract key learning points.",
+    title: "Upload Anything, Understand Everything",
+    description: "Transform your study materials into clear, memorable insights",
+    details: "Upload documents, images, audio, or YouTube links in any language. Our AI extracts key concepts and creates flashcards and quizzes you'll actually understand and remember.",
     image: uploadFeature,
     color: "text-primary",
   },
   {
     icon: Brain,
-    title: "AI Learning Engine",
-    description: "Automatic creation of simplified study guides, flashcards, and quizzes",
-    details: "Powered by advanced AI that creates Feynman-style summaries, validates outputs for accuracy, and adapts to your learning style.",
+    title: "AI That Creates Smart Practice",
+    description: "Personalized flashcards and quizzes that work together",
+    details: "Our AI creates Feynman-style summaries, then generates both flashcards for recall and quizzes for application. They work together with spaced repetition for maximum retention.",
     image: aiEngine,
     color: "text-accent",
   },
   {
     icon: FolderKanban,
-    title: "Exam Workspaces",
-    description: "Group study packs by exam with due dates and progress tracking",
-    details: "Organize materials by exam type (SAT, ACT, AP), set deadlines, track progress with visual dashboards, and countdown to exam day.",
+    title: "Exam Workspaces That Keep You Organized",
+    description: "Separate spaces for each exam with smart tracking",
+    details: "Create dedicated workspaces for SAT, ACT, AP, or any exam. Set deadlines, track progress, and see exactly what you need to study each day with your flashcards and quizzes.",
     image: examWorkspace,
     color: "text-secondary",
   },
   {
     icon: Target,
-    title: "Daily Mastery Loop",
-    description: "SM2 spaced repetition, adaptive quizzes, and personalized report cards",
-    details: "Scientific SM2 algorithm schedules reviews at optimal intervals. Get daily quiz drills, smart reminders, and detailed analytics on your mastery.",
+    title: "Daily Practice That Sticks",
+    description: "SM2 spaced repetition for flashcards and quizzes",
+    details: "Scientifically-proven scheduling optimizes when you see each flashcard and quiz question. The system adapts based on your performance for maximum memory retention.",
     image: masteryLoop,
     color: "text-success",
   },
   {
     icon: ShieldCheck,
-    title: "Always Works™ Accuracy",
-    description: "AI output validation, reminder checks, and reliability guarantees",
-    details: "Every AI-generated card, quiz, and summary goes through multiple validation checks. We guarantee accuracy so you can study with confidence.",
+    title: "Always Works™ Accuracy You Can Trust",
+    description: "AI-validated flashcards and quizzes for reliable studying",
+    details: "Every flashcard, quiz, and summary goes through rigorous validation. Study with confidence knowing your practice materials are accurate and trustworthy.",
     image: uploadFeature,
     color: "text-primary",
   },
@@ -56,10 +56,11 @@ export const Features = () => {
       <div className="container mx-auto px-4 relative z-10">
         <div className="text-center mb-16 animate-fade-in">
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            Everything You Need to <span className="text-white">Master Any Exam</span>
+            From Overwhelmed to{" "}
+            <span className="text-white">Exam-Ready</span>
           </h2>
           <p className="text-lg text-foreground/70 max-w-2xl mx-auto">
-            Intelligent features that work together to transform how you study
+            Turn study stress into confidence with AI-powered tools that understand exactly how you learn best
           </p>
         </div>
 

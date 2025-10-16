@@ -42,10 +42,11 @@ export const FAQ = () => {
       <div className="container mx-auto px-4 max-w-4xl relative z-10">
         <div className="text-center mb-16 animate-fade-in">
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            Frequently Asked <span className="text-white">Questions</span>
+            Your Questions,{" "}
+            <span className="text-white">Answered</span>
           </h2>
           <p className="text-lg text-foreground/70">
-            Everything you need to know about Masterly
+            Get the clarity you need to start your transformation journey
           </p>
         </div>
 

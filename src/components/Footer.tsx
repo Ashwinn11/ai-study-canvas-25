@@ -9,7 +9,7 @@ export const Footer = () => {
           <div>
             <h3 className="text-2xl font-bold mb-4 text-white">Masterly</h3>
             <p className="text-white/70 mb-4">
-              Your AI-powered study coach for mastering any exam with smart flashcards, adaptive quizzes, and spaced repetition.
+              Your AI-powered study coach for mastering any exam with smart flashcards and quizzes that work together with spaced repetition.
             </p>
             <a 
               href="https://apps.apple.com/app/idXXXXXXXXX"

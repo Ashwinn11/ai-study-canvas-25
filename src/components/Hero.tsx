@@ -1,6 +1,6 @@
-import { Button } from "@/components/ui/button";
-import { ArrowRight, Download } from "lucide-react";
+
 import heroImage from "@/assets/hero-study-ai.jpg";
+import { BlobBackground } from "@/components/ui/BlobBackground";
 
 export const Hero = () => {
   return (
@@ -9,6 +9,8 @@ export const Hero = () => {
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left content */}
           <div className="text-left space-y-8 animate-fade-in-up">
+
+            
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight text-white drop-shadow-lg">
               Your Personal{" "}
               <span className="text-secondary drop-shadow-md">AI Study Coach</span>
@@ -26,11 +28,11 @@ export const Hero = () => {
                 rel="noopener noreferrer"
                 className="inline-block"
               >
-                <Button variant="hero" size="lg" className="group">
-                  <Download className="mr-2 h-5 w-5" />
-                  Download on App Store
-                  <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
-                </Button>
+                <img 
+                  src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
+                  alt="Download on the App Store"
+                  className="h-12"
+                />
               </a>
               
               <button
@@ -41,17 +43,17 @@ export const Hero = () => {
               </button>
             </div>
 
-            <div className="flex gap-6 items-center pt-4 bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+            <div className="flex gap-6 items-center pt-4 bg-primary/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
               <div className="text-center">
                 <div className="text-3xl font-bold text-secondary drop-shadow-md">10K+</div>
                 <div className="text-sm text-white/80">Active Learners</div>
               </div>
-              <div className="h-12 w-px bg-white/30"></div>
+              <div className="h-12 w-px bg-primary/30"></div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-accent drop-shadow-md">98%</div>
                 <div className="text-sm text-white/80">Success Rate</div>
               </div>
-              <div className="h-12 w-px bg-white/30"></div>
+              <div className="h-12 w-px bg-primary/30"></div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-secondary drop-shadow-md">50K+</div>
                 <div className="text-sm text-white/80">Hours Saved</div>
@@ -61,7 +63,7 @@ export const Hero = () => {
 
           {/* Right content - Hero image */}
           <div className="relative animate-slide-in-right">
-            <div className="relative z-10 bg-white/10 backdrop-blur-md rounded-3xl p-4 border border-white/20">
+            <div className="relative z-10 bg-primary/10 backdrop-blur-md rounded-3xl p-4 border border-white/20">
               <img 
                 src={heroImage} 
                 alt="AI-powered study platform showing flashcard generation from uploaded documents"

@@ -7,7 +7,7 @@ export const Footer = () => {
         <div className="grid md:grid-cols-3 gap-12 mb-12">
           {/* Brand */}
           <div>
-            <h3 className="text-2xl font-bold mb-4 text-gradient-primary">Masterly</h3>
+            <h3 className="text-2xl font-bold mb-4 text-white">Masterly</h3>
             <p className="text-white/70 mb-4">
               Your AI-powered study coach for mastering any exam with smart flashcards, adaptive quizzes, and spaced repetition.
             </p>

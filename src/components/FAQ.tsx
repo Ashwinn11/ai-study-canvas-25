@@ -6,6 +6,7 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Download, Users } from "lucide-react";
+import { BlobBackground } from "@/components/ui/BlobBackground";
 
 const faqs = [
   {
@@ -36,13 +37,14 @@ const faqs = [
 
 export const FAQ = () => {
   return (
-    <section id="faq" className="py-20 lg:py-32 bg-white/80 backdrop-blur-md content-layer">
+    <section id="faq" className="py-20 lg:py-32 content-layer relative">
+      <BlobBackground position="bottom" color="#ff7664" animate={true} />
       <div className="container mx-auto px-4 max-w-4xl relative z-10">
         <div className="text-center mb-16 animate-fade-in">
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            Frequently Asked <span className="text-gradient-primary">Questions</span>
+            Frequently Asked <span className="text-white">Questions</span>
           </h2>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-lg text-foreground/70">
             Everything you need to know about Masterly
           </p>
         </div>
@@ -57,7 +59,7 @@ export const FAQ = () => {
               <AccordionTrigger className="text-left text-lg font-semibold hover:text-primary">
                 {faq.question}
               </AccordionTrigger>
-              <AccordionContent className="text-muted-foreground leading-relaxed pt-2">
+              <AccordionContent className="text-foreground/70 leading-relaxed pt-2">
                 {faq.answer}
               </AccordionContent>
             </AccordionItem>
@@ -65,7 +67,7 @@ export const FAQ = () => {
         </Accordion>
 
         {/* Secondary CTA */}
-        <div className="bg-gradient-primary rounded-2xl p-8 md:p-12 text-center text-white shadow-elevated animate-scale-in">
+        <div className="bg-dark-surface rounded-2xl p-8 md:p-12 text-center text-white shadow-elevated animate-scale-in">
           <h3 className="text-3xl md:text-4xl font-bold mb-4">
             Ready to Transform Your Study Game?
           </h3>
@@ -75,9 +77,9 @@ export const FAQ = () => {
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button
-              variant="secondary"
+              variant="default"
               size="lg"
-              className="bg-white text-primary hover:bg-white/90"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
               asChild
             >
               <a href="https://apps.apple.com/app/idXXXXXXXXX" target="_blank" rel="noopener noreferrer">

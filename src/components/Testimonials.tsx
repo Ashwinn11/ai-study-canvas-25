@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Star } from "lucide-react";
+import { BlobBackground } from "@/components/ui/BlobBackground";
 
 const testimonials = [
   {
@@ -57,13 +58,14 @@ const examLogos = [
 
 export const Testimonials = () => {
   return (
-    <section className="py-20 lg:py-32 bg-white/90 backdrop-blur-sm content-layer">
+    <section className="py-20 lg:py-32 content-layer relative">
+      <BlobBackground position="bottom" color="#ff7664" animate={true} />
       <div className="container mx-auto px-4 relative z-10">
         <div className="text-center mb-16 animate-fade-in">
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            Loved by <span className="text-gradient-primary">10,000+ Students</span>
+            Loved by <span className="text-white">10,000+ Students</span>
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg text-foreground/70 max-w-2xl mx-auto">
             See how Masterly is helping students ace their exams and save hundreds of study hours
           </p>
         </div>
@@ -86,14 +88,14 @@ export const Testimonials = () => {
                   "{testimonial.content}"
                 </p>
                 <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10 bg-gradient-primary">
-                    <AvatarFallback className="bg-gradient-primary text-white font-semibold">
+                  <Avatar className="h-10 w-10 bg-primary">
+                    <AvatarFallback className="bg-primary text-white font-semibold">
                       {testimonial.avatar}
                     </AvatarFallback>
                   </Avatar>
                   <div>
                     <div className="font-semibold text-sm">{testimonial.name}</div>
-                    <div className="text-xs text-muted-foreground">{testimonial.role}</div>
+                    <div className="text-xs text-foreground/70">{testimonial.role}</div>
                   </div>
                 </div>
               </CardContent>
@@ -103,7 +105,7 @@ export const Testimonials = () => {
 
         {/* Exam Trust Badges */}
         <div className="text-center animate-fade-in">
-          <p className="text-sm text-muted-foreground mb-6 font-medium">
+          <p className="text-sm text-foreground/70 mb-6 font-medium">
             Trusted for exam preparation
           </p>
           <div className="flex flex-wrap justify-center items-center gap-8">

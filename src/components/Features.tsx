@@ -4,6 +4,7 @@ import uploadFeature from "@/assets/upload-feature.jpg";
 import aiEngine from "@/assets/ai-engine.jpg";
 import examWorkspace from "@/assets/exam-workspace.jpg";
 import masteryLoop from "@/assets/mastery-loop.jpg";
+import { BlobBackground } from "@/components/ui/BlobBackground";
 
 const features = [
   {
@@ -50,14 +51,14 @@ const features = [
 
 export const Features = () => {
   return (
-    <section id="features" className="py-20 lg:py-32 bg-white/90 backdrop-blur-sm content-layer">
+    <section id="features" className="py-20 lg:py-32 content-layer relative">
+      <BlobBackground position="top" color="#ff7664" animate={true} />
       <div className="container mx-auto px-4 relative z-10">
         <div className="text-center mb-16 animate-fade-in">
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            Everything You Need to{" "}
-            <span className="text-gradient-primary">Master Any Exam</span>
+            Everything You Need to <span className="text-white">Master Any Exam</span>
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg text-foreground/70 max-w-2xl mx-auto">
             Intelligent features that work together to transform how you study
           </p>
         </div>
@@ -84,7 +85,7 @@ export const Features = () => {
                 <CardDescription className="text-base">{feature.description}</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground leading-relaxed">
+                <p className="text-sm text-foreground/70 leading-relaxed">
                   {feature.details}
                 </p>
               </CardContent>

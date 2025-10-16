@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Check } from "lucide-react";
+import { BlobBackground } from "@/components/ui/BlobBackground";
 
 const plans = [
   {
@@ -58,13 +59,14 @@ const plans = [
 
 export const Pricing = () => {
   return (
-    <section id="pricing" className="py-20 lg:py-32 bg-white/80 backdrop-blur-md content-layer">
+    <section id="pricing" className="py-20 lg:py-32 content-layer relative">
+      <BlobBackground position="top" color="#ff7664" animate={true} />
       <div className="container mx-auto px-4 relative z-10">
         <div className="text-center mb-16 animate-fade-in">
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            Simple, <span className="text-gradient-primary">Transparent Pricing</span>
+            Simple, <span className="text-white">Transparent Pricing</span>
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg text-foreground/70 max-w-2xl mx-auto">
             Choose the plan that fits your study schedule. All plans include our core AI features.
           </p>
         </div>
@@ -93,8 +95,8 @@ export const Pricing = () => {
               <CardHeader className="text-center pb-8">
                 <CardTitle className="text-2xl mb-2">{plan.name}</CardTitle>
                 <div className="mb-4">
-                  <span className="text-5xl font-bold text-gradient-primary">{plan.price}</span>
-                  <span className="text-muted-foreground ml-2">{plan.period}</span>
+                  <span className="text-5xl font-bold text-foreground">{plan.price}</span>
+                  <span className="text-foreground/70 ml-2">{plan.period}</span>
                 </div>
                 <CardDescription className="text-base">{plan.description}</CardDescription>
                 {plan.trial && (
@@ -130,7 +132,7 @@ export const Pricing = () => {
           ))}
         </div>
 
-        <p className="text-center text-sm text-muted-foreground mt-12 max-w-2xl mx-auto">
+        <p className="text-center text-sm text-foreground/70 mt-12 max-w-2xl mx-auto">
           All plans are billed through the App Store. Cancel anytime. Free trials available for monthly and yearly plans.
         </p>
       </div>

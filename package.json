@@ -1,8 +1,12 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "masterly",
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "packageManager": "npm@10.0.0",
+  "engines": {
+    "npm": ">=10.0.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",

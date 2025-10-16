@@ -22,5 +22,10 @@ export default tseslint.config(
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
     },
+    settings: {
+      react: {
+        version: "detect",
+      },
+    },
   },
 );

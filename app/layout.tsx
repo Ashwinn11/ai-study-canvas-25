@@ -2,26 +2,9 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
+import { metadata } from './metadata'
 
 const inter = Inter({ subsets: ['latin'] })
-
-export const metadata: Metadata = {
-  title: 'Masterly - Your AI Study Coach for Smarter Learning',
-  description: 'Transform your study materials into AI-powered flashcards, quizzes, and summaries. Master any exam with spaced repetition, adaptive learning, and intelligent study analytics.',
-  keywords: 'AI study coach, smart flashcards, spaced repetition, exam prep, upload study materials, adaptive quizzes, Feynman technique, study analytics',
-  authors: [{ name: 'Masterly' }],
-  openGraph: {
-    title: 'Masterly - Your AI Study Coach',
-    description: 'Transform your study materials into AI-powered flashcards, quizzes, and summaries. Master any exam with spaced repetition and adaptive learning.',
-    type: 'website',
-    images: ['https://lovable.dev/opengraph-image-p98pqg.png'],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    site: '@masterlyapp',
-    images: ['https://lovable.dev/opengraph-image-p98pqg.png'],
-  },
-}
 
 export default function RootLayout({
   children,

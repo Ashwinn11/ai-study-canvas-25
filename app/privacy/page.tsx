@@ -28,6 +28,7 @@ export default function PrivacyPage() {
               <li><strong>Usage Data:</strong> App interactions, feature usage patterns, device type, operating system, and diagnostics.</li>
               <li><strong>Analytics & Logs:</strong> Event telemetry collected to improve reliability. You can opt out from analytics in the Profile settings.</li>
               <li><strong>Notifications:</strong> If you enable push notifications, we collect a device token to deliver reminders.</li>
+              <li><strong>Error & Crash Reports:</strong> When the app encounters errors, we collect diagnostic data (device model, OS version, stack traces) via Sentry to improve stability. No personally identifying information is included in crash reports.</li>
             </ul>
 
             <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">2. How We Use Information</h2>
@@ -43,6 +44,8 @@ export default function PrivacyPage() {
               <li><strong>Supabase</strong> hosts authentication, database, and storage.</li>
               <li><strong>OpenAI</strong> processes text to generate explanations and practice questions.</li>
               <li><strong>Google Cloud</strong> services may analyze images or documents when you request it.</li>
+              <li><strong>RevenueCat</strong> processes subscription purchase events and manages entitlements. RevenueCat does not store payment card information (handled by Apple).</li>
+              <li><strong>Sentry</strong> receives error logs and crash reports to diagnose technical issues.</li>
               <li>We do not sell your personal information. We only share data with these processors under strict agreements that limit their use to providing services to Masterly.</li>
             </ul>
 
@@ -57,7 +60,9 @@ export default function PrivacyPage() {
               <li><strong>Access & Update:</strong> Review and update profile details in the Profile → Settings tab.</li>
               <li><strong>Analytics Opt-Out:</strong> Disable analytics collection from the Profile settings. Push notifications are opt-in and can be disabled in system settings.</li>
               <li><strong>Account Deletion:</strong> Use the in-app account deletion flow or email support@masterlyapp.in to request deletion. We will confirm completion once all associated data is removed.</li>
-              <li><strong>Children's Privacy:</strong> Masterly is not directed to children under 13. If we learn we collected data from a child under 13 without parental consent, we will delete it promptly.</li>
+              <li><strong>Children's Privacy (COPPA):</strong> Masterly is designed for users 13 years and older. Users between 13 and 17 must obtain parental or guardian permission before creating an account. We do not knowingly collect data from children under 13. If we discover unauthorized data from a child under 13, we will delete it immediately. Parents may contact support@masterlyapp.in to review or delete their child's data.</li>
+              <li><strong>California Residents (CCPA):</strong> You have the right to request disclosure of data collected, request deletion, and opt out of data "sales" (we do not sell data). Contact support@masterlyapp.in to exercise these rights.</li>
+              <li><strong>European Residents (GDPR):</strong> You have rights to data access, rectification, erasure, and portability under GDPR. Contact support@masterlyapp.in for requests.</li>
             </ul>
 
             <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">6. Security</h2>

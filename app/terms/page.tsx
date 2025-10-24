@@ -30,9 +30,9 @@ export default function TermsPage() {
 
             <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">2. Subscription and Payments</h2>
             <ul className="list-disc pl-6 space-y-2">
-              <li>Masterly offers subscription packages billed through Apple's in-app purchase system: <strong>Weekly Study Pass</strong>, <strong>Monthly Study Pro</strong>, and <strong>Yearly Master Plan</strong>. Pricing and billing frequency are displayed before you confirm your purchase.</li>
+              <li>Masterly offers subscription packages billed through Apple's in-app purchase system: <strong>Weekly Study Pass ($7.99/week)</strong>, <strong>Monthly Study Pro ($12.99/month)</strong>, and <strong>Yearly Master Plan ($79.99/year)</strong>. Pricing and billing frequency are displayed before you confirm your purchase.</li>
               <li>All payments are processed by Apple. By subscribing, you authorize Apple to charge your Apple ID account for the selected plan.</li>
-              <li>Fees are non-refundable except where required by applicable law. You may cancel future renewals at any time in your device subscription settings.</li>
+              <li>All payments are processed by Apple. Refunds are handled by Apple according to their refund policy. You can request a refund through the App Store if eligible. You may cancel future renewals at any time by visiting <a href="https://apps.apple.com/account/subscriptions" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">Manage Subscriptions</a> in your Apple ID settings or through the app's Profile → Subscription → Manage in App Store option.</li>
               <li>We may change pricing or available plans with advance notice delivered through the App or email.</li>
             </ul>
 

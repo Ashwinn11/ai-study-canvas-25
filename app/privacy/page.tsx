@@ -44,6 +44,7 @@ export default function PrivacyPage() {
               <li><strong>Supabase</strong> hosts authentication, database, and storage.</li>
               <li><strong>OpenAI</strong> processes text to generate explanations and practice questions.</li>
               <li><strong>Google Cloud</strong> services may analyze images or documents when you request it.</li>
+              <li><strong>Google (YouTube Data API)</strong> retrieves video metadata and available captions when you submit YouTube links. Your use of this feature is also subject to the <a href="https://www.youtube.com/t/terms" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">YouTube Terms of Service</a> and <a href="https://policies.google.com/privacy" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">Google Privacy Policy</a>.</li>
               <li><strong>RevenueCat</strong> processes subscription purchase events and manages entitlements. RevenueCat does not store payment card information (handled by Apple).</li>
               <li><strong>Sentry</strong> receives error logs and crash reports to diagnose technical issues.</li>
               <li>We do not sell your personal information. We only share data with these processors under strict agreements that limit their use to providing services to Masterly.</li>

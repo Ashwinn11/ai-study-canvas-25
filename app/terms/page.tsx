@@ -52,7 +52,7 @@ export default function TermsPage() {
 
             <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">5. Third-Party Services</h2>
             <ul className="list-disc pl-6 space-y-2">
-              <li>Masterly uses Supabase for secure authentication and data storage, OpenAI for AI-powered explanations, and Google services for document analysis. Your data will be processed by these providers solely to deliver the App's features.</li>
+              <li>Masterly uses Supabase for secure authentication and data storage, OpenAI for AI-powered explanations, Google services for document analysis, and the YouTube Data API to retrieve video metadata and available captions when you submit YouTube links. Your data will be processed by these providers solely to deliver the App's features. Use of any YouTube functionality is also subject to the <a href="https://www.youtube.com/t/terms" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">YouTube Terms of Service</a> and <a href="https://policies.google.com/privacy" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">Google Privacy Policy</a>.</li>
               <li>Links to third-party resources are provided for convenience. We do not endorse or assume responsibility for third-party websites or services.</li>
             </ul>
 

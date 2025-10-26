@@ -23,7 +23,8 @@ export default function TermsPage() {
 
             <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">1. Eligibility & Account Responsibilities</h2>
             <ul className="list-disc pl-6 space-y-2">
-              <li>You must be at least 13 years old to create or use a Masterly account. If you are between 13 and the age of majority in your jurisdiction, you must have permission from your parent or legal guardian.</li>
+              <li>Masterly is designed for learners of all ages. If you are under the age of majority in your region, please have a parent or legal guardian review these Terms with you and consent to your use of the App.</li>
+              <li>Parents and guardians who create or manage accounts for children agree to supervise use of the App and help manage any data requests on their behalf.</li>
               <li>You are responsible for maintaining the confidentiality of your login credentials and for all activity that occurs under your account.</li>
               <li>You must provide accurate information during onboarding and keep it updated.</li>
             </ul>

@@ -14,7 +14,7 @@ export default function TermsPage() {
       <div className="container mx-auto px-4 max-w-4xl relative z-10">
         <div className="bg-white rounded-2xl shadow-elevated p-8 md:p-12">
           <h1 className="text-4xl font-bold mb-4 text-foreground">Terms of Service</h1>
-          <p className="text-sm text-foreground/70 mb-8">Last updated: October 15, 2024</p>
+          <p className="text-sm text-foreground/70 mb-8">Last updated: October 26, 2024</p>
           
           <div className="prose prose-lg max-w-none text-foreground/80 space-y-6">
             <p>
@@ -51,8 +51,16 @@ export default function TermsPage() {
             </ul>
 
             <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">5. Third-Party Services</h2>
+            <p className="font-medium text-foreground mb-3">Masterly uses the following third-party services to deliver core functionality:</p>
             <ul className="list-disc pl-6 space-y-2">
-              <li>Masterly uses Supabase for secure authentication and data storage, OpenAI for AI-powered explanations, Google services for document analysis, and the YouTube Data API to retrieve video metadata and available captions when you submit YouTube links. Your data will be processed by these providers solely to deliver the App's features. Use of any YouTube functionality is also subject to the <a href="https://www.youtube.com/t/terms" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">YouTube Terms of Service</a> and <a href="https://policies.google.com/privacy" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">Google Privacy Policy</a>.</li>
+              <li><strong>Supabase:</strong> Secure authentication, database, and file storage</li>
+              <li><strong>OpenAI:</strong> AI-powered explanations, study guides, and practice questions</li>
+              <li><strong>Google Cloud Services:</strong> Document AI (PDF/image OCR), Vision API (image text detection), Speech-to-Text (audio transcription), and Cloud Storage</li>
+              <li><strong>YouTube Data API v3:</strong> Video metadata retrieval and caption download when you submit YouTube links. Your use of YouTube features is also subject to the <a href="https://www.youtube.com/t/terms" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">YouTube Terms of Service</a> and <a href="https://policies.google.com/privacy" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">Google Privacy Policy</a>.</li>
+              <li><strong>RevenueCat:</strong> Subscription management and in-app purchase entitlements (Apple handles payment processing)</li>
+              <li><strong>Sentry:</strong> Error monitoring and crash reporting for app stability</li>
+              <li><strong>Expo Push Notifications:</strong> Sending study reminders and notifications to your device</li>
+              <li>Your data will be processed by these providers solely to deliver the App's features under strict data processing agreements.</li>
               <li>Links to third-party resources are provided for convenience. We do not endorse or assume responsibility for third-party websites or services.</li>
             </ul>
 

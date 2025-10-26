@@ -14,7 +14,7 @@ export default function PrivacyPage() {
       <div className="container mx-auto px-4 max-w-4xl relative z-10">
         <div className="bg-white rounded-2xl shadow-elevated p-8 md:p-12">
           <h1 className="text-4xl font-bold mb-4 text-foreground">Privacy Policy</h1>
-          <p className="text-sm text-foreground/70 mb-8">Last updated: October 15, 2024</p>
+          <p className="text-sm text-foreground/70 mb-8">Last updated: October 26, 2024</p>
           
           <div className="prose prose-lg max-w-none text-foreground/80 space-y-6">
             <p>
@@ -40,14 +40,23 @@ export default function PrivacyPage() {
             </ul>
 
             <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">3. Data Sharing & Processors</h2>
+            <p className="font-medium text-foreground mb-3">We share data with the following processors to deliver app functionality:</p>
             <ul className="list-disc pl-6 space-y-2">
-              <li><strong>Supabase</strong> hosts authentication, database, and storage.</li>
-              <li><strong>OpenAI</strong> processes text to generate explanations and practice questions.</li>
-              <li><strong>Google Cloud</strong> services may analyze images or documents when you request it.</li>
-              <li><strong>Google (YouTube Data API)</strong> retrieves video metadata and available captions when you submit YouTube links. Your use of this feature is also subject to the <a href="https://www.youtube.com/t/terms" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">YouTube Terms of Service</a> and <a href="https://policies.google.com/privacy" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">Google Privacy Policy</a>.</li>
-              <li><strong>RevenueCat</strong> processes subscription purchase events and manages entitlements. RevenueCat does not store payment card information (handled by Apple).</li>
-              <li><strong>Sentry</strong> receives error logs and crash reports to diagnose technical issues.</li>
-              <li>We do not sell your personal information. We only share data with these processors under strict agreements that limit their use to providing services to Masterly.</li>
+              <li><strong>Supabase:</strong> Hosts authentication, database, and file storage. All data is encrypted in transit.</li>
+              <li><strong>OpenAI:</strong> Processes content (documents, images, audio) you upload to generate AI-powered explanations, study guides, and practice questions.</li>
+              <li><strong>Google Cloud Services:</strong>
+                <ul className="list-disc pl-6 mt-1 space-y-1">
+                  <li><strong>Document AI:</strong> Analyzes PDFs and images using OCR to extract text</li>
+                  <li><strong>Vision API:</strong> Detects and extracts text from images</li>
+                  <li><strong>Speech-to-Text:</strong> Transcribes audio and video files to text</li>
+                  <li><strong>Cloud Storage:</strong> Temporarily stores files during processing</li>
+                </ul>
+              </li>
+              <li><strong>Google (YouTube Data API v3):</strong> Retrieves video metadata and available captions when you submit YouTube links. Your use of this feature is also subject to the <a href="https://www.youtube.com/t/terms" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">YouTube Terms of Service</a> and <a href="https://policies.google.com/privacy" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">Google Privacy Policy</a>.</li>
+              <li><strong>RevenueCat:</strong> Processes subscription purchase events and manages entitlements. RevenueCat does not store payment card information (handled by Apple).</li>
+              <li><strong>Sentry:</strong> Receives error logs and crash reports to diagnose and improve app stability. Sentry does not receive personally identifying information in crash reports.</li>
+              <li><strong>Expo Push Notification Service:</strong> Delivers study reminders and notifications. We collect device tokens only to send notifications you enable.</li>
+              <li>We do not sell your personal information. We only share data with these processors under strict data processing agreements that limit their use to providing services to Masterly.</li>
             </ul>
 
             <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">4. Data Retention</h2>

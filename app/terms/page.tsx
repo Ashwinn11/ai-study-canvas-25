@@ -14,7 +14,7 @@ export default function TermsPage() {
       <div className="container mx-auto px-4 max-w-4xl relative z-10">
         <div className="bg-white rounded-2xl shadow-elevated p-8 md:p-12">
           <h1 className="text-4xl font-bold mb-4 text-foreground">Terms of Service</h1>
-          <p className="text-sm text-foreground/70 mb-8">Last updated: October 26, 2024</p>
+          <p className="text-sm text-foreground/70 mb-8">Last updated: November 1, 2025</p>
           
           <div className="prose prose-lg max-w-none text-foreground/80 space-y-6">
             <p>
@@ -89,7 +89,47 @@ export default function TermsPage() {
               We may update these Terms when we add new features or as required by law. We will notify you of material changes by email or in-app notice. Continued use after changes become effective constitutes acceptance of the revised Terms.
             </p>
 
-            <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">10. Contact Us</h2>
+            <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">10. Apple App Store Terms</h2>
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">10.1 EULA Acknowledgement</h3>
+                <p>
+                  You and Masterly acknowledge that this Terms of Service is concluded between you and Masterly only, and not with Apple, Inc. ("Apple"). Masterly, not Apple, is solely responsible for the Licensed Application (the App) and its content. This EULA does not provide for usage rules that are in conflict with Apple Media Services Terms and Conditions.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">10.2 Scope of License</h3>
+                <p>
+                  The license granted to you for the Licensed Application is limited to a non-transferable license to use the Licensed Application on any Apple-branded products (iPhone, iPad, Mac, Apple Watch, Apple TV) that you own or control, and as permitted by the Usage Rules set forth in the Apple Media Services Terms and Conditions. The Licensed Application may be accessed and used by other accounts associated with the purchaser via Family Sharing or volume purchasing as permitted by Apple.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">10.3 Product Claims and Liability</h3>
+                <p>
+                  You acknowledge that Masterly, not Apple, is solely responsible for addressing any claims by you or any third party relating to the Licensed Application or your possession and use of it, including but not limited to: (i) product liability claims; (ii) any claim that the Licensed Application fails to conform to any applicable legal or regulatory requirement; and (iii) claims arising under consumer protection, privacy, or similar legislation. Masterly's total liability for any claims shall be limited to the amounts permitted under applicable law.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">10.4 Intellectual Property</h3>
+                <p>
+                  You acknowledge that Masterly, not Apple, is solely responsible for investigating, defending, settling, and discharging any third-party claim that the Licensed Application or your possession and use of it infringes that third party's intellectual property rights.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">10.5 Your Legal Representations</h3>
+                <p>
+                  You represent and warrant that: (i) you are not located in a country that is subject to a U.S. Government embargo, or that has been designated by the U.S. Government as a "terrorist supporting" country; and (ii) you are not listed on any U.S. Government list of prohibited or restricted parties. You may not use the App if any of these representations is false.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">10.6 Third-Party Beneficiary</h3>
+                <p>
+                  You acknowledge that Apple and Apple's subsidiaries are third-party beneficiaries of this Terms of Service. Upon your acceptance of these Terms, Apple will have the right (and will be deemed to have accepted the right) to enforce these Terms against you as a third-party beneficiary.
+                </p>
+              </div>
+            </div>
+
+            <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">11. Contact Us</h2>
             <p>
               If you have any questions about these Terms or need assistance, contact us at <strong>support@masterlyapp.in</strong>.
             </p>

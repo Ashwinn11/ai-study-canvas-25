@@ -14,12 +14,18 @@ export default function PrivacyPage() {
       <div className="container mx-auto px-4 max-w-4xl relative z-10">
         <div className="bg-white rounded-2xl shadow-elevated p-8 md:p-12">
           <h1 className="text-4xl font-bold mb-4 text-foreground">Privacy Policy</h1>
-          <p className="text-sm text-foreground/70 mb-8">Last updated: October 26, 2024</p>
+          <p className="text-sm text-foreground/70 mb-8">Last updated: November 1, 2025</p>
           
           <div className="prose prose-lg max-w-none text-foreground/80 space-y-6">
             <p>
               Masterly ("we", "us", "our") is committed to protecting your privacy. This Privacy Policy explains what information we collect, how we use it, and the choices you have.
             </p>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 my-6">
+              <p className="text-sm text-blue-900">
+                <strong>Important Note:</strong> Apple Inc. and its subsidiaries are third-party beneficiaries of our Terms of Service and have the right to enforce those terms against you.
+              </p>
+            </div>
 
             <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">1. Information We Collect</h2>
             <ul className="list-disc pl-6 space-y-2">

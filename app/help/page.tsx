@@ -46,7 +46,6 @@ export default function HelpPage() {
                     <li><strong>Images:</strong> Photos of notes, textbook pages, handwritten content</li>
                     <li><strong>Audio:</strong> Voice notes, lectures, recordings</li>
                     <li><strong>Video:</strong> Educational videos, lectures</li>
-                    <li><strong>YouTube:</strong> Educational video links</li>
                     <li><strong>Text:</strong> Paste text directly into the app</li>
                   </ul>
                 </div>
@@ -115,7 +114,7 @@ export default function HelpPage() {
                   <h3 className="text-lg font-medium text-foreground">How do I upload study materials?</h3>
                   <p className="text-foreground/70 mt-2">
                     1. Tap the <strong>+ button</strong> on the Home screen<br/>
-                    2. Choose your upload method (document, image, audio, video, YouTube, or text)<br/>
+                    2. Choose your upload method (document, image, audio, video, or text)<br/>
                     3. Give your material a title<br/>
                     4. Masterly's AI will automatically generate flashcards and quizzes<br/>
                     5. Review and customize the generated content

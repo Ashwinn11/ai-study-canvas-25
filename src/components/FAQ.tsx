@@ -11,7 +11,7 @@ import { WaveBackground } from "@/components/ui/WaveBackground";
 const faqs = [
   {
     question: "What types of files can I upload?",
-    answer: "Masterly supports documents (PDF, Word, PowerPoint), images (JPG, PNG), audio files (MP3, M4A), and YouTube links. You can upload materials in any language, and our AI will process them into study-ready content.",
+    answer: "Masterly supports documents (PDF, Word, PowerPoint), images (JPG, PNG), audio files (MP3, M4A), and video files. You can upload materials in any language, and our AI will process them into study-ready content.",
   },
   {
     question: "How accurate are the AI-generated study materials?",

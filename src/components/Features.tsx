@@ -11,7 +11,7 @@ const features = [
     icon: Upload,
     title: "Upload Anything, Master Everything",
     description: "Transform any study material into personalized learning",
-    details: "Documents, images, audio, YouTube links - in any language. Our AI extracts key concepts and creates the perfect study system just for you.",
+    details: "Documents, images, audio, video - in any language. Our AI extracts key concepts and creates the perfect study system just for you.",
     image: uploadFeature,
     gradient: "from-primary to-orange-400",
     badge: "Multi-format",

@@ -58,7 +58,6 @@ export default function PrivacyPage() {
                   <li><strong>Cloud Storage:</strong> Temporarily stores files during processing</li>
                 </ul>
               </li>
-              <li><strong>Google (YouTube Data API v3):</strong> Retrieves video metadata and available captions when you submit YouTube links. Your use of this feature is also subject to the <a href="https://www.youtube.com/t/terms" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">YouTube Terms of Service</a> and <a href="https://policies.google.com/privacy" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">Google Privacy Policy</a>.</li>
               <li><strong>RevenueCat:</strong> Processes subscription purchase events and manages entitlements. RevenueCat does not store payment card information (handled by Apple).</li>
               <li><strong>Sentry:</strong> Receives error logs and crash reports to diagnose and improve app stability. Sentry does not receive personally identifying information in crash reports.</li>
               <li><strong>Expo Push Notification Service:</strong> Delivers study reminders and notifications. We collect device tokens only to send notifications you enable.</li>

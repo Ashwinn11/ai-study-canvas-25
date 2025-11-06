@@ -56,7 +56,6 @@ export default function TermsPage() {
               <li><strong>Supabase:</strong> Secure authentication, database, and file storage</li>
               <li><strong>OpenAI:</strong> AI-powered explanations, study guides, and practice questions</li>
               <li><strong>Google Cloud Services:</strong> Document AI (PDF/image OCR), Vision API (image text detection), Speech-to-Text (audio transcription), and Cloud Storage</li>
-              <li><strong>YouTube Data API v3:</strong> Video metadata retrieval and caption download when you submit YouTube links. Your use of YouTube features is also subject to the <a href="https://www.youtube.com/t/terms" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">YouTube Terms of Service</a> and <a href="https://policies.google.com/privacy" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">Google Privacy Policy</a>.</li>
               <li><strong>RevenueCat:</strong> Subscription management and in-app purchase entitlements (Apple handles payment processing)</li>
               <li><strong>Sentry:</strong> Error monitoring and crash reporting for app stability</li>
               <li><strong>Expo Push Notifications:</strong> Sending study reminders and notifications to your device</li>

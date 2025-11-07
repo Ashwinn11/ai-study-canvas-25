@@ -12,7 +12,7 @@ export const Footer = () => {
               Your AI-powered study coach for mastering any exam with smart flashcards and quizzes that work together with spaced repetition.
             </p>
             <a 
-              href="https://apps.apple.com/app/idXXXXXXXXX"
+              href="https://apps.apple.com/app/masterly-ai-flashcards-quiz/id6753760295"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block"

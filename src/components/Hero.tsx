@@ -24,7 +24,7 @@ export const Hero = () => {
 
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
               <a 
-                href="https://apps.apple.com/app/idXXXXXXXXX" 
+                href="https://apps.apple.com/app/masterly-ai-flashcards-quiz/id6753760295" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="inline-block"

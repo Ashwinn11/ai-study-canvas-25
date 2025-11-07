@@ -93,7 +93,7 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
                 asChild
               >
                 <a 
-                  href="https://apps.apple.com/app/idXXXXXXXXX" 
+                  href="https://apps.apple.com/app/masterly-ai-flashcards-quiz/id6753760295" 
                   target="_blank" 
                   rel="noopener noreferrer"
                 >
@@ -152,7 +152,7 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
                         asChild
                       >
                         <a 
-                          href="https://apps.apple.com/app/idXXXXXXXXX" 
+                          href="https://apps.apple.com/app/masterly-ai-flashcards-quiz/id6753760295" 
                           target="_blank" 
                           rel="noopener noreferrer"
                         >

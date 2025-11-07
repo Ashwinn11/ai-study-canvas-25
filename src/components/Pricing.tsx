@@ -124,7 +124,7 @@ export const Pricing = () => {
                   className="w-full"
                   asChild
                 >
-                  <a href="https://apps.apple.com/app/idXXXXXXXXX" target="_blank" rel="noopener noreferrer">
+                  <a href="https://apps.apple.com/app/masterly-ai-flashcards-quiz/id6753760295" target="_blank" rel="noopener noreferrer">
                     {plan.cta}
                   </a>
                 </Button>

@@ -83,7 +83,7 @@ export const FAQ = () => {
               className="bg-primary text-primary-foreground hover:bg-primary/90"
               asChild
             >
-              <a href="https://apps.apple.com/app/idXXXXXXXXX" target="_blank" rel="noopener noreferrer">
+              <a href="https://apps.apple.com/app/masterly-ai-flashcards-quiz/id6753760295" target="_blank" rel="noopener noreferrer">
                 <Download className="mr-2 h-5 w-5" />
                 Download on App Store
               </a>

@@ -46,21 +46,22 @@ class ProfileStatsService {
         flashcardsResult,
         quizQuestionsResult,
         seedsResult,
-        sessionsResult,
-        todaySessionsResult,
+        examReviewSessionsResult,
+        todayExamSessionsResult,
+        allSessionsResult,
         gradeResult,
         aGradeResult,
       ] = await Promise.all([
         // Get all flashcards for total and mastered count
         supabase
           .from('flashcards')
-          .select('id, repetitions, easiness_factor, quality_rating')
+          .select('id, repetitions, easiness_factor')
           .eq('user_id', userId),
 
-        // Get all quiz questions for total and accuracy
+        // Get all quiz questions for total and mastered count
         supabase
           .from('quiz_questions')
-          .select('id, repetitions, easiness_factor, quality_rating')
+          .select('id, repetitions, easiness_factor')
           .eq('user_id', userId),
 
         // Get total seeds count (including deleted)
@@ -69,22 +70,33 @@ class ProfileStatsService {
           .select('id', { count: 'exact', head: true })
           .eq('user_id', userId),
 
-        // Get learning sessions for streak and total sessions
+        // Get ONLY exam-review sessions for streak calculation (matching iOS)
         supabase
           .from('learning_sessions')
           .select('completed_at, session_type, metadata')
           .eq('user_id', userId)
+          .eq('metadata->>source', 'exam-review')
           .not('completed_at', 'is', null)
           .order('completed_at', { ascending: false })
           .limit(365), // Last year for streak calculation
 
-        // Get today's sessions for cards reviewed today
+        // Get today's EXAM-REVIEW sessions for daily goal (matching iOS)
         supabase
           .from('learning_sessions')
-          .select('metadata')
+          .select('total_items, metadata')
           .eq('user_id', userId)
+          .eq('metadata->>source', 'exam-review')
           .gte('completed_at', `${today}T00:00:00`)
           .not('completed_at', 'is', null),
+
+        // Get ALL sessions (both sources) for accuracy calculation (matching iOS)
+        supabase
+          .from('learning_sessions')
+          .select('score, correct_items, total_items')
+          .eq('user_id', userId)
+          .not('completed_at', 'is', null)
+          .order('completed_at', { ascending: false })
+          .limit(20), // Last 20 sessions for accuracy
 
         // Get exam reports for average grade
         supabase
@@ -118,25 +130,28 @@ class ProfileStatsService {
       const totalCards = flashcards.length + quizQuestions.length;
       const masteredCards = masteredFlashcards.length + masteredQuizzes.length;
 
-      // Calculate accuracy (percentage of quality rating >= 3)
-      const allItems = [...flashcards, ...quizQuestions];
-      const ratedItems = allItems.filter((item: any) => item.quality_rating !== null);
-      const correctItems = ratedItems.filter((item: any) => item.quality_rating >= 3);
-      const accuracy = ratedItems.length > 0 ? Math.round((correctItems.length / ratedItems.length) * 100) : 0;
+      // Calculate accuracy from ALL learning sessions (matching iOS lines 283-307)
+      const allSessions = allSessionsResult.data || [];
+      let accuracy = 0;
+      if (allSessions.length > 0) {
+        const totalItems = allSessions.reduce((sum: number, s: any) => sum + (s.total_items || 0), 0);
+        const correctItems = allSessions.reduce((sum: number, s: any) => sum + (s.correct_items || 0), 0);
+        accuracy = totalItems > 0 ? Math.round((correctItems / totalItems) * 100) : 0;
+      }
 
-      // Process learning sessions
-      const sessions = sessionsResult.data || [];
-      const totalSessions = sessions.length;
+      // Process EXAM-REVIEW sessions for streak (matching iOS)
+      const examReviewSessions = examReviewSessionsResult.data || [];
+      const totalSessions = examReviewSessions.length;
 
       // Calculate current streak
       let currentStreak = 0;
       let longestStreak = 0;
       let tempStreak = 0;
 
-      if (sessions.length > 0) {
-        // Group sessions by date
+      if (examReviewSessions.length > 0) {
+        // Group EXAM-REVIEW sessions by date (matching iOS)
         const sessionsByDate = new Map<string, boolean>();
-        sessions.forEach((session: any) => {
+        examReviewSessions.forEach((session: any) => {
           if (session.completed_at) {
             const date = session.completed_at.split('T')[0];
             sessionsByDate.set(date, true);
@@ -177,18 +192,12 @@ class ProfileStatsService {
         }
       }
 
-      // Process today's sessions for cards reviewed today
-      const todaySessions = todaySessionsResult.data || [];
-      let cardsReviewedToday = 0;
-      todaySessions.forEach((session: any) => {
-        if (session.metadata) {
-          // Count flashcards and quiz questions
-          const metadata = session.metadata;
-          if (metadata.flashcard_count) cardsReviewedToday += metadata.flashcard_count;
-          if (metadata.quiz_count) cardsReviewedToday += metadata.quiz_count;
-          if (metadata.total_items) cardsReviewedToday += metadata.total_items;
-        }
-      });
+      // Process today's EXAM-REVIEW sessions for cards reviewed today (matching iOS lines 245-275)
+      const todayExamSessions = todayExamSessionsResult.data || [];
+      const cardsReviewedToday = todayExamSessions.reduce(
+        (sum: number, session: any) => sum + (session.total_items || 0),
+        0
+      );
 
       // Calculate average grade
       const grades = gradeResult.data || [];

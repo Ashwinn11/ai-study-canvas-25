@@ -115,9 +115,44 @@ export default function ExamReviewPage() {
   const currentItem = reviewItems[currentIndex] || null;
   const isLastItem = currentIndex === reviewItems.length - 1;
 
-  const moveToNext = useCallback(() => {
+  const moveToNext = useCallback(async () => {
     if (isLastItem) {
-      // Session complete
+      // Session complete - save learning session (matching iOS)
+      if (user && examId) {
+        try {
+          const timeSpentSeconds = Math.round((Date.now() - sessionStartTime) / 1000);
+          const totalItems = stats.flashcardTotal + stats.quizTotal;
+          const correctItems = stats.flashcardCorrect + stats.quizCorrect;
+
+          // Create learning session via supabase (matching iOS lines 1378-1420)
+          const { getSupabaseClient } = await import('@/lib/supabase/client');
+          const supabase = getSupabaseClient();
+
+          const score = totalItems > 0 ? correctItems / totalItems : 0;
+
+          await supabase.from('learning_sessions').insert({
+            user_id: user.id,
+            exam_id: examId,
+            session_type: 'exam',
+            total_items: totalItems,
+            correct_items: correctItems,
+            score,
+            time_spent: timeSpentSeconds,
+            metadata: {
+              source: 'exam-review',
+              flashcard_count: stats.flashcardTotal,
+              flashcard_correct: stats.flashcardCorrect,
+              quiz_count: stats.quizTotal,
+              quiz_correct: stats.quizCorrect,
+              reviewed_card_ids: Array.from(results.keys()),
+            },
+            completed_at: new Date().toISOString(),
+          });
+        } catch (error) {
+          console.error('Error saving exam review session:', error);
+        }
+      }
+
       setSessionComplete(true);
     } else {
       setCurrentIndex((prev) => prev + 1);
@@ -127,7 +162,7 @@ export default function ExamReviewPage() {
       setSwipeDirection(null);
       setDragOffset({ x: 0, y: 0 });
     }
-  }, [isLastItem]);
+  }, [isLastItem, user, examId, sessionStartTime, stats, results]);
 
   // Quiz answer handler (matching iOS lines 1011-1057)
   const handleQuizAnswer = async (answerIndex: number) => {

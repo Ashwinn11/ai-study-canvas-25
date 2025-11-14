@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { seedsService } from '@/lib/api/seeds';
 import { Seed } from '@/lib/supabase/types';
-import { FileText, Image, Music, Video, Loader2, Upload as UploadIcon, Star, Archive, Trash2 } from 'lucide-react';
+import { FileText, Image, Music, Video, Loader2, Upload as UploadIcon, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const CONTENT_TYPE_ICONS = {
@@ -54,32 +54,46 @@ export default function SeedsPage() {
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    }).format(date);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (diffInSeconds < 60) return 'Just now';
+    if (diffInSeconds < 3600) {
+      const minutes = Math.floor(diffInSeconds / 60);
+      return `${minutes}m ago`;
+    }
+    if (diffInSeconds < 86400) {
+      const hours = Math.floor(diffInSeconds / 3600);
+      return `${hours}h ago`;
+    }
+    if (diffInSeconds < 604800) {
+      const days = Math.floor(diffInSeconds / 86400);
+      return `${days}d ago`;
+    }
+    if (diffInSeconds < 2592000) {
+      const weeks = Math.floor(diffInSeconds / 604800);
+      return `${weeks}w ago`;
+    }
+    const months = Math.floor(diffInSeconds / 2592000);
+    return `${months}mo ago`;
   };
 
-  const getStatusBadge = (status?: string) => {
-    const statusColors = {
-      pending: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
-      extracting: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-      analyzing: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
-      completed: 'bg-green-500/10 text-green-500 border-green-500/20',
-      failed: 'bg-red-500/10 text-red-500 border-red-500/20',
-    };
+  const handleDeleteSeed = async (seedId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
 
-    const color = status ? statusColors[status as keyof typeof statusColors] : statusColors.completed;
-    const label = status || 'completed';
+    if (!confirm('Are you sure you want to delete this seed?')) {
+      return;
+    }
 
-    return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full border ${color}`}>
-        {label.charAt(0).toUpperCase() + label.slice(1)}
-      </span>
-    );
+    try {
+      await seedsService.deleteSeed(seedId);
+      setSeeds(seeds.filter(s => s.id !== seedId));
+    } catch (err) {
+      console.error('Error deleting seed:', err);
+      setError(err instanceof Error ? err.message : 'Failed to delete seed');
+    }
   };
 
   if (isLoading) {
@@ -154,7 +168,7 @@ export default function SeedsPage() {
           </div>
         </div>
       ) : (
-        <div className="grid gap-4">
+        <div className="space-y-3">
           {seeds.map((seed) => {
             const Icon = CONTENT_TYPE_ICONS[seed.content_type];
             const iconColor = CONTENT_TYPE_COLORS[seed.content_type];
@@ -162,72 +176,38 @@ export default function SeedsPage() {
             return (
               <div
                 key={seed.id}
-                className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-xl p-6 hover:bg-white/10 transition-colors cursor-pointer"
+                className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 backdrop-blur-xl p-4 hover:bg-white/10 transition-colors cursor-pointer max-w-full"
                 onClick={() => {
                   // TODO: Navigate to seed detail page
                   console.log('Seed clicked:', seed.id);
                 }}
               >
-                <div className="flex items-start gap-4">
-                  <div className={`p-3 rounded-lg bg-white/5 ${iconColor}`}>
-                    <Icon className="h-6 w-6" />
-                  </div>
+                <div className={`p-2 rounded-lg bg-white/5 flex-shrink-0 ${iconColor}`}>
+                  <Icon className="h-5 w-5" />
+                </div>
 
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-semibold text-white truncate">
-                          {seed.title}
-                        </h3>
-                        <p className="text-sm text-gray-400 mt-1">
-                          {formatDate(seed.created_at)}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {getStatusBadge(seed.processing_status)}
-                        {seed.is_starred && (
-                          <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                        )}
-                      </div>
-                    </div>
-
-                    {seed.feynman_explanation && (
-                      <p className="text-sm text-gray-300 mt-3 line-clamp-2">
-                        {seed.feynman_explanation.substring(0, 200)}...
-                      </p>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base font-medium text-white truncate">
+                    {seed.title}
+                  </h3>
+                  <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
+                    <span>{formatTimeAgo(seed.created_at)}</span>
+                    {seed.exam_name && (
+                      <>
+                        <span>•</span>
+                        <span className="truncate">{seed.exam_name}</span>
+                      </>
                     )}
-
-                    {seed.processing_error && (
-                      <p className="text-sm text-red-400 mt-2">
-                        Error: {seed.processing_error}
-                      </p>
-                    )}
-
-                    <div className="flex items-center gap-4 mt-4 text-xs text-gray-400">
-                      <span className="capitalize">{seed.content_type}</span>
-                      {seed.intent && (
-                        <>
-                          <span>•</span>
-                          <span>{seed.intent}</span>
-                        </>
-                      )}
-                      {seed.language_code && seed.language_code !== 'en' && (
-                        <>
-                          <span>•</span>
-                          <span>{seed.language_code.toUpperCase()}</span>
-                        </>
-                      )}
-                      {seed.confidence_score && (
-                        <>
-                          <span>•</span>
-                          <span>
-                            {Math.round(seed.confidence_score * 100)}% confidence
-                          </span>
-                        </>
-                      )}
-                    </div>
                   </div>
                 </div>
+
+                <button
+                  onClick={(e) => handleDeleteSeed(seed.id, e)}
+                  className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors flex-shrink-0"
+                  aria-label="Delete seed"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
               </div>
             );
           })}

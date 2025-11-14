@@ -61,7 +61,7 @@ export default function FlashcardsPage() {
 
     try {
       // Try to load existing flashcards
-      const existingCards = await flashcardsService.getFlashcardsBySeed(seedId, user.id);
+      const existingCards = await flashcardsService.getFlashcards(seedId, user.id);
 
       if (existingCards && existingCards.length > 0) {
         const flashcardStates: FlashcardState[] = existingCards.map((card) => ({

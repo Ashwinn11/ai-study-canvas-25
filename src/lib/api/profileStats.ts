@@ -49,6 +49,7 @@ class ProfileStatsService {
         historicalResult,
         todayExamSessionsResult,
         allSessionsResult,
+        userDataResult,
         gradeResult,
         aGradeResult,
       ] = await Promise.all([
@@ -75,7 +76,7 @@ class ProfileStatsService {
           .from('user_stats_historical')
           .select('current_streak, longest_streak, total_sessions, total_seeds_created')
           .eq('user_id', userId)
-          .maybeSingle()
+          .maybeSingle(),
 
         // Get today's EXAM-REVIEW sessions for daily goal (matching iOS)
         supabase
@@ -95,14 +96,19 @@ class ProfileStatsService {
           .order('completed_at', { ascending: false })
           .limit(20), // Last 20 sessions for accuracy
 
-        // Get exam reports for average grade
+        // Get user's current_grade from onboarding (for average grade calculation)
+        supabase
+          .from('users')
+          .select('current_grade')
+          .eq('id', userId)
+          .single(),
+
+        // Get ALL exam reports for average grade (matching iOS lines 404-408)
         supabase
           .from('exam_reports')
           .select('letter_grade')
           .eq('user_id', userId)
-          .not('letter_grade', 'is', null)
-          .order('created_at', { ascending: false })
-          .limit(50), // Last 50 reports
+          .not('letter_grade', 'is', null),
 
         // Get A+/A grades count
         supabase
@@ -149,16 +155,30 @@ class ProfileStatsService {
         0
       );
 
-      // Calculate average grade
-      const grades = gradeResult.data || [];
-      let averageGrade = 'N/A';
-      if (grades.length > 0) {
-        const totalGradeValue = grades.reduce(
-          (sum: number, report: any) => sum + gradeToNumber(report.letter_grade),
+      // Calculate average grade (matching iOS lines 390-437)
+      const currentGrade = userDataResult.data?.current_grade;
+      const examReports = gradeResult.data || [];
+
+      let averageGrade = '';
+      if (examReports.length === 0) {
+        // CASE 1: No exam reports yet - use currentGrade from onboarding
+        averageGrade = currentGrade || '';
+      } else {
+        // CASE 2: Has exam reports - calculate average including currentGrade
+        let allGrades = examReports.map((r: any) => r.letter_grade);
+
+        // Include currentGrade in the average if it exists (as baseline)
+        if (currentGrade) {
+          allGrades = [currentGrade, ...allGrades];
+        }
+
+        // Calculate average
+        const avgNumeric = allGrades.reduce(
+          (sum: number, grade: string) => sum + gradeToNumber(grade),
           0
-        );
-        const avgGradeValue = totalGradeValue / grades.length;
-        averageGrade = numberToGrade(Math.round(avgGradeValue));
+        ) / allGrades.length;
+
+        averageGrade = numberToGrade(avgNumeric);
       }
 
       // Get A grades count

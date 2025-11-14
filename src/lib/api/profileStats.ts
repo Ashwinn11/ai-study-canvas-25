@@ -1,0 +1,240 @@
+import { getSupabaseClient } from '@/lib/supabase/client';
+import { gradeToNumber, numberToGrade } from '@/lib/utils/gradeUtils';
+
+/**
+ * Get local date in YYYY-MM-DD format
+ */
+function getLocalDate(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+export interface UserStats {
+  // Legacy compatibility (main fields used by UI)
+  totalCards: number; // Total cards reviewed ever
+  masteredCards: number; // Mastered cards now
+  studyMinutes: number; // Total study minutes
+  currentStreak: number; // Current streak
+  longestStreak: number; // Best streak ever
+  totalSeeds: number; // Total seeds created
+  totalSessions: number; // Total sessions completed
+  weeklyGoal: number; // Weekly goal minutes
+  dailyCardsGoal: number; // Daily cards goal
+  accuracy: number; // Current accuracy %
+  avgSessionScore: number; // Average session score
+  weakAreas: string[]; // Weak areas
+  cardsReviewedToday: number; // Cards reviewed today
+  currentCommitmentStreak: number; // Current commitment streak
+  totalAGrades: number; // Total A+/A grades earned
+  averageGrade: string; // Average letter grade
+}
+
+class ProfileStatsService {
+  /**
+   * Get comprehensive user statistics
+   */
+  async getUserStats(userId: string): Promise<{ data?: UserStats; error?: string }> {
+    try {
+      const supabase = getSupabaseClient();
+      const today = getLocalDate();
+
+      // Run all queries in parallel for optimal performance
+      const [
+        flashcardsResult,
+        quizQuestionsResult,
+        seedsResult,
+        sessionsResult,
+        todaySessionsResult,
+        gradeResult,
+        aGradeResult,
+      ] = await Promise.all([
+        // Get all flashcards for total and mastered count
+        supabase
+          .from('flashcards')
+          .select('id, repetitions, easiness_factor, quality_rating')
+          .eq('user_id', userId),
+
+        // Get all quiz questions for total and accuracy
+        supabase
+          .from('quiz_questions')
+          .select('id, repetitions, easiness_factor, quality_rating')
+          .eq('user_id', userId),
+
+        // Get total seeds count (including deleted)
+        supabase
+          .from('seeds')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId),
+
+        // Get learning sessions for streak and total sessions
+        supabase
+          .from('learning_sessions')
+          .select('completed_at, session_type, metadata')
+          .eq('user_id', userId)
+          .not('completed_at', 'is', null)
+          .order('completed_at', { ascending: false })
+          .limit(365), // Last year for streak calculation
+
+        // Get today's sessions for cards reviewed today
+        supabase
+          .from('learning_sessions')
+          .select('metadata')
+          .eq('user_id', userId)
+          .gte('completed_at', `${today}T00:00:00`)
+          .not('completed_at', 'is', null),
+
+        // Get exam reports for average grade
+        supabase
+          .from('exam_reports')
+          .select('letter_grade')
+          .eq('user_id', userId)
+          .not('letter_grade', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(50), // Last 50 reports
+
+        // Get A+/A grades count
+        supabase
+          .from('exam_reports')
+          .select('letter_grade', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .in('letter_grade', ['A+', 'A']),
+      ]);
+
+      // Process flashcards
+      const flashcards = flashcardsResult.data || [];
+      const masteredFlashcards = flashcards.filter((fc: any) =>
+        fc.repetitions !== null && fc.repetitions >= 3 && fc.easiness_factor !== null && fc.easiness_factor >= 2.5
+      );
+
+      // Process quiz questions
+      const quizQuestions = quizQuestionsResult.data || [];
+      const masteredQuizzes = quizQuestions.filter((qq: any) =>
+        qq.repetitions !== null && qq.repetitions >= 3 && qq.easiness_factor !== null && qq.easiness_factor >= 2.5
+      );
+
+      const totalCards = flashcards.length + quizQuestions.length;
+      const masteredCards = masteredFlashcards.length + masteredQuizzes.length;
+
+      // Calculate accuracy (percentage of quality rating >= 3)
+      const allItems = [...flashcards, ...quizQuestions];
+      const ratedItems = allItems.filter((item: any) => item.quality_rating !== null);
+      const correctItems = ratedItems.filter((item: any) => item.quality_rating >= 3);
+      const accuracy = ratedItems.length > 0 ? Math.round((correctItems.length / ratedItems.length) * 100) : 0;
+
+      // Process learning sessions
+      const sessions = sessionsResult.data || [];
+      const totalSessions = sessions.length;
+
+      // Calculate current streak
+      let currentStreak = 0;
+      let longestStreak = 0;
+      let tempStreak = 0;
+
+      if (sessions.length > 0) {
+        // Group sessions by date
+        const sessionsByDate = new Map<string, boolean>();
+        sessions.forEach((session: any) => {
+          if (session.completed_at) {
+            const date = session.completed_at.split('T')[0];
+            sessionsByDate.set(date, true);
+          }
+        });
+
+        // Calculate current streak (consecutive days up to today)
+        let checkDate = new Date();
+        while (true) {
+          const dateStr = checkDate.toISOString().split('T')[0];
+          if (sessionsByDate.has(dateStr)) {
+            currentStreak++;
+            checkDate.setDate(checkDate.getDate() - 1);
+          } else if (dateStr === today) {
+            // Today hasn't been completed yet, check yesterday
+            checkDate.setDate(checkDate.getDate() - 1);
+          } else {
+            break;
+          }
+        }
+
+        // Calculate longest streak
+        const sortedDates = Array.from(sessionsByDate.keys()).sort();
+        for (let i = 0; i < sortedDates.length; i++) {
+          if (i === 0) {
+            tempStreak = 1;
+          } else {
+            const prevDate = new Date(sortedDates[i - 1]);
+            const currDate = new Date(sortedDates[i]);
+            const diffDays = Math.floor((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
+            if (diffDays === 1) {
+              tempStreak++;
+            } else {
+              tempStreak = 1;
+            }
+          }
+          longestStreak = Math.max(longestStreak, tempStreak);
+        }
+      }
+
+      // Process today's sessions for cards reviewed today
+      const todaySessions = todaySessionsResult.data || [];
+      let cardsReviewedToday = 0;
+      todaySessions.forEach((session: any) => {
+        if (session.metadata) {
+          // Count flashcards and quiz questions
+          const metadata = session.metadata;
+          if (metadata.flashcard_count) cardsReviewedToday += metadata.flashcard_count;
+          if (metadata.quiz_count) cardsReviewedToday += metadata.quiz_count;
+          if (metadata.total_items) cardsReviewedToday += metadata.total_items;
+        }
+      });
+
+      // Calculate average grade
+      const grades = gradeResult.data || [];
+      let averageGrade = 'N/A';
+      if (grades.length > 0) {
+        const totalGradeValue = grades.reduce(
+          (sum: number, report: any) => sum + gradeToNumber(report.letter_grade),
+          0
+        );
+        const avgGradeValue = totalGradeValue / grades.length;
+        averageGrade = numberToGrade(Math.round(avgGradeValue));
+      }
+
+      // Get A grades count
+      const totalAGrades = aGradeResult.count || 0;
+
+      // Get total seeds
+      const totalSeeds = seedsResult.count || 0;
+
+      const stats: UserStats = {
+        totalCards,
+        masteredCards,
+        studyMinutes: 0, // Not tracking time yet
+        currentStreak,
+        longestStreak,
+        totalSeeds,
+        totalSessions,
+        weeklyGoal: 0, // Not implemented yet
+        dailyCardsGoal: 20, // Default goal
+        accuracy,
+        avgSessionScore: accuracy, // Use accuracy as session score
+        weakAreas: [], // Not implemented yet
+        cardsReviewedToday,
+        currentCommitmentStreak: currentStreak,
+        totalAGrades,
+        averageGrade,
+      };
+
+      return { data: stats };
+    } catch (err) {
+      console.error('[ProfileStatsService] Error getting user stats:', err);
+      return {
+        error: err instanceof Error ? err.message : 'Failed to get user stats',
+      };
+    }
+  }
+}
+
+export const profileStatsService = new ProfileStatsService();

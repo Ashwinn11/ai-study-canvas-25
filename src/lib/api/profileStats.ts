@@ -34,6 +34,99 @@ export interface UserStats {
 
 class ProfileStatsService {
   /**
+   * Calculate commitment streak (consecutive days meeting daily goal)
+   * Matching iOS lines 442-521
+   */
+  private async getCommitmentStreak(userId: string, dailyCardsGoal: number): Promise<number> {
+    try {
+      const supabase = getSupabaseClient();
+
+      const { data: sessions, error } = await supabase
+        .from('learning_sessions')
+        .select('completed_at, total_items, metadata')
+        .eq('user_id', userId)
+        .eq('metadata->>source', 'exam-review')
+        .not('completed_at', 'is', null)
+        .order('completed_at', { ascending: false });
+
+      if (error) throw error;
+      if (!sessions || sessions.length === 0) return 0;
+
+      // Group by local date string (YYYY-MM-DD)
+      const cardsByDate = new Map<string, number>();
+      sessions.forEach((s: any) => {
+        const date = new Date(s.completed_at);
+        const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        cardsByDate.set(
+          dateKey,
+          (cardsByDate.get(dateKey) || 0) + (s.total_items || 0)
+        );
+      });
+
+      // Calculate streak using only days that met the goal
+      const today = getLocalDate();
+      const yesterday = (() => {
+        const d = new Date();
+        d.setDate(d.getDate() - 1);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      })();
+
+      const sortedDates = Array.from(cardsByDate.keys()).sort((a, b) =>
+        a > b ? -1 : a < b ? 1 : 0
+      );
+
+      const goalMetStartIndex = sortedDates.findIndex(
+        (date) => (cardsByDate.get(date) || 0) >= dailyCardsGoal
+      );
+      if (goalMetStartIndex === -1) {
+        return 0;
+      }
+
+      const anchorDate = sortedDates[goalMetStartIndex];
+      if (anchorDate !== today && anchorDate !== yesterday) {
+        return 0;
+      }
+
+      const toDate = (dateString: string) => {
+        const [year, month, day] = dateString.split('-').map(Number);
+        return new Date(year, month - 1, day);
+      };
+
+      let streak = 0;
+      let lastCountedDate = toDate(anchorDate);
+
+      for (let i = goalMetStartIndex; i < sortedDates.length; i++) {
+        const currentDateString = sortedDates[i];
+        const cardsOnDate = cardsByDate.get(currentDateString) || 0;
+
+        if (cardsOnDate < dailyCardsGoal) {
+          break;
+        }
+
+        const currentDate = toDate(currentDateString);
+
+        if (streak > 0) {
+          const dayDiff = Math.round(
+            (lastCountedDate.getTime() - currentDate.getTime()) /
+              (1000 * 3600 * 24)
+          );
+          if (dayDiff !== 1) {
+            break;
+          }
+        }
+
+        streak++;
+        lastCountedDate = currentDate;
+      }
+
+      return streak;
+    } catch (error) {
+      console.error('[ProfileStatsService] Error calculating commitment streak:', error);
+      return 0;
+    }
+  }
+
+  /**
    * Get comprehensive user statistics
    */
   async getUserStats(userId: string): Promise<{ data?: UserStats; error?: string }> {
@@ -142,11 +235,20 @@ class ProfileStatsService {
         accuracy = totalItems > 0 ? Math.round((correctItems / totalItems) * 100) : 0;
       }
 
-      // Read streak from user_stats_historical table (matching iOS lines 179-182)
+      // Read streak from user_stats_historical table (matching iOS lines 121-125)
       const historical = historicalResult.data;
-      const currentStreak = historical?.current_streak || 0;
       const longestStreak = historical?.longest_streak || 0;
       const totalSessions = historical?.total_sessions || 0;
+
+      // Calculate commitment streak from learning_sessions (matching iOS lines 442-521)
+      const calculatedStreak = await this.getCommitmentStreak(userId, 20); // Default dailyCardsGoal = 20
+
+      // Use MAX of historical and calculated streak (matching iOS lines 179-182)
+      // This ensures real-time accuracy even if historical table not updated yet
+      const currentStreak = Math.max(
+        historical?.current_streak || 0,
+        calculatedStreak
+      );
 
       // Process today's EXAM-REVIEW sessions for cards reviewed today (matching iOS lines 245-275)
       const todayExamSessions = todayExamSessionsResult.data || [];

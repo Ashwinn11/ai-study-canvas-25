@@ -204,8 +204,11 @@ class SpacedRepetitionService {
       let nextDueDate: string | null = null;
 
       allItems.forEach((item: any) => {
-        const dueDate = item.next_due_date;
-        if (!dueDate) return;
+        const dueDateRaw = item.next_due_date;
+        if (!dueDateRaw) return;
+
+        // Normalize date: extract YYYY-MM-DD from timestamp (matching iOS lines 188-194)
+        const dueDate = dueDateRaw.split('T')[0] || dueDateRaw.split(' ')[0];
 
         // Match iOS logic: dueToday includes overdue + today (lines 188-194 in useReviewStats.ts)
         if (dueDate <= today) {

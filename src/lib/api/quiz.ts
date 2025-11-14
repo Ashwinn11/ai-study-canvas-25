@@ -111,13 +111,21 @@ class QuizService {
 
       request.onProgress?.(0.3, 'Generating quiz questions with AI...');
 
+      // Get model limits (matching iOS lines 362-365)
+      const fullConfig = await configService.getConfig();
+      const modelLimits = fullConfig.ai.modelLimits || {};
+      const modelMaxTokens = modelLimits[quizConfig.model] || 16384;
+
       // Call chatCompletion (matching iOS lines 360-384)
       const aiContent = await chatCompletion({
         model: quizConfig.model,
         systemPrompt: systemPrompt,
         userPrompt: prompt,
         temperature: quizConfig.temperature,
-        maxTokens: Math.max(quizConfig.maxTokens, 5000 + quizConfig.maxQuantity * 220),
+        maxTokens: Math.min(
+          modelMaxTokens,
+          Math.max(quizConfig.maxTokens, 5000 + quizConfig.maxQuantity * 220)
+        ),
         responseFormat: { type: 'json_object' },
         timeoutMs: quizConfig.timeoutMs,
       });

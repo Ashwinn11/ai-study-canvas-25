@@ -93,6 +93,59 @@ export class FlashcardsService {
   }
 
   /**
+   * Create flashcards for a seed (fetches seed content, generates via AI, and saves to DB)
+   */
+  async createFlashcards(params: {
+    seedId: string;
+    userId: string;
+    onProgress?: (progress: number, message: string) => void;
+  }): Promise<Flashcard[]> {
+    const supabase = getSupabaseClient();
+
+    // Check if flashcards already exist
+    const existing = await this.getFlashcards(params.seedId, params.userId);
+    if (existing.length > 0) {
+      return existing;
+    }
+
+    params.onProgress?.(0.1, 'Preparing content...');
+
+    // Get seed data
+    const { data: seedData, error: seedError } = await supabase
+      .from('seeds')
+      .select('*')
+      .eq('id', params.seedId)
+      .eq('user_id', params.userId)
+      .single();
+
+    if (seedError || !seedData) {
+      throw new Error('Failed to find the source content for flashcard generation');
+    }
+
+    params.onProgress?.(0.2, 'Analyzing content...');
+
+    // Get access token
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      throw new Error('Authentication required');
+    }
+
+    // Generate flashcards via backend API
+    const generatedCards = await this.generateFlashcards({
+      seedId: params.seedId,
+      userId: params.userId,
+      content: seedData.content_text || '',
+      title: seedData.title,
+      language: seedData.language_code || 'en',
+      accessToken: session.access_token,
+    });
+
+    params.onProgress?.(1.0, 'Flashcards ready!');
+
+    return generatedCards;
+  }
+
+  /**
    * Get flashcards for a seed
    */
   async getFlashcards(seedId: string, userId: string): Promise<Flashcard[]> {

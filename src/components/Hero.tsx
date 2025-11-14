@@ -25,7 +25,7 @@ export const Hero = () => {
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
                 <a
-                  href="/signup"
+                  href="/login"
                   className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white bg-gradient-to-r from-[#ff7664] to-[#ff8874] rounded-full hover:shadow-lg hover:scale-105 transition-all duration-200 shadow-md"
                 >
                   Try Web App Free
@@ -46,13 +46,7 @@ export const Hero = () => {
               </div>
 
               <p className="text-sm text-white/80 drop-shadow-md">
-                Already have an account?{' '}
-                <a
-                  href="/login"
-                  className="font-semibold text-white hover:text-[#F5C6FF] transition-colors underline underline-offset-4"
-                >
-                  Sign In
-                </a>
+                Sign in with your Google account to get started
               </p>
             </div>
 

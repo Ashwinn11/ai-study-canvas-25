@@ -130,14 +130,9 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
                   </DropdownMenu>
                 </>
               ) : (
-                <>
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link href="/login">Sign In</Link>
-                  </Button>
-                  <Button variant="default" size="sm" asChild>
-                    <Link href="/signup">Get Started</Link>
-                  </Button>
-                </>
+                <Button variant="default" size="sm" asChild>
+                  <Link href="/login">Get Started</Link>
+                </Button>
               )}
             </div>
 
@@ -211,14 +206,9 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
                           </Button>
                         </>
                       ) : (
-                        <>
-                          <Button variant="outline" size="lg" className="w-full" asChild>
-                            <Link href="/login">Sign In</Link>
-                          </Button>
-                          <Button variant="default" size="lg" className="w-full" asChild>
-                            <Link href="/signup">Get Started</Link>
-                          </Button>
-                        </>
+                        <Button variant="default" size="lg" className="w-full" asChild>
+                          <Link href="/login">Get Started</Link>
+                        </Button>
                       )}
                     </div>
                   </div>

@@ -155,40 +155,23 @@ class UploadProcessor {
           processingStatus: 'analyzing',
         });
 
-        this.emitProgress(onProgress, 'generating');
-
-        // Generate Feynman explanation
-        const feynmanResult = await generateFeynman(
-          extractionResult.content,
-          title,
-          extractionResult.metadata?.language,
-          accessToken,
-          (progress: number, message: string) => {
-            // Map Feynman progress to overall progress (0.45-0.82)
-            const generatingStart = STAGE_PROGRESS.generating;
-            const generatingEnd = STAGE_PROGRESS.finalizing;
-            const mappedProgress = generatingStart + progress * (generatingEnd - generatingStart);
-            onProgress?.({
-              stage: 'generating',
-              progress: Math.round(mappedProgress * 100),
-              message,
-            });
-          }
-        );
+        // DISABLED: Feynman generation endpoint doesn't exist yet (/api/ai/feynman returns 404)
+        // TODO: Re-enable when backend endpoint is available
+        // this.emitProgress(onProgress, 'generating');
+        // const feynmanResult = await generateFeynman(...);
 
         this.emitProgress(onProgress, 'finalizing');
 
-        // Update seed with final results
+        // Update seed with final results (without Feynman explanation for now)
         const completedSeed = await seedsService.updateSeed(seedId, {
           contentText: extractionResult.content,
           originalContent: extractionResult.content,
-          feynmanExplanation: feynmanResult.feynmanExplanation,
-          intent: feynmanResult.intent,
-          confidenceScore: feynmanResult.processingMetadata.confidence,
+          // feynmanExplanation: null, // Skip for now - endpoint doesn't exist
+          // intent: 'Educational', // Default
+          confidenceScore: extractionResult.metadata?.confidence || 0.8,
           processingStatus: 'completed',
           extractionMetadata: {
             ...extractionResult.metadata,
-            ...feynmanResult.processingMetadata,
             materialsStatus: {
               flashcards: 'pending',
               quiz: 'pending',
@@ -257,29 +240,23 @@ class UploadProcessor {
     });
 
     try {
-        this.emitProgress(onProgress, 'generating');
-
-        // Generate Feynman explanation
-        const feynmanResult = await generateFeynman(
-          extractionResult.content,
-          title,
-          extractionResult.metadata?.language,
-          accessToken
-        );
+        // DISABLED: Feynman generation endpoint doesn't exist yet (/api/ai/feynman returns 404)
+        // TODO: Re-enable when backend endpoint is available
+        // this.emitProgress(onProgress, 'generating');
+        // const feynmanResult = await generateFeynman(...);
 
         this.emitProgress(onProgress, 'finalizing');
 
-        // Update seed with results
+        // Update seed with results (without Feynman explanation for now)
         const completedSeed = await seedsService.updateSeed(seedId, {
           contentText: extractionResult.content,
           originalContent: extractionResult.content,
-          feynmanExplanation: feynmanResult.feynmanExplanation,
-          intent: feynmanResult.intent,
-          confidenceScore: feynmanResult.processingMetadata.confidence,
+          // feynmanExplanation: null, // Skip for now - endpoint doesn't exist
+          // intent: 'Educational', // Default
+          confidenceScore: extractionResult.metadata?.confidence || 0.8,
           processingStatus: 'completed',
           extractionMetadata: {
             ...extractionResult.metadata,
-            ...feynmanResult.processingMetadata,
             materialsStatus: {
               flashcards: 'pending',
               quiz: 'pending',

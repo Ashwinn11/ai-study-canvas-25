@@ -5,7 +5,6 @@ import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { flashcardsService } from '@/lib/api/flashcards';
 import { Flashcard } from '@/lib/supabase/types';
-import { useSwipeable } from 'react-swipeable';
 import {
   ArrowLeft,
   Loader2,
@@ -13,8 +12,6 @@ import {
   ChevronUp,
   ChevronLeft,
   ChevronRight,
-  X,
-  Trophy,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -44,6 +41,11 @@ export default function FlashcardsPage() {
   const [sessionStartTime] = useState<number>(Date.now());
   const [exitAnimation, setExitAnimation] = useState<'left' | 'right' | 'up' | null>(null);
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | 'up' | null>(null);
+
+  // Drag state for smooth swipe animations
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
   const currentCard = flashcards[currentIndex] ?? null;
 
@@ -210,49 +212,81 @@ export default function FlashcardsPage() {
     );
   };
 
-  // Swipe handlers
-  const swipeHandlers = useSwipeable({
-    onSwipedLeft: () => {
-      if (currentCard && currentCard.isFlipped && !exitAnimation) {
-        handleSwipeRating('left', 1); // Forgot
-      }
-    },
-    onSwipedRight: () => {
-      if (currentCard && currentCard.isFlipped && !exitAnimation) {
-        handleSwipeRating('right', 4); // Know well
-      }
-    },
-    onSwipedUp: () => {
-      if (currentCard && currentCard.isFlipped && !exitAnimation) {
-        handleSwipeRating('up', 3); // Somewhat
-      }
-    },
-    onSwiping: (eventData) => {
-      if (!currentCard || !currentCard.isFlipped || exitAnimation) {
-        setSwipeDirection(null);
-        return;
-      }
+  // Pointer event handlers for smooth drag (matching iOS gesture behavior)
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (!currentCard || !currentCard.isFlipped || exitAnimation) return;
+    setIsDragging(true);
+    setDragStart({ x: e.clientX, y: e.clientY });
+    setDragOffset({ x: 0, y: 0 });
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  };
 
-      const absX = Math.abs(eventData.deltaX);
-      const absY = Math.abs(eventData.deltaY);
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isDragging || !currentCard || !currentCard.isFlipped || exitAnimation) return;
 
-      if (absX > absY) {
-        if (eventData.deltaX > 50) {
-          setSwipeDirection('right');
-        } else if (eventData.deltaX < -50) {
-          setSwipeDirection('left');
-        } else {
-          setSwipeDirection(null);
-        }
-      } else if (absY > absX && eventData.deltaY < -100) {
-        setSwipeDirection('up');
-      } else {
-        setSwipeDirection(null);
+    const deltaX = e.clientX - dragStart.x;
+    const deltaY = e.clientY - dragStart.y;
+    setDragOffset({ x: deltaX, y: deltaY });
+
+    // Calculate swipe direction (matching iOS thresholds)
+    const absX = Math.abs(deltaX);
+    const absY = Math.abs(deltaY);
+
+    let direction: 'left' | 'right' | 'up' | null = null;
+
+    // Horizontal has priority if dominant (matching iOS)
+    if (absX > absY) {
+      if (deltaX > 50) {
+        direction = 'right';
+      } else if (deltaX < -50) {
+        direction = 'left';
       }
-    },
-    trackMouse: true,
-    preventScrollOnSwipe: true,
-  });
+    } else if (absY > absX && deltaY < -100) {
+      // Only up swipe if vertical dominant
+      direction = 'up';
+    }
+
+    setSwipeDirection(direction);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+
+    if (!currentCard || !currentCard.isFlipped || exitAnimation) {
+      setDragOffset({ x: 0, y: 0 });
+      setSwipeDirection(null);
+      return;
+    }
+
+    const absX = Math.abs(dragOffset.x);
+    const absY = Math.abs(dragOffset.y);
+
+    // Thresholds matching iOS (lines 303-304 in SwipeFlashcard.tsx)
+    const horizontalPass = absX > 100;
+    const verticalPass = absY > 150;
+    const horizontalDominant = absX >= absY;
+    const verticalDominant = !horizontalDominant;
+
+    let direction: 'left' | 'right' | 'up' | null = null;
+
+    if (horizontalDominant && horizontalPass) {
+      direction = dragOffset.x > 0 ? 'right' : 'left';
+    } else if (verticalDominant && verticalPass && dragOffset.y < 0) {
+      direction = 'up';
+    }
+
+    if (direction) {
+      // Swipe committed - trigger rating
+      const quality = direction === 'left' ? 1 : direction === 'up' ? 3 : 4;
+      handleSwipeRating(direction, quality);
+    } else {
+      // Swipe cancelled - spring back to center
+      setDragOffset({ x: 0, y: 0 });
+      setSwipeDirection(null);
+    }
+  };
 
   // Loading state
   if (isLoading) {
@@ -400,6 +434,28 @@ export default function FlashcardsPage() {
 
   const swipeStyle = getSwipeStyle();
 
+  // Calculate overlay opacity based on drag distance (matching iOS lines 498-507)
+  const getOverlayOpacity = () => {
+    const absX = Math.abs(dragOffset.x);
+    const absY = Math.abs(dragOffset.y);
+    const effectiveY = dragOffset.y < 0 ? absY : 0;
+    const effectiveDistance = Math.max(absX, effectiveY);
+
+    // Fade in overlay as user drags (0 to 0.85 over 150px)
+    return Math.min(0.85, effectiveDistance / 150);
+  };
+
+  // Calculate border width based on drag distance (matching iOS lines 533-538)
+  const getBorderWidth = () => {
+    const absX = Math.abs(dragOffset.x);
+    const absY = Math.abs(dragOffset.y);
+    const effectiveY = dragOffset.y < 0 ? absY : 0;
+    const effectiveDistance = Math.max(absX, effectiveY);
+
+    // Border grows from 0 to 3px over 150px
+    return Math.min(3, effectiveDistance / 50);
+  };
+
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Header */}
@@ -429,8 +485,16 @@ export default function FlashcardsPage() {
       {/* Flashcard */}
       <div className="flex items-center justify-center min-h-[500px]">
         <div
-          {...swipeHandlers}
-          className={`relative w-full max-w-2xl transition-all duration-300 ${
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          className={`relative w-full max-w-2xl select-none ${
+            exitAnimation
+              ? 'transition-all duration-300'
+              : isDragging
+              ? ''
+              : 'transition-all duration-200'
+          } ${
             exitAnimation === 'left'
               ? '-translate-x-[120%] opacity-0 -rotate-12'
               : exitAnimation === 'right'
@@ -439,6 +503,16 @@ export default function FlashcardsPage() {
               ? '-translate-y-[120%] opacity-0'
               : ''
           }`}
+          style={
+            !exitAnimation && (isDragging || dragOffset.x !== 0 || dragOffset.y !== 0)
+              ? {
+                  transform: `translate(${dragOffset.x}px, ${dragOffset.y}px) rotate(${
+                    (dragOffset.x / 20) * (isDragging ? 1 : 0)
+                  }deg)`,
+                  transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                }
+              : undefined
+          }
         >
           {/* Card container with flip animation */}
           <div
@@ -466,8 +540,8 @@ export default function FlashcardsPage() {
                   WebkitBackfaceVisibility: 'hidden',
                   minHeight: '400px',
                   borderColor: swipeStyle.borderColor,
-                  borderWidth: swipeDirection ? '3px' : '1px',
-                  transition: 'border-color 0.2s, border-width 0.2s',
+                  borderWidth: `${getBorderWidth()}px`,
+                  transition: 'border-color 0.1s',
                 }}
               >
                 <div className="flex flex-col h-full">
@@ -483,10 +557,21 @@ export default function FlashcardsPage() {
                   </div>
                 </div>
 
-                {/* Swipe feedback overlay */}
+                {/* Swipe feedback overlay - dark background (matching iOS) */}
+                <div
+                  className="absolute inset-0 rounded-2xl bg-black pointer-events-none"
+                  style={{ opacity: getOverlayOpacity() }}
+                />
+
+                {/* Swipe feedback text - centered rating label */}
                 {swipeDirection && (
-                  <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/50 pointer-events-none">
-                    <div className={`text-4xl font-bold ${swipeStyle.textColor}`}>
+                  <div
+                    className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                    style={{
+                      opacity: Math.min(1, getOverlayOpacity() * 2), // Fade in text faster than overlay
+                    }}
+                  >
+                    <div className={`text-5xl font-bold ${swipeStyle.textColor}`}>
                       {swipeStyle.text}
                     </div>
                   </div>
@@ -504,8 +589,8 @@ export default function FlashcardsPage() {
                   transform: 'rotateY(180deg)',
                   minHeight: '400px',
                   borderColor: swipeStyle.borderColor,
-                  borderWidth: swipeDirection ? '3px' : '1px',
-                  transition: 'border-color 0.2s, border-width 0.2s',
+                  borderWidth: `${getBorderWidth()}px`,
+                  transition: 'border-color 0.1s',
                 }}
               >
                 <div className="flex flex-col h-full">
@@ -517,10 +602,21 @@ export default function FlashcardsPage() {
                   </div>
                 </div>
 
-                {/* Swipe feedback overlay */}
+                {/* Swipe feedback overlay - dark background (matching iOS) */}
+                <div
+                  className="absolute inset-0 rounded-2xl bg-black pointer-events-none"
+                  style={{ opacity: getOverlayOpacity() }}
+                />
+
+                {/* Swipe feedback text - centered rating label */}
                 {swipeDirection && (
-                  <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/50 pointer-events-none">
-                    <div className={`text-4xl font-bold ${swipeStyle.textColor}`}>
+                  <div
+                    className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                    style={{
+                      opacity: Math.min(1, getOverlayOpacity() * 2), // Fade in text faster than overlay
+                    }}
+                  >
+                    <div className={`text-5xl font-bold ${swipeStyle.textColor}`}>
                       {swipeStyle.text}
                     </div>
                   </div>

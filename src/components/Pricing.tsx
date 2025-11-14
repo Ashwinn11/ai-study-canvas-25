@@ -124,7 +124,7 @@ export const Pricing = () => {
                   className="w-full"
                   asChild
                 >
-                  <a href="/signup">
+                  <a href="/login">
                     {plan.cta}
                   </a>
                 </Button>

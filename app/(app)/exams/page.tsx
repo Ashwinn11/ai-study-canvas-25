@@ -4,13 +4,15 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { examsService, Exam } from '@/lib/api/exams';
-import { Plus, BookOpen, Loader2, Trash2 } from 'lucide-react';
+import { spacedRepetitionService, ExamReviewStats } from '@/lib/api/spacedRepetition';
+import { Plus, BookOpen, Loader2, Trash2, Flame, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function ExamsPage() {
   const router = useRouter();
   const { user } = useAuth();
   const [exams, setExams] = useState<Exam[]>([]);
+  const [reviewStats, setReviewStats] = useState<Record<string, ExamReviewStats>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,6 +23,8 @@ export default function ExamsPage() {
   }, [user]);
 
   const loadExams = async () => {
+    if (!user) return;
+
     setIsLoading(true);
     setError(null);
 
@@ -33,6 +37,27 @@ export default function ExamsPage() {
       }
 
       setExams(data || []);
+
+      // Load review stats for each exam (matching iOS)
+      if (data && data.length > 0) {
+        const statsPromises = data.map(async (exam) => {
+          try {
+            const stats = await spacedRepetitionService.getExamReviewStats(exam.id, user.id);
+            return { examId: exam.id, stats };
+          } catch {
+            return { examId: exam.id, stats: null };
+          }
+        });
+
+        const statsResults = await Promise.all(statsPromises);
+        const statsMap: Record<string, ExamReviewStats> = {};
+        statsResults.forEach(({ examId, stats }) => {
+          if (stats) {
+            statsMap[examId] = stats;
+          }
+        });
+        setReviewStats(statsMap);
+      }
     } catch (err) {
       console.error('Error loading exams:', err);
       setError('Failed to load exams');
@@ -134,39 +159,72 @@ export default function ExamsPage() {
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {exams.map((exam) => (
-            <div
-              key={exam.id}
-              onClick={() => handleExamClick(exam.id)}
-              className="group relative rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-6 hover:bg-white/10 transition-all cursor-pointer active:scale-[0.98] hover:scale-[1.01] duration-200"
-            >
-              {/* Delete button */}
-              <button
-                onClick={(e) => handleDeleteExam(exam.id, exam.subject_name, e)}
-                className="absolute top-4 right-4 p-2 rounded-lg bg-red-500/10 text-red-400 opacity-0 group-hover:opacity-100 hover:bg-red-500/20 transition-all"
-                aria-label="Delete exam"
+          {exams.map((exam) => {
+            const stats = reviewStats[exam.id];
+            const hasDue = stats && stats.due_today > 0;
+            const hasOverdue = stats && stats.overdue > 0;
+
+            return (
+              <div
+                key={exam.id}
+                onClick={() => handleExamClick(exam.id)}
+                className="group relative rounded-xl border border-white/10 bg-white/5 backdrop-blur-xl p-6 hover:bg-white/10 transition-all cursor-pointer active:scale-[0.98] hover:scale-[1.01] duration-200"
               >
-                <Trash2 className="h-4 w-4" />
-              </button>
+                {/* Delete button */}
+                <button
+                  onClick={(e) => handleDeleteExam(exam.id, exam.subject_name, e)}
+                  className="absolute top-4 right-4 p-2 rounded-lg bg-red-500/10 text-red-400 opacity-0 group-hover:opacity-100 hover:bg-red-500/20 transition-all"
+                  aria-label="Delete exam"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
 
-              <div className="space-y-3">
-                {/* Icon */}
-                <div className="p-3 rounded-lg bg-primary/10 w-fit">
-                  <BookOpen className="h-6 w-6 text-primary" />
+                <div className="space-y-3">
+                  {/* Icon */}
+                  <div className="p-3 rounded-lg bg-primary/10 w-fit">
+                    <BookOpen className="h-6 w-6 text-primary" />
+                  </div>
+
+                  {/* Exam Name */}
+                  <h3 className="text-xl font-semibold text-white pr-8">
+                    {exam.subject_name}
+                  </h3>
+
+                  {/* Due Status (matching iOS ExamCard lines 153-173) */}
+                  {stats && (
+                    <div className="space-y-1.5">
+                      {hasOverdue && (
+                        <div className="flex items-center gap-1.5 text-red-500">
+                          <Flame className="h-4 w-4" />
+                          <span className="text-sm font-medium">
+                            {stats.overdue} card{stats.overdue !== 1 ? 's' : ''} overdue
+                          </span>
+                        </div>
+                      )}
+                      {hasDue && !hasOverdue && (
+                        <div className="flex items-center gap-1.5 text-blue-500">
+                          <Clock className="h-4 w-4" />
+                          <span className="text-sm font-medium">
+                            {stats.due_today} card{stats.due_today !== 1 ? 's' : ''} due today
+                          </span>
+                        </div>
+                      )}
+                      {!hasDue && stats.available_items > 0 && (
+                        <div className="flex items-center gap-1.5 text-green-500">
+                          <span className="text-sm font-medium">All caught up!</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Date */}
+                  <p className="text-sm text-gray-400">
+                    Created {new Date(exam.created_at).toLocaleDateString()}
+                  </p>
                 </div>
-
-                {/* Exam Name */}
-                <h3 className="text-xl font-semibold text-white pr-8">
-                  {exam.subject_name}
-                </h3>
-
-                {/* Date */}
-                <p className="text-sm text-gray-400">
-                  Created {new Date(exam.created_at).toLocaleDateString()}
-                </p>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

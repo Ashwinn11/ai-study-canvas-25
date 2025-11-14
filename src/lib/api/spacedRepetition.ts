@@ -207,10 +207,14 @@ class SpacedRepetitionService {
         const dueDate = item.next_due_date;
         if (!dueDate) return;
 
+        // Match iOS logic: dueToday includes overdue + today (lines 188-194 in useReviewStats.ts)
+        if (dueDate <= today) {
+          dueToday++;  // Includes both overdue and items due exactly today
+        }
+
+        // Track overdue separately
         if (dueDate < today) {
           overdue++;
-        } else if (dueDate === today) {
-          dueToday++;
         }
 
         // Track earliest due date

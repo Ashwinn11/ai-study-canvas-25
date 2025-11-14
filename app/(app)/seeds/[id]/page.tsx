@@ -5,6 +5,8 @@ import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { seedsService } from '@/lib/api/seeds';
 import { Seed } from '@/lib/supabase/types';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
   FileText,
   Image,
@@ -262,9 +264,30 @@ export default function SeedDetailPage() {
                     Feynman Explanation
                   </h3>
                 </div>
-                <div className="text-gray-300 whitespace-pre-wrap">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  className="text-gray-300"
+                  components={{
+                    h1: ({node, ...props}) => <h1 className="text-2xl font-bold text-white mt-6 mb-4" {...props} />,
+                    h2: ({node, ...props}) => <h2 className="text-xl font-bold text-white mt-5 mb-3" {...props} />,
+                    h3: ({node, ...props}) => <h3 className="text-lg font-semibold text-white mt-4 mb-2" {...props} />,
+                    p: ({node, ...props}) => <p className="text-gray-300 mb-4 leading-relaxed" {...props} />,
+                    ul: ({node, ...props}) => <ul className="list-disc list-inside text-gray-300 mb-4 space-y-2" {...props} />,
+                    ol: ({node, ...props}) => <ol className="list-decimal list-inside text-gray-300 mb-4 space-y-2" {...props} />,
+                    li: ({node, ...props}) => <li className="text-gray-300" {...props} />,
+                    strong: ({node, ...props}) => <strong className="text-white font-semibold" {...props} />,
+                    em: ({node, ...props}) => <em className="text-gray-200 italic" {...props} />,
+                    code: ({node, inline, ...props}: any) =>
+                      inline ? (
+                        <code className="bg-white/10 text-primary px-1.5 py-0.5 rounded text-sm" {...props} />
+                      ) : (
+                        <code className="block bg-white/10 text-gray-200 p-4 rounded-lg my-4 overflow-x-auto" {...props} />
+                      ),
+                    blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-primary pl-4 italic text-gray-400 my-4" {...props} />,
+                  }}
+                >
                   {seed.feynman_explanation}
-                </div>
+                </ReactMarkdown>
               </div>
             )}
 

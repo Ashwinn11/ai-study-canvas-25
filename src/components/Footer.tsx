@@ -21,13 +21,13 @@ export const Footer = () => {
 
             {/* Web App CTAs */}
             {!user ? (
-              <div className="space-y-3 mb-6">
-                <Button variant="default" size="sm" className="w-full" asChild>
-                  <Link href="/signup">Get Started Free</Link>
+              <div className="mb-6">
+                <Button variant="default" size="lg" className="w-full" asChild>
+                  <Link href="/login">Get Started Free</Link>
                 </Button>
-                <Button variant="outline" size="sm" className="w-full" asChild>
-                  <Link href="/login">Sign In</Link>
-                </Button>
+                <p className="text-xs text-white/50 mt-2 text-center">
+                  Sign in with your Google account
+                </p>
               </div>
             ) : (
               <div className="space-y-3 mb-6">

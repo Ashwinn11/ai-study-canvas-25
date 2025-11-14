@@ -44,6 +44,7 @@ export type Database = {
           content_type: 'pdf' | 'image' | 'audio' | 'video' | 'text';
           content_url: string | null;
           content_text: string | null;
+          original_content: string | null;
           file_size: number | null;
           feynman_explanation: string | null;
           processing_status: 'pending' | 'extracting' | 'analyzing' | 'completed' | 'failed';
@@ -69,6 +70,7 @@ export type Database = {
           content_type: 'pdf' | 'image' | 'audio' | 'video' | 'text';
           content_url?: string | null;
           content_text?: string | null;
+          original_content?: string | null;
           file_size?: number | null;
           feynman_explanation?: string | null;
           processing_status?: 'pending' | 'extracting' | 'analyzing' | 'completed' | 'failed';
@@ -94,6 +96,7 @@ export type Database = {
           content_type?: 'pdf' | 'image' | 'audio' | 'video' | 'text';
           content_url?: string | null;
           content_text?: string | null;
+          original_content?: string | null;
           file_size?: number | null;
           feynman_explanation?: string | null;
           processing_status?: 'pending' | 'extracting' | 'analyzing' | 'completed' | 'failed';

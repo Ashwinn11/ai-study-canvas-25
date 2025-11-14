@@ -83,18 +83,8 @@ export const FAQ = () => {
               className="bg-primary text-primary-foreground hover:bg-primary/90"
               asChild
             >
-              <a href="/signup">
-                Get Started Free
-              </a>
-            </Button>
-
-            <Button
-              variant="outline"
-              size="lg"
-              asChild
-            >
               <a href="/login">
-                Sign In
+                Get Started Free
               </a>
             </Button>
           </div>

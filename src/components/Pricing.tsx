@@ -124,7 +124,7 @@ export const Pricing = () => {
                   className="w-full"
                   asChild
                 >
-                  <a href="https://apps.apple.com/app/masterly-ai-flashcards-quiz/id6753760295" target="_blank" rel="noopener noreferrer">
+                  <a href="/signup">
                     {plan.cta}
                   </a>
                 </Button>
@@ -134,7 +134,7 @@ export const Pricing = () => {
         </div>
 
         <p className="text-center text-sm text-foreground/70 mt-12 max-w-2xl mx-auto">
-          All plans are billed through the App Store. Cancel anytime. Free trials available for monthly and yearly plans.
+          Start with a free account. Upgrade anytime to unlock premium features. Cancel anytime.
         </p>
       </div>
     </section>

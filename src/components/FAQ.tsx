@@ -83,19 +83,20 @@ export const FAQ = () => {
               className="bg-primary text-primary-foreground hover:bg-primary/90"
               asChild
             >
-              <a href="https://apps.apple.com/app/masterly-ai-flashcards-quiz/id6753760295" target="_blank" rel="noopener noreferrer">
-                <Download className="mr-2 h-5 w-5" />
-                Download on App Store
+              <a href="/signup">
+                Get Started Free
               </a>
             </Button>
-            
-            <button
-              onClick={() => window.open('https://discord.gg/masterly', '_blank')}
-              className="text-base font-medium text-white hover:text-white/80 transition-colors underline-offset-4 hover:underline flex items-center gap-2"
+
+            <Button
+              variant="outline"
+              size="lg"
+              asChild
             >
-              <Users className="h-5 w-5" />
-              Join the Study Community
-            </button>
+              <a href="/login">
+                Sign In
+              </a>
+            </Button>
           </div>
         </div>
       </div>

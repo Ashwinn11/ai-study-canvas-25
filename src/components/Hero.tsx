@@ -23,26 +23,32 @@ export const Hero = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-              <a 
-                href="https://apps.apple.com/app/masterly-ai-flashcards-quiz/id6753760295" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-block"
+              <a
+                href="/signup"
+                className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white bg-gradient-to-r from-[#ff7664] to-[#ff8874] rounded-full hover:shadow-lg hover:scale-105 transition-all duration-200 shadow-md"
               >
-                <img 
-                  src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
-                  alt="Download on the App Store"
-                  className="h-12"
-                />
+                Get Started Free
               </a>
-              
-              <button
-                onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
-                className="text-base font-medium text-white hover:text-white/80 transition-colors underline-offset-4 hover:underline drop-shadow-md"
+
+              <a
+                href="/login"
+                className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white bg-white/10 backdrop-blur-sm border-2 border-white/20 rounded-full hover:bg-white/20 hover:scale-105 transition-all duration-200"
               >
-                See the Transformation
-              </button>
+                Sign In
+              </a>
             </div>
+
+            <p className="text-sm text-white/70 drop-shadow-md">
+              Also available on{' '}
+              <a
+                href="https://apps.apple.com/app/masterly-ai-flashcards-quiz/id6753760295"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-white/90 transition-colors"
+              >
+                iOS App Store
+              </a>
+            </p>
 
             <div className="flex gap-6 items-center pt-4 bg-primary/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
               <div className="text-center">

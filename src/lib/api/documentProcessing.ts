@@ -274,13 +274,18 @@ export async function generateFeynman(
 
     onProgress?.(0.3, 'Generating study materials...');
 
+    // Get model limits (matching iOS lines 79-82)
+    const fullConfig = await configService.getConfig();
+    const modelLimits = fullConfig.ai.modelLimits || {};
+    const modelMaxTokens = modelLimits[feynmanConfig.model] || 16384;
+
     // Call chatCompletion (matching iOS lines 90-100)
     const aiContent = await chatCompletion({
       model: feynmanConfig.model,
       systemPrompt: await getConditionalSystemPrompt(),
       userPrompt: prompt,
       temperature: feynmanConfig.temperature,
-      maxTokens: feynmanConfig.maxTokens,
+      maxTokens: Math.min(modelMaxTokens, feynmanConfig.maxTokens),
       timeoutMs: feynmanConfig.timeoutMs,
     });
 

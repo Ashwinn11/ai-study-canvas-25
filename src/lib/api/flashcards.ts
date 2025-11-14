@@ -64,13 +64,21 @@ export class FlashcardsService {
         max_quantity: String(flashcardsConfig.maxQuantity),
       });
 
+      // Get model limits (matching iOS lines 204-207)
+      const fullConfig = await configService.getConfig();
+      const modelLimits = fullConfig.ai.modelLimits || {};
+      const modelMaxTokens = modelLimits[flashcardsConfig.model] || 16384;
+
       // Call chatCompletion (matching iOS lines 239-263)
       const aiContent = await chatCompletion({
         model: flashcardsConfig.model,
         systemPrompt: systemPrompt,
         userPrompt: prompt,
         temperature: flashcardsConfig.temperature,
-        maxTokens: Math.max(flashcardsConfig.maxTokens, 6000 + flashcardsConfig.maxQuantity * 180),
+        maxTokens: Math.min(
+          modelMaxTokens,
+          Math.max(flashcardsConfig.maxTokens, 6000 + flashcardsConfig.maxQuantity * 180)
+        ),
         responseFormat: { type: 'json_object' },
         timeoutMs: flashcardsConfig.timeoutMs,
       });

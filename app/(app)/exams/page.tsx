@@ -42,9 +42,11 @@ export default function ExamsPage() {
       if (data && data.length > 0) {
         const statsPromises = data.map(async (exam) => {
           try {
-            const stats = await spacedRepetitionService.getExamReviewStats(exam.id, user.id);
+            const stats = await spacedRepetitionService.getExamReviewStats(user.id, exam.id); // Fixed: userId first, examId second
+            console.log(`[ExamStats] Exam ${exam.subject_name}:`, stats);
             return { examId: exam.id, stats };
-          } catch {
+          } catch (error) {
+            console.error(`[ExamStats] Error loading stats for exam ${exam.subject_name}:`, error);
             return { examId: exam.id, stats: null };
           }
         });

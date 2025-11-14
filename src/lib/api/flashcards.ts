@@ -25,75 +25,129 @@ export interface ReviewFlashcardParams {
 export class FlashcardsService {
   /**
    * Generate flashcards from seed content using AI
+   * Matches iOS contentGenerator.ts generateAIPoweredFlashcards lines 193-309
    */
-  async generateFlashcards(params: GenerateFlashcardsParams): Promise<Flashcard[]> {
-    if (!API_BASE_URL) {
-      throw new Error('Backend URL not configured');
-    }
+  async generateFlashcards(params: GenerateFlashcardsParams & { intent?: string; quantity?: number }): Promise<Flashcard[]> {
+    const { chatCompletion } = await import('./openAIClient');
+    const { configService } = await import('./configService');
+    const { getReturnOnlyJsonFlashcards, getFlashcardsUserTemplate, renderPromptTemplate } = await import('./prompts');
 
-    const url = `${API_BASE_URL}/api/ai/flashcards`;
+    try {
+      // Get dynamic config for flashcard generation (matching iOS lines 204-207)
+      const flashcardsConfig = await configService.getAIConfig('flashcards');
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${params.accessToken}`,
-      },
-      body: JSON.stringify({
+      // Validate quantity (matching iOS line 210)
+      const validatedQuantity = Math.min(
+        params.quantity || flashcardsConfig.maxQuantity,
+        flashcardsConfig.maxQuantity
+      );
+
+      // Fetch prompts from backend (matching iOS lines 216-221)
+      const intent = (params.intent || 'Educational') as 'Educational' | 'Comprehension' | 'Reference' | 'Analytical' | 'Procedural';
+      const [systemPrompt, userTemplate] = await Promise.all([
+        getReturnOnlyJsonFlashcards(),
+        getFlashcardsUserTemplate(intent),
+      ]);
+
+      // Add language instruction if content is not in English (matching iOS lines 224-227)
+      const languageInstruction =
+        params.language && params.language !== 'en'
+          ? `\n\nCRITICAL LANGUAGE INSTRUCTION:\nThe source content is in ${params.language.toUpperCase()}.\nGenerate ALL flashcards (questions AND answers) in ${params.language.toUpperCase()}.\nMaintain the source language throughout - do NOT translate to English.`
+          : '';
+
+      // Render prompt template (matching iOS lines 229-236)
+      const prompt = renderPromptTemplate(userTemplate, {
+        language_instruction: languageInstruction,
+        intent,
         content: params.content,
-        title: params.title,
-        language: params.language,
-      }),
-    });
+        min_quantity: String(flashcardsConfig.minQuantity),
+        max_quantity: String(flashcardsConfig.maxQuantity),
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      let errorMessage = 'Failed to generate flashcards';
+      // Call chatCompletion (matching iOS lines 239-263)
+      const aiContent = await chatCompletion({
+        model: flashcardsConfig.model,
+        systemPrompt: systemPrompt,
+        userPrompt: prompt,
+        temperature: flashcardsConfig.temperature,
+        maxTokens: Math.max(flashcardsConfig.maxTokens, 6000 + flashcardsConfig.maxQuantity * 180),
+        responseFormat: { type: 'json_object' },
+        timeoutMs: flashcardsConfig.timeoutMs,
+      });
 
+      // Parse JSON response (matching iOS lines 265-286)
+      let cards;
       try {
-        const errorJson = JSON.parse(errorText);
-        errorMessage = errorJson.message || errorMessage;
-      } catch {
-        // Use default error message
+        cards = JSON.parse(aiContent);
+
+        if (!cards || typeof cards !== 'object') {
+          throw new Error('Parsed result is not an object');
+        }
+      } catch (parseError) {
+        console.error('[FlashcardsService] Flashcard parsing failed:', parseError);
+        throw new Error('Unable to process AI response. The content may be too complex. Try breaking it into smaller sections.');
       }
 
-      throw new Error(errorMessage);
+      // Normalize to array (matching iOS lines 289-303)
+      let normalized: any[] = [];
+      if (Array.isArray(cards)) {
+        normalized = cards;
+      } else if (cards && typeof cards === 'object') {
+        const obj = cards as any;
+        const candidate = obj.flashcards || obj.cards || obj.items || obj.data || obj.results;
+        if (Array.isArray(candidate)) {
+          normalized = candidate;
+        } else if (Array.isArray(obj.questions)) {
+          normalized = obj.questions;
+        }
+      }
+
+      // Cap at maximum quantity (matching iOS lines 306-308)
+      const result = Array.isArray(normalized)
+        ? normalized.slice(0, flashcardsConfig.maxQuantity)
+        : [];
+
+      if (result.length === 0) {
+        throw new Error('No flashcards generated from content');
+      }
+
+      // Store flashcards in database with initial SM-2 values
+      const supabase = getSupabaseClient();
+      const today = getLocalDate();
+
+      const flashcardsToInsert = result.map((fc: { question: string; answer: string; difficulty?: number }) => ({
+        seed_id: params.seedId,
+        user_id: params.userId,
+        question: fc.question,
+        answer: fc.answer,
+        difficulty: fc.difficulty || 3,
+        interval: 1,
+        repetitions: 0,
+        easiness_factor: 2.5,
+        next_due_date: today, // Due today for first review
+        streak: 0,
+        lapses: 0,
+      }));
+
+      const { data, error } = await supabase
+        .from('flashcards')
+        .insert(flashcardsToInsert)
+        .select();
+
+      if (error) {
+        throw new Error(`Failed to save flashcards: ${error.message}`);
+      }
+
+      return data as Flashcard[];
+    } catch (error) {
+      console.error('[FlashcardsService] Error generating flashcards:', error);
+      throw error instanceof Error ? error : new Error('Failed to generate flashcards. Please try again.');
     }
-
-    const result = await response.json();
-
-    // Store flashcards in database with initial SM-2 values
-    const supabase = getSupabaseClient();
-    const today = getLocalDate();
-
-    const flashcardsToInsert = result.flashcards.map((fc: { question: string; answer: string; difficulty?: number }) => ({
-      seed_id: params.seedId,
-      user_id: params.userId,
-      question: fc.question,
-      answer: fc.answer,
-      difficulty: fc.difficulty || 3,
-      interval: 1,
-      repetitions: 0,
-      easiness_factor: 2.5,
-      next_due_date: today, // Due today for first review
-      streak: 0,
-      lapses: 0,
-    }));
-
-    const { data, error } = await supabase
-      .from('flashcards')
-      .insert(flashcardsToInsert)
-      .select();
-
-    if (error) {
-      throw new Error(`Failed to save flashcards: ${error.message}`);
-    }
-
-    return data as Flashcard[];
   }
 
   /**
    * Create flashcards for a seed (fetches seed content, generates via AI, and saves to DB)
+   * Matches iOS contentGenerator.ts generateFlashcardsFromSeed lines 51-109
    */
   async createFlashcards(params: {
     seedId: string;
@@ -122,6 +176,11 @@ export class FlashcardsService {
       throw new Error('Failed to find the source content for flashcard generation');
     }
 
+    // Verify Feynman explanation exists (matching iOS lines 61-69)
+    if (!seedData.feynman_explanation || seedData.feynman_explanation.length < 50) {
+      throw new Error('Learning materials not ready yet. Please wait for content processing to complete.');
+    }
+
     params.onProgress?.(0.2, 'Analyzing content...');
 
     // Get access token
@@ -130,13 +189,14 @@ export class FlashcardsService {
       throw new Error('Authentication required');
     }
 
-    // Generate flashcards via backend API
+    // Generate flashcards from Feynman explanation (matching iOS lines 80-85)
     const generatedCards = await this.generateFlashcards({
       seedId: params.seedId,
       userId: params.userId,
-      content: seedData.content_text || '',
+      content: seedData.feynman_explanation, // Use Feynman instead of raw content
       title: seedData.title,
       language: seedData.language_code || 'en',
+      intent: seedData.intent || 'Educational', // Pass intent for adaptive generation
       accessToken: session.access_token,
     });
 

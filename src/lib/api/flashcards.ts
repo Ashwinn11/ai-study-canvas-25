@@ -284,38 +284,48 @@ export class FlashcardsService {
   }
 
   /**
-   * Create learning session record
+   * Create learning session record (matching iOS lines 483-549)
+   * Source: "individual-practice" for flashcard practice
    */
   async createLearningSession(
     seedId: string,
     userId: string,
-    stats: {
+    sessionData: {
       totalItems: number;
       correctItems: number;
-      timeSpent: number;
-      metadata?: Record<string, unknown>;
+      timeSpent?: number;
+      metadata?: Record<string, any>;
     }
   ): Promise<void> {
     const supabase = getSupabaseClient();
 
-    const score = stats.totalItems > 0 ? stats.correctItems / stats.totalItems : 0;
+    // Score as decimal 0.0-1.0 (NOT percentage) per database constraint
+    const score = sessionData.totalItems > 0
+      ? sessionData.correctItems / sessionData.totalItems
+      : 0;
+
+    const sessionRecord = {
+      user_id: userId,
+      seed_id: seedId,
+      session_type: 'flashcards' as const,
+      total_items: sessionData.totalItems,
+      correct_items: sessionData.correctItems,
+      score,
+      time_spent: sessionData.timeSpent,
+      metadata: {
+        ...sessionData.metadata,
+        source: sessionData.metadata?.source || 'individual-practice',
+      },
+      completed_at: new Date().toISOString(),
+    };
 
     const { error } = await supabase
       .from('learning_sessions')
-      .insert({
-        user_id: userId,
-        seed_id: seedId,
-        session_type: 'flashcards',
-        total_items: stats.totalItems,
-        correct_items: stats.correctItems,
-        score,
-        time_spent: stats.timeSpent,
-        completed_at: new Date().toISOString(),
-        metadata: stats.metadata || {},
-      });
+      .insert(sessionRecord);
 
     if (error) {
-      throw new Error(`Failed to save learning session: ${error.message}`);
+      console.error('[FlashcardsService] Error saving session:', error);
+      // Don't throw - just log (matching iOS behavior)
     }
   }
 }

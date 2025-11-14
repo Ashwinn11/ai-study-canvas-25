@@ -176,7 +176,7 @@ export default function SeedsPage() {
             return (
               <div
                 key={seed.id}
-                className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 backdrop-blur-xl p-4 hover:bg-white/10 transition-colors cursor-pointer max-w-full"
+                className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 backdrop-blur-xl p-4 hover:bg-white/10 transition-all duration-200 cursor-pointer max-w-full active:scale-[0.98] hover:scale-[1.01]"
                 onClick={() => router.push(`/seeds/${seed.id}`)}
               >
                 <div className={`p-2 rounded-lg bg-white/5 flex-shrink-0 ${iconColor}`}>

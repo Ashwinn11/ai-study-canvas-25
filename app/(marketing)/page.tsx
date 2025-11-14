@@ -6,20 +6,16 @@ import { Pricing } from "@/components/Pricing";
 import { Testimonials } from "@/components/Testimonials";
 import { FAQ } from "@/components/FAQ";
 import { Footer } from "@/components/Footer";
-import Navigation from "@/components/Navigation";
 
 export default function HomePage() {
   return (
-    <>
-      <Navigation />
-      <main className="min-h-screen">
-        <Hero />
-        <Features />
-        <Testimonials />
-        <Pricing />
-        <FAQ />
-        <Footer />
-      </main>
-    </>
+    <main className="min-h-screen">
+      <Hero />
+      <Features />
+      <Testimonials />
+      <Pricing />
+      <FAQ />
+      <Footer />
+    </main>
   );
 }

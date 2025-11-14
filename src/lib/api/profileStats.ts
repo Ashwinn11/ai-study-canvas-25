@@ -132,7 +132,10 @@ class ProfileStatsService {
   async getUserStats(userId: string): Promise<{ data?: UserStats; error?: string }> {
     try {
       const supabase = getSupabaseClient();
-      const today = getLocalDate();
+
+      // Get local midnight for today (matching iOS getLocalMidnight)
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
 
       // Run all queries in parallel for optimal performance
       const [
@@ -140,19 +143,20 @@ class ProfileStatsService {
         quizQuestionsResult,
         seedsResult,
         historicalResult,
+        userPrefsResult,
         todayExamSessionsResult,
         allSessionsResult,
         userDataResult,
         gradeResult,
         aGradeResult,
       ] = await Promise.all([
-        // Get all flashcards for total and mastered count
+        // Get all flashcards for mastered count
         supabase
           .from('flashcards')
           .select('id, repetitions, easiness_factor')
           .eq('user_id', userId),
 
-        // Get all quiz questions for total and mastered count
+        // Get all quiz questions for mastered count
         supabase
           .from('quiz_questions')
           .select('id, repetitions, easiness_factor')
@@ -167,17 +171,24 @@ class ProfileStatsService {
         // Get streak from user_stats_historical table (matching iOS lines 121-125)
         supabase
           .from('user_stats_historical')
-          .select('current_streak, longest_streak, total_sessions, total_seeds_created')
+          .select('current_streak, longest_streak, total_sessions, total_seeds_created, total_cards_reviewed')
           .eq('user_id', userId)
           .maybeSingle(),
 
-        // Get today's EXAM-REVIEW sessions for daily goal (matching iOS)
+        // Get user preferences (daily_cards_goal)
+        supabase
+          .from('users')
+          .select('daily_cards_goal')
+          .eq('id', userId)
+          .single(),
+
+        // Get today's EXAM-REVIEW sessions for daily goal (matching iOS lines 245-275)
         supabase
           .from('learning_sessions')
           .select('total_items, metadata')
           .eq('user_id', userId)
           .eq('metadata->>source', 'exam-review')
-          .gte('completed_at', `${today}T00:00:00`)
+          .gte('completed_at', startOfToday.toISOString())
           .not('completed_at', 'is', null),
 
         // Get ALL sessions (both sources) for accuracy calculation (matching iOS)
@@ -203,12 +214,12 @@ class ProfileStatsService {
           .eq('user_id', userId)
           .not('letter_grade', 'is', null),
 
-        // Get A+/A grades count
+        // Get A+ grades count (matching iOS lines 367-380 - only A+, not A)
         supabase
           .from('exam_reports')
           .select('letter_grade', { count: 'exact', head: true })
           .eq('user_id', userId)
-          .in('letter_grade', ['A+', 'A']),
+          .eq('letter_grade', 'A+'),
       ]);
 
       // Process flashcards
@@ -223,7 +234,6 @@ class ProfileStatsService {
         qq.repetitions !== null && qq.repetitions >= 3 && qq.easiness_factor !== null && qq.easiness_factor >= 2.5
       );
 
-      const totalCards = flashcards.length + quizQuestions.length;
       const masteredCards = masteredFlashcards.length + masteredQuizzes.length;
 
       // Calculate accuracy from ALL learning sessions (matching iOS lines 283-307)
@@ -235,13 +245,17 @@ class ProfileStatsService {
         accuracy = totalItems > 0 ? Math.round((correctItems / totalItems) * 100) : 0;
       }
 
-      // Read streak from user_stats_historical table (matching iOS lines 121-125)
+      // Read from user_stats_historical table (matching iOS lines 121-125)
       const historical = historicalResult.data;
       const longestStreak = historical?.longest_streak || 0;
       const totalSessions = historical?.total_sessions || 0;
+      const totalCards = historical?.total_cards_reviewed || 0; // Total cards reviewed EVER (matching iOS line 217)
+
+      // Get user's actual dailyCardsGoal preference (matching iOS lines 169-177)
+      const dailyCardsGoal = userPrefsResult.data?.daily_cards_goal || 20;
 
       // Calculate commitment streak from learning_sessions (matching iOS lines 442-521)
-      const calculatedStreak = await this.getCommitmentStreak(userId, 20); // Default dailyCardsGoal = 20
+      const calculatedStreak = await this.getCommitmentStreak(userId, dailyCardsGoal);
 
       // Use MAX of historical and calculated streak (matching iOS lines 179-182)
       // This ensures real-time accuracy even if historical table not updated yet
@@ -298,7 +312,7 @@ class ProfileStatsService {
         totalSeeds,
         totalSessions,
         weeklyGoal: 0, // Not implemented yet
-        dailyCardsGoal: 20, // Default goal
+        dailyCardsGoal, // User's actual goal preference
         accuracy,
         avgSessionScore: accuracy, // Use accuracy as session score
         weakAreas: [], // Not implemented yet

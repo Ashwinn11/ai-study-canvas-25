@@ -3,8 +3,17 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, X } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Menu, X, User, LogOut, LayoutDashboard } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import Link from "next/link";
 import backgroundImage from "@/assets/background.png";
 
 interface NavigationProps {
@@ -14,6 +23,7 @@ interface NavigationProps {
 const Navigation: React.FC<NavigationProps> = ({ className }) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, loading, signOut } = useAuth();
 
   // Navigation links
   const navLinks = [
@@ -85,21 +95,50 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
               ))}
             </nav>
 
-            {/* CTA Button */}
-            <div className="hidden md:block">
-              <Button
-                variant="default"
-                size="sm"
-                asChild
-              >
-                <a 
-                  href="https://apps.apple.com/app/masterly-ai-flashcards-quiz/id6753760295" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                >
-                  Download
-                </a>
-              </Button>
+            {/* CTA Button / User Menu */}
+            <div className="hidden md:flex items-center gap-2">
+              {loading ? (
+                <div className="h-9 w-20 animate-pulse bg-white/10 rounded-md" />
+              ) : user ? (
+                <>
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link href="/dashboard">
+                      <LayoutDashboard className="h-4 w-4 mr-2" />
+                      Dashboard
+                    </Link>
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="gap-2">
+                        <User className="h-4 w-4" />
+                        Account
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem asChild>
+                        <Link href="/profile" className="cursor-pointer">
+                          <User className="mr-2 h-4 w-4" />
+                          Profile
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={signOut} className="cursor-pointer text-red-500">
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Sign Out
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
+              ) : (
+                <>
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link href="/login">Sign In</Link>
+                  </Button>
+                  <Button variant="default" size="sm" asChild>
+                    <Link href="/signup">Get Started</Link>
+                  </Button>
+                </>
+              )}
             </div>
 
             {/* Mobile Menu Trigger */}
@@ -143,22 +182,44 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
                       ))}
                     </nav>
 
-                    {/* Mobile CTA Button */}
-                    <div className="pt-4 border-t">
-                      <Button
-                        variant="default"
-                        size="lg"
-                        className="w-full"
-                        asChild
-                      >
-                        <a 
-                          href="https://apps.apple.com/app/masterly-ai-flashcards-quiz/id6753760295" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                        >
-                          Download on App Store
-                        </a>
-                      </Button>
+                    {/* Mobile Auth Buttons */}
+                    <div className="pt-4 border-t space-y-2">
+                      {loading ? (
+                        <div className="h-10 w-full animate-pulse bg-white/10 rounded-md" />
+                      ) : user ? (
+                        <>
+                          <Button variant="default" size="lg" className="w-full" asChild>
+                            <Link href="/dashboard">
+                              <LayoutDashboard className="h-4 w-4 mr-2" />
+                              Dashboard
+                            </Link>
+                          </Button>
+                          <Button variant="outline" size="lg" className="w-full" asChild>
+                            <Link href="/profile">
+                              <User className="h-4 w-4 mr-2" />
+                              Profile
+                            </Link>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="lg"
+                            className="w-full text-red-500 hover:text-red-600"
+                            onClick={signOut}
+                          >
+                            <LogOut className="h-4 w-4 mr-2" />
+                            Sign Out
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button variant="outline" size="lg" className="w-full" asChild>
+                            <Link href="/login">Sign In</Link>
+                          </Button>
+                          <Button variant="default" size="lg" className="w-full" asChild>
+                            <Link href="/signup">Get Started</Link>
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </SheetContent>

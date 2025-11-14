@@ -285,47 +285,46 @@ export default function QuizPage() {
   const totalQuestions = questions.length;
   const scorePercentage = Math.round((sessionStats.correct / totalQuestions) * 100);
 
-  // Completion modal
+  // Get score color based on percentage (matching iOS)
+  const getScoreColor = (pct: number) => {
+    if (pct >= 90) return 'bg-green-500';
+    if (pct >= 80) return 'bg-blue-500';
+    if (pct >= 70) return 'bg-purple-500';
+    return 'bg-primary';
+  };
+
+  const scoreColor = getScoreColor(scorePercentage);
+
+  // Completion modal - Matching iOS quiz variant
   if (sessionStats.completed) {
     return (
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
         <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-white/10 p-8 max-w-md w-full space-y-6 shadow-2xl">
-          <div className="text-center space-y-4">
-            <div className="flex justify-center">
-              <div className="p-4 rounded-full bg-primary/10">
-                <Trophy className="h-12 w-12 text-primary" />
-              </div>
+          {/* Score Circle */}
+          <div className="flex flex-col items-center space-y-4">
+            <div
+              className={`w-36 h-36 rounded-full ${scoreColor} flex items-center justify-center`}
+            >
+              <span className="text-5xl font-bold text-white">{scorePercentage}%</span>
             </div>
-            <h2 className="text-2xl font-bold text-white">Quiz Complete!</h2>
-            <p className="text-gray-400">Great work! You've completed all questions.</p>
+
+            {/* Title - Emotional (matching iOS) */}
+            <h2 className="text-2xl font-bold text-white">💯 Solid performance!</h2>
+
+            {/* Combined summary - No redundancy (matching iOS) */}
+            <p className="text-lg text-gray-300">
+              {sessionStats.correct} nailed, {sessionStats.incorrect} to master
+            </p>
           </div>
 
-          <div className="space-y-3">
-            <div className="flex justify-between items-center p-4 rounded-lg bg-white/5">
-              <span className="text-gray-400">Total Questions</span>
-              <span className="text-white font-semibold">{totalQuestions}</span>
-            </div>
-            <div className="flex justify-between items-center p-4 rounded-lg bg-green-500/10">
-              <span className="text-gray-400">Correct</span>
-              <span className="text-green-400 font-semibold">{sessionStats.correct}</span>
-            </div>
-            <div className="flex justify-between items-center p-4 rounded-lg bg-red-500/10">
-              <span className="text-gray-400">Incorrect</span>
-              <span className="text-red-400 font-semibold">{sessionStats.incorrect}</span>
-            </div>
-            <div className="flex justify-between items-center p-4 rounded-lg bg-primary/10">
-              <span className="text-gray-400">Score</span>
-              <span className="text-primary font-semibold">{scorePercentage}%</span>
-            </div>
-          </div>
-
-          <div className="flex gap-3">
-            <Button onClick={restartQuiz} variant="outline" className="flex-1">
-              <RotateCw className="h-4 w-4 mr-2" />
-              Retry
-            </Button>
-            <Button onClick={() => router.push(`/seeds/${seedId}`)} className="flex-1">
-              Done
+          {/* Action Button (matching iOS) */}
+          <div className="flex justify-center">
+            <Button
+              onClick={restartQuiz}
+              className="px-8"
+              size="lg"
+            >
+              Try Again & Ace It 🚀
             </Button>
           </div>
         </div>

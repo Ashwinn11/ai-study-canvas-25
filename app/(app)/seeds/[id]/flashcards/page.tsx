@@ -328,47 +328,53 @@ export default function FlashcardsPage() {
   const totalCards = flashcards.length;
   const scorePercentage = totalCards > 0 ? Math.round((sessionStats.correct / totalCards) * 100) : 0;
 
-  // Completion modal
+  // Get score color based on percentage (matching iOS)
+  const getScoreColor = (pct: number) => {
+    if (pct >= 90) return 'bg-green-500';
+    if (pct >= 80) return 'bg-blue-500';
+    if (pct >= 70) return 'bg-purple-500';
+    return 'bg-primary';
+  };
+
+  const scoreColor = getScoreColor(scorePercentage);
+
+  // Completion modal - Matching iOS flashcards variant
   if (sessionStats.completed) {
     return (
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
         <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-white/10 p-8 max-w-md w-full space-y-6 shadow-2xl">
-          <div className="text-center space-y-4">
-            <div className="flex justify-center">
-              <div className="p-4 rounded-full bg-primary/10">
-                <Trophy className="h-12 w-12 text-primary" />
-              </div>
+          {/* Score Circle */}
+          <div className="flex flex-col items-center space-y-4">
+            <div
+              className={`w-36 h-36 rounded-full ${scoreColor} flex items-center justify-center`}
+            >
+              <span className="text-5xl font-bold text-white">{scorePercentage}%</span>
             </div>
-            <h2 className="text-2xl font-bold text-white">Session Complete!</h2>
-            <p className="text-gray-400">Great work! You've completed all flashcards.</p>
+
+            {/* Title - Emotional (matching iOS) */}
+            <h2 className="text-2xl font-bold text-white">🔥 You're on fire!</h2>
+
+            {/* Summary - No redundancy (matching iOS) */}
+            <p className="text-lg text-gray-300">
+              {sessionStats.correct} cards locked in 🔒
+            </p>
+
+            {/* Challenge framing (matching iOS) */}
+            {sessionStats.needReview > 0 && (
+              <p className="text-lg text-primary">
+                {sessionStats.needReview} more to conquer
+              </p>
+            )}
           </div>
 
-          <div className="space-y-3">
-            <div className="flex justify-between items-center p-4 rounded-lg bg-white/5">
-              <span className="text-gray-400">Total Cards</span>
-              <span className="text-white font-semibold">{totalCards}</span>
-            </div>
-            <div className="flex justify-between items-center p-4 rounded-lg bg-green-500/10">
-              <span className="text-gray-400">Confident</span>
-              <span className="text-green-400 font-semibold">{sessionStats.correct}</span>
-            </div>
-            <div className="flex justify-between items-center p-4 rounded-lg bg-orange-500/10">
-              <span className="text-gray-400">Need Review</span>
-              <span className="text-orange-400 font-semibold">{sessionStats.needReview}</span>
-            </div>
-            <div className="flex justify-between items-center p-4 rounded-lg bg-primary/10">
-              <span className="text-gray-400">Score</span>
-              <span className="text-primary font-semibold">{scorePercentage}%</span>
-            </div>
-          </div>
-
-          <div className="flex gap-3">
-            <Button onClick={restartSession} variant="outline" className="flex-1">
-              <RotateCw className="h-4 w-4 mr-2" />
-              Retry
-            </Button>
-            <Button onClick={() => router.push(`/seeds/${seedId}`)} className="flex-1">
-              Done
+          {/* Action Button (matching iOS) */}
+          <div className="flex justify-center">
+            <Button
+              onClick={restartSession}
+              className="px-8"
+              size="lg"
+            >
+              Master It Again! 💪
             </Button>
           </div>
         </div>

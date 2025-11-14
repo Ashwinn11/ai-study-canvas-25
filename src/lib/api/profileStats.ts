@@ -46,7 +46,7 @@ class ProfileStatsService {
         flashcardsResult,
         quizQuestionsResult,
         seedsResult,
-        examReviewSessionsResult,
+        historicalResult,
         todayExamSessionsResult,
         allSessionsResult,
         gradeResult,
@@ -70,15 +70,12 @@ class ProfileStatsService {
           .select('id', { count: 'exact', head: true })
           .eq('user_id', userId),
 
-        // Get ONLY exam-review sessions for streak calculation (matching iOS)
+        // Get streak from user_stats_historical table (matching iOS lines 121-125)
         supabase
-          .from('learning_sessions')
-          .select('completed_at, session_type, metadata')
+          .from('user_stats_historical')
+          .select('current_streak, longest_streak, total_sessions, total_seeds_created')
           .eq('user_id', userId)
-          .eq('metadata->>source', 'exam-review')
-          .not('completed_at', 'is', null)
-          .order('completed_at', { ascending: false })
-          .limit(365), // Last year for streak calculation
+          .maybeSingle()
 
         // Get today's EXAM-REVIEW sessions for daily goal (matching iOS)
         supabase
@@ -139,58 +136,11 @@ class ProfileStatsService {
         accuracy = totalItems > 0 ? Math.round((correctItems / totalItems) * 100) : 0;
       }
 
-      // Process EXAM-REVIEW sessions for streak (matching iOS)
-      const examReviewSessions = examReviewSessionsResult.data || [];
-      const totalSessions = examReviewSessions.length;
-
-      // Calculate current streak
-      let currentStreak = 0;
-      let longestStreak = 0;
-      let tempStreak = 0;
-
-      if (examReviewSessions.length > 0) {
-        // Group EXAM-REVIEW sessions by date (matching iOS)
-        const sessionsByDate = new Map<string, boolean>();
-        examReviewSessions.forEach((session: any) => {
-          if (session.completed_at) {
-            const date = session.completed_at.split('T')[0];
-            sessionsByDate.set(date, true);
-          }
-        });
-
-        // Calculate current streak (consecutive days up to today)
-        let checkDate = new Date();
-        while (true) {
-          const dateStr = checkDate.toISOString().split('T')[0];
-          if (sessionsByDate.has(dateStr)) {
-            currentStreak++;
-            checkDate.setDate(checkDate.getDate() - 1);
-          } else if (dateStr === today) {
-            // Today hasn't been completed yet, check yesterday
-            checkDate.setDate(checkDate.getDate() - 1);
-          } else {
-            break;
-          }
-        }
-
-        // Calculate longest streak
-        const sortedDates = Array.from(sessionsByDate.keys()).sort();
-        for (let i = 0; i < sortedDates.length; i++) {
-          if (i === 0) {
-            tempStreak = 1;
-          } else {
-            const prevDate = new Date(sortedDates[i - 1]);
-            const currDate = new Date(sortedDates[i]);
-            const diffDays = Math.floor((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
-            if (diffDays === 1) {
-              tempStreak++;
-            } else {
-              tempStreak = 1;
-            }
-          }
-          longestStreak = Math.max(longestStreak, tempStreak);
-        }
-      }
+      // Read streak from user_stats_historical table (matching iOS lines 179-182)
+      const historical = historicalResult.data;
+      const currentStreak = historical?.current_streak || 0;
+      const longestStreak = historical?.longest_streak || 0;
+      const totalSessions = historical?.total_sessions || 0;
 
       // Process today's EXAM-REVIEW sessions for cards reviewed today (matching iOS lines 245-275)
       const todayExamSessions = todayExamSessionsResult.data || [];
@@ -214,8 +164,8 @@ class ProfileStatsService {
       // Get A grades count
       const totalAGrades = aGradeResult.count || 0;
 
-      // Get total seeds
-      const totalSeeds = seedsResult.count || 0;
+      // Get total seeds from user_stats_historical (matching iOS) or fall back to seeds count
+      const totalSeeds = historical?.total_seeds_created || seedsResult.count || 0;
 
       const stats: UserStats = {
         totalCards,

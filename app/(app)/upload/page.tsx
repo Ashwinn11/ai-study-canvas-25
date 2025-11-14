@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { getSupabaseClient } from '@/lib/supabase/client';
@@ -23,32 +23,15 @@ export default function UploadPage() {
   const [textContent, setTextContent] = useState('');
   const [uploadMode, setUploadMode] = useState<'file' | 'text'>('file');
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(true);
-  }, []);
+  };
 
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
+  const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-  }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) {
-      handleFileUpload(files[0]);
-    }
-  }, []);
-
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      handleFileUpload(files[0]);
-    }
-  }, []);
+  };
 
   const handleFileUpload = async (file: File) => {
     if (!user) {
@@ -153,6 +136,23 @@ export default function UploadPage() {
     setError(null);
     setTitle('');
     setTextContent('');
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      handleFileUpload(files[0]);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      handleFileUpload(files[0]);
+    }
   };
 
   return (

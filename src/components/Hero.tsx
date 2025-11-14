@@ -22,33 +22,39 @@ export const Hero = () => {
               Your AI coach creates smart flashcards and adaptive quizzes that work together with spaced repetition.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-              <a
-                href="/signup"
-                className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white bg-gradient-to-r from-[#ff7664] to-[#ff8874] rounded-full hover:shadow-lg hover:scale-105 transition-all duration-200 shadow-md"
-              >
-                Get Started Free
-              </a>
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                <a
+                  href="/signup"
+                  className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white bg-gradient-to-r from-[#ff7664] to-[#ff8874] rounded-full hover:shadow-lg hover:scale-105 transition-all duration-200 shadow-md"
+                >
+                  Try Web App Free
+                </a>
 
-              <a
-                href="/login"
-                className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white bg-white/10 backdrop-blur-sm border-2 border-white/20 rounded-full hover:bg-white/20 hover:scale-105 transition-all duration-200"
-              >
-                Sign In
-              </a>
+                <a
+                  href="https://apps.apple.com/app/masterly-ai-flashcards-quiz/id6753760295"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block"
+                >
+                  <img
+                    src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
+                    alt="Download on the App Store"
+                    className="h-14"
+                  />
+                </a>
+              </div>
+
+              <p className="text-sm text-white/80 drop-shadow-md">
+                Already have an account?{' '}
+                <a
+                  href="/login"
+                  className="font-semibold text-white hover:text-[#F5C6FF] transition-colors underline underline-offset-4"
+                >
+                  Sign In
+                </a>
+              </p>
             </div>
-
-            <p className="text-sm text-white/70 drop-shadow-md">
-              Also available on{' '}
-              <a
-                href="https://apps.apple.com/app/masterly-ai-flashcards-quiz/id6753760295"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline hover:text-white/90 transition-colors"
-              >
-                iOS App Store
-              </a>
-            </p>
 
             <div className="flex gap-6 items-center pt-4 bg-primary/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
               <div className="text-center">

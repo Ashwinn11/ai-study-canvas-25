@@ -264,10 +264,10 @@ export default function SeedDetailPage() {
                     Feynman Explanation
                   </h3>
                 </div>
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  className="text-gray-300"
-                  components={{
+                <div className="text-gray-300">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
                     h1: ({node, ...props}) => <h1 className="text-2xl font-bold text-white mt-6 mb-4" {...props} />,
                     h2: ({node, ...props}) => <h2 className="text-xl font-bold text-white mt-5 mb-3" {...props} />,
                     h3: ({node, ...props}) => <h3 className="text-lg font-semibold text-white mt-4 mb-2" {...props} />,
@@ -288,6 +288,7 @@ export default function SeedDetailPage() {
                 >
                   {seed.feynman_explanation}
                 </ReactMarkdown>
+                </div>
               </div>
             )}
 

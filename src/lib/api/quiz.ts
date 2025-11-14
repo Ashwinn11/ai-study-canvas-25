@@ -35,8 +35,15 @@ class QuizService {
     return (data || []) as QuizQuestion[];
   }
 
+  /**
+   * Create quiz questions for a seed
+   * Matches iOS contentGenerator.ts generateQuizFromSeed and generateAIPoweredQuiz lines 121-433
+   */
   async createQuizQuestions(request: CreateQuizRequest): Promise<QuizQuestion[]> {
     const supabase = getSupabaseClient();
+    const { chatCompletion } = await import('./openAIClient');
+    const { configService } = await import('./configService');
+    const { getReturnOnlyJsonQuiz, getQuizUserTemplate, renderPromptTemplate } = await import('./prompts');
 
     // Check if quiz questions already exist
     const existingQuestions = await this.getQuizQuestionsBySeed(
@@ -63,89 +70,141 @@ class QuizService {
       throw new Error('Failed to find the source content for quiz generation');
     }
 
+    // Verify Feynman explanation exists (matching iOS lines 131-139)
+    if (!seedData.feynman_explanation || seedData.feynman_explanation.length < 50) {
+      throw new Error('Learning materials not ready yet. Please wait for content processing to complete.');
+    }
+
     request.onProgress?.(0.2, 'Analyzing content...');
 
-    // Generate quiz questions via backend API
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_SERVER_URL}/api/generate/quiz`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${await supabase.auth.getSession().then((s) => s.data.session?.access_token)}`,
-        },
-        body: JSON.stringify({
-          seed_id: request.seedId,
-          user_id: request.userId,
-          content_text: seedData.content_text,
-          feynman_explanation: seedData.feynman_explanation,
-          quantity: request.quantity || 10,
-        }),
-      }
-    );
+    try {
+      // Get dynamic config for quiz generation (matching iOS lines 325-328)
+      const quizConfig = await configService.getAIConfig('quiz');
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Quiz generation failed: ${errorText}`);
-    }
-
-    const result = await response.json();
-
-    // Poll for progress if generation is async
-    if (result.status === 'processing') {
-      return await this.pollForCompletion(
-        request.seedId,
-        request.userId,
-        request.onProgress
+      // Validate quantity (matching iOS line 331)
+      const validatedQuantity = Math.min(
+        request.quantity || quizConfig.maxQuantity,
+        quizConfig.maxQuantity
       );
-    }
 
-    const generatedQuestions = result.questions || [];
+      // Fetch prompts from backend (matching iOS lines 337-342)
+      const intent = (seedData.intent || 'Educational') as 'Educational' | 'Comprehension' | 'Reference' | 'Analytical' | 'Procedural';
+      const [systemPrompt, userTemplate] = await Promise.all([
+        getReturnOnlyJsonQuiz(),
+        getQuizUserTemplate(intent),
+      ]);
 
-    if (generatedQuestions.length < 3) {
-      throw new Error(
-        `Only ${generatedQuestions.length} quiz questions generated (minimum 3 required). Content may be too short for meaningful assessment.`
-      );
-    }
+      // Add language instruction if content is not in English (matching iOS lines 345-348)
+      const languageInstruction =
+        seedData.language_code && seedData.language_code !== 'en'
+          ? `\n\nCRITICAL LANGUAGE INSTRUCTION:\nThe source content is in ${seedData.language_code.toUpperCase()}.\nGenerate ALL quiz questions and options in ${seedData.language_code.toUpperCase()}.\nMaintain the source language throughout - do NOT translate to English.`
+          : '';
 
-    request.onProgress?.(0.9, 'Saving quiz questions...');
+      // Render prompt template (matching iOS lines 350-357)
+      const prompt = renderPromptTemplate(userTemplate, {
+        language_instruction: languageInstruction,
+        intent,
+        content: seedData.feynman_explanation, // Use Feynman instead of raw content
+        min_quantity: String(quizConfig.minQuantity),
+        max_quantity: String(quizConfig.maxQuantity),
+      });
 
-    // Save quiz questions to database with SM2 initialization
-    const questionsToInsert = generatedQuestions.map((q: any) => ({
-      seed_id: request.seedId,
-      user_id: request.userId,
-      question: q.question,
-      options: q.options,
-      correct_answer: q.correct_answer,
-      explanation: q.explanation,
-      difficulty: q.difficulty || 3,
-      // Initialize SM2 fields
-      interval: 1,
-      repetitions: 0,
-      easiness_factor: 2.5,
-      next_due_date: new Date().toISOString().split('T')[0],
-      streak: 0,
-      lapses: 0,
-    }));
+      request.onProgress?.(0.3, 'Generating quiz questions with AI...');
 
-    const { data, error } = await supabase
-      .from('quiz_questions')
-      .insert(questionsToInsert)
-      .select();
+      // Call chatCompletion (matching iOS lines 360-384)
+      const aiContent = await chatCompletion({
+        model: quizConfig.model,
+        systemPrompt: systemPrompt,
+        userPrompt: prompt,
+        temperature: quizConfig.temperature,
+        maxTokens: Math.max(quizConfig.maxTokens, 5000 + quizConfig.maxQuantity * 220),
+        responseFormat: { type: 'json_object' },
+        timeoutMs: quizConfig.timeoutMs,
+      });
 
-    if (error) {
-      // Handle duplicate constraint violation (race condition)
-      if (error.code === '23505') {
-        console.warn('Duplicate quiz questions detected, fetching existing ones');
-        return await this.getQuizQuestionsBySeed(request.seedId, request.userId);
+      // Parse JSON response (matching iOS lines 388-407)
+      let quizzes;
+      try {
+        quizzes = JSON.parse(aiContent);
+
+        if (!quizzes || typeof quizzes !== 'object') {
+          throw new Error('Parsed result is not an object');
+        }
+      } catch (parseError) {
+        console.error('[QuizService] Quiz parsing failed:', parseError);
+        throw new Error('Unable to process AI response. The content may be too complex. Try breaking it into smaller sections.');
       }
 
-      throw new Error(`Failed to save quiz questions: ${error.message}`);
+      // Normalize to array (matching iOS lines 410-424)
+      let normalizedQ: any[] = [];
+      if (Array.isArray(quizzes)) {
+        normalizedQ = quizzes;
+      } else if (quizzes && typeof quizzes === 'object') {
+        const obj = quizzes as any;
+        const candidate =
+          obj.questions ||
+          obj.quizQuestions ||
+          obj.items ||
+          obj.data ||
+          obj.results;
+        if (Array.isArray(candidate)) {
+          normalizedQ = candidate;
+        }
+      }
+
+      // Cap at maximum quantity (matching iOS lines 427-429)
+      const generatedQuestions = Array.isArray(normalizedQ)
+        ? normalizedQ.slice(0, quizConfig.maxQuantity)
+        : [];
+
+      if (generatedQuestions.length < 3) {
+        throw new Error(
+          `Only ${generatedQuestions.length} quiz questions generated (minimum 3 required). Content may be too short for meaningful assessment.`
+        );
+      }
+
+      request.onProgress?.(0.9, 'Saving quiz questions...');
+
+      // Save quiz questions to database with SM2 initialization
+      const questionsToInsert = generatedQuestions.map((q: any) => ({
+        seed_id: request.seedId,
+        user_id: request.userId,
+        question: q.question,
+        options: q.options,
+        correct_answer: q.correct_answer,
+        explanation: q.explanation,
+        difficulty: q.difficulty || 3,
+        // Initialize SM2 fields
+        interval: 1,
+        repetitions: 0,
+        easiness_factor: 2.5,
+        next_due_date: new Date().toISOString().split('T')[0],
+        streak: 0,
+        lapses: 0,
+      }));
+
+      const { data, error } = await supabase
+        .from('quiz_questions')
+        .insert(questionsToInsert)
+        .select();
+
+      if (error) {
+        // Handle duplicate constraint violation (race condition)
+        if (error.code === '23505') {
+          console.warn('Duplicate quiz questions detected, fetching existing ones');
+          return await this.getQuizQuestionsBySeed(request.seedId, request.userId);
+        }
+
+        throw new Error(`Failed to save quiz questions: ${error.message}`);
+      }
+
+      request.onProgress?.(1.0, 'Quiz questions ready!');
+
+      return (data || []) as QuizQuestion[];
+    } catch (error) {
+      console.error('[QuizService] Error generating quiz questions:', error);
+      throw error instanceof Error ? error : new Error('Failed to generate quiz questions. Please try again.');
     }
-
-    request.onProgress?.(1.0, 'Quiz questions ready!');
-
-    return (data || []) as QuizQuestion[];
   }
 
   private async pollForCompletion(

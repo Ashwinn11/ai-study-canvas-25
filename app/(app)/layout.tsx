@@ -51,13 +51,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1A2332] via-[#1A2332] to-[#2A3342]">
+    <div className="min-h-screen bg-background">
       {/* Desktop Sidebar */}
       <aside className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
-        <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-white/10 bg-[#1A2332]/50 backdrop-blur-xl px-6 pb-4">
+        <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-border bg-card px-6 pb-4">
           {/* Logo */}
           <div className="flex h-16 shrink-0 items-center">
-            <div className="text-2xl font-bold bg-gradient-to-r from-[#ff7664] to-[#F5C6FF] bg-clip-text text-transparent">
+            <div className="text-2xl font-bold text-primary">
               Masterly
             </div>
           </div>
@@ -76,8 +76,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                           className={cn(
                             'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold transition-colors',
                             isActive
-                              ? 'bg-[#ff7664] text-white'
-                              : 'text-gray-400 hover:text-white hover:bg-white/10'
+                              ? 'bg-primary text-primary-foreground'
+                              : 'text-muted-foreground hover:text-foreground hover:bg-accent'
                           )}
                         >
                           <link.icon className="h-6 w-6 shrink-0" />
@@ -91,15 +91,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
               {/* User info & Sign Out */}
               <li className="mt-auto">
-                <div className="p-3 rounded-lg bg-white/5 border border-white/10">
-                  <div className="text-sm text-gray-400 mb-2">Signed in as</div>
-                  <div className="text-sm text-white font-medium truncate mb-3">
+                <div className="p-3 rounded-lg bg-accent/50 border border-border">
+                  <div className="text-sm text-muted-foreground mb-2">Signed in as</div>
+                  <div className="text-sm font-medium truncate mb-3">
                     {user?.email}
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                    className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
                     onClick={signOut}
                   >
                     <LogOut className="mr-2 h-4 w-4" />
@@ -114,18 +114,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* Mobile Header */}
       <div className="sticky top-0 z-40 lg:hidden">
-        <div className="flex h-16 items-center gap-x-4 border-b border-white/10 bg-[#1A2332]/50 backdrop-blur-xl px-4 shadow-sm">
+        <div className="flex h-16 items-center gap-x-4 border-b border-border bg-card px-4 shadow-sm">
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="lg:hidden">
-                <Menu className="h-6 w-6 text-white" />
+                <Menu className="h-6 w-6" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-72 bg-[#1A2332] border-white/10">
-              <div className="flex flex-col h-full">
+            <SheetContent side="left" className="w-72 border-r border-border bg-card p-0">
+              <div className="flex flex-col h-full px-6 pb-4">
                 {/* Logo */}
                 <div className="flex h-16 shrink-0 items-center">
-                  <div className="text-2xl font-bold bg-gradient-to-r from-[#ff7664] to-[#F5C6FF] bg-clip-text text-transparent">
+                  <div className="text-2xl font-bold text-primary">
                     Masterly
                   </div>
                 </div>
@@ -143,8 +143,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                             className={cn(
                               'group flex gap-x-3 rounded-md p-3 text-sm leading-6 font-semibold transition-colors',
                               isActive
-                                ? 'bg-[#ff7664] text-white'
-                                : 'text-gray-400 hover:text-white hover:bg-white/10'
+                                ? 'bg-primary text-primary-foreground'
+                                : 'text-muted-foreground hover:text-foreground hover:bg-accent'
                             )}
                           >
                             <link.icon className="h-6 w-6 shrink-0" />
@@ -157,15 +157,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </nav>
 
                 {/* User info */}
-                <div className="p-3 rounded-lg bg-white/5 border border-white/10 mb-4">
-                  <div className="text-sm text-gray-400 mb-2">Signed in as</div>
-                  <div className="text-sm text-white font-medium truncate mb-3">
+                <div className="p-3 rounded-lg bg-accent/50 border border-border mb-4">
+                  <div className="text-sm text-muted-foreground mb-2">Signed in as</div>
+                  <div className="text-sm font-medium truncate mb-3">
                     {user?.email}
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                    className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
                     onClick={signOut}
                   >
                     <LogOut className="mr-2 h-4 w-4" />
@@ -176,7 +176,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </SheetContent>
           </Sheet>
 
-          <div className="flex-1 text-sm font-semibold leading-6 text-white">
+          <div className="flex-1 text-sm font-semibold leading-6">
             Masterly
           </div>
         </div>

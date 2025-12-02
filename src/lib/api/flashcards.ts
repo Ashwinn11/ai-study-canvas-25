@@ -132,9 +132,11 @@ export class FlashcardsService {
         interval: 1,
         repetitions: 0,
         easiness_factor: 2.5,
-        next_due_date: today, // Due today for first review
+        next_due_date: today,
+        last_reviewed_date: null,
         streak: 0,
         lapses: 0,
+        quality_rating: null,
       }));
 
       const { data, error } = await supabase
@@ -279,12 +281,9 @@ export class FlashcardsService {
 
     // Check if already reviewed today - prevent duplicate SM2 updates
     const today = getLocalDate();
-    if (currentCard.last_reviewed) {
-      const lastReviewedDate = currentCard.last_reviewed.split('T')[0];
-      if (lastReviewedDate === today) {
-        console.log(`Flashcard ${flashcardId} already reviewed today, skipping SM2 update`);
-        return currentCard as Flashcard;
-      }
+    if (currentCard.last_reviewed_date === today) {
+      console.log(`Flashcard ${flashcardId} already reviewed today, skipping SM2 update`);
+      return currentCard as Flashcard;
     }
 
     // Convert swipe direction to quality rating
@@ -312,6 +311,7 @@ export class FlashcardsService {
       easiness_factor: sm2Result.easinessFactor,
       next_due_date: formatDateString(sm2Result.nextDueDate),
       last_reviewed: new Date().toISOString(),
+      last_reviewed_date: today,
       quality_rating: sm2Result.qualityRating,
       streak,
       lapses,

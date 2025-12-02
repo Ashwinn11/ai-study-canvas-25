@@ -10,29 +10,29 @@ export const metadata: Metadata = {
 
 export default function SignUpPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1A2332] via-[#1A2332] to-[#2A3342] p-4">
-      <Card className="w-full max-w-md border-white/10 bg-[#1A2332]/50 backdrop-blur-xl">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
-            <div className="text-4xl font-bold bg-gradient-to-r from-[#ff7664] to-[#F5C6FF] bg-clip-text text-transparent">
+            <div className="text-4xl font-bold text-primary">
               Masterly
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold text-white">Get Started</CardTitle>
-          <CardDescription className="text-gray-400">
+          <CardTitle className="text-2xl font-bold">Get Started</CardTitle>
+          <CardDescription>
             Sign in with Google to start your learning journey
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <GoogleSignInButton />
 
-          <p className="text-xs text-gray-500 text-center mt-4">
+          <p className="text-xs text-muted-foreground text-center mt-4">
             By continuing, you agree to our{' '}
-            <Link href="/terms" className="underline hover:text-gray-400">
+            <Link href="/terms" className="underline hover:text-foreground">
               Terms of Service
             </Link>{' '}
             and{' '}
-            <Link href="/privacy" className="underline hover:text-gray-400">
+            <Link href="/privacy" className="underline hover:text-foreground">
               Privacy Policy
             </Link>
           </p>

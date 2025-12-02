@@ -1,6 +1,6 @@
 import { getSupabaseClient } from '@/lib/supabase/client';
 import { QuizQuestion } from '@/lib/supabase/types';
-import { calculateSM2, quizToQuality } from '@/lib/algorithms/sm2';
+import { calculateSM2, quizToQuality, getLocalDate } from '@/lib/algorithms/sm2';
 
 export interface CreateQuizRequest {
   seedId: string;
@@ -186,9 +186,11 @@ class QuizService {
         interval: 1,
         repetitions: 0,
         easiness_factor: 2.5,
-        next_due_date: new Date().toISOString().split('T')[0],
+        next_due_date: getLocalDate(),
+        last_reviewed_date: null,
         streak: 0,
         lapses: 0,
+        quality_rating: null,
       }));
 
       const { data, error } = await supabase
@@ -261,12 +263,9 @@ class QuizService {
     }
 
     // Check if already reviewed today
-    const today = new Date().toISOString().split('T')[0];
-    if (currentQuestion.last_reviewed) {
-      const lastReviewedDate = currentQuestion.last_reviewed.split('T')[0];
-      if (lastReviewedDate === today) {
-        return currentQuestion as QuizQuestion;
-      }
+    const today = getLocalDate();
+    if (currentQuestion.last_reviewed_date === today) {
+      return currentQuestion as QuizQuestion;
     }
 
     // Convert quiz result to quality rating
@@ -293,6 +292,7 @@ class QuizService {
         easiness_factor: sm2Result.easinessFactor,
         next_due_date: sm2Result.nextDueDate.toISOString().split('T')[0],
         last_reviewed: new Date().toISOString(),
+        last_reviewed_date: today,
         streak,
         lapses,
       })
@@ -400,8 +400,8 @@ class QuizService {
     const scores = sessions.map((s) => s.score || 0);
     const averageScore = Math.round(
       (scores.reduce((sum, score) => sum + score, 0) / totalAttempts) * 100
-    );
-    const bestScore = Math.round(Math.max(...scores) * 100);
+    ) / 100;
+    const bestScore = Math.round(Math.max(...scores) * 100) / 100;
     const totalTimeSpent = sessions.reduce((sum, s) => sum + (s.time_spent || 0), 0);
     const lastAttempt = sessions[0]?.completed_at;
 

@@ -170,8 +170,8 @@ export default function SeedsPage() {
       ) : (
         <div className="space-y-3">
           {seeds.map((seed) => {
-            const Icon = CONTENT_TYPE_ICONS[seed.content_type];
-            const iconColor = CONTENT_TYPE_COLORS[seed.content_type];
+            const Icon = CONTENT_TYPE_ICONS[seed.content_type] || FileText;
+            const iconColor = CONTENT_TYPE_COLORS[seed.content_type] || 'text-gray-400';
 
             return (
               <div

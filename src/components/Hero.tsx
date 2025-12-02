@@ -1,5 +1,5 @@
 
-import heroImage from "@/assets/hero-study-ai.jpg";
+const heroImage = "/brand-assets/icon.png";
 import { WaveBackground } from "@/components/ui/WaveBackground";
 
 export const Hero = () => {
@@ -72,7 +72,7 @@ export const Hero = () => {
           <div className="relative animate-slide-in-right">
             <div className="relative z-10 bg-primary/10 backdrop-blur-md rounded-3xl p-4 border border-white/20">
               <img 
-                src={heroImage.src} 
+                src={heroImage} 
                 alt="AI-powered study platform showing flashcard generation from uploaded documents"
                 className="rounded-2xl shadow-elevated w-full"
               />

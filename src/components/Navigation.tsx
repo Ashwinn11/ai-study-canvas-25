@@ -14,7 +14,7 @@ import { Menu, X, User, LogOut, LayoutDashboard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
-import backgroundImage from "@/assets/background.png";
+const backgroundImage = "/brand-assets/background.png";
 
 interface NavigationProps {
   className?: string;
@@ -59,7 +59,7 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
   }) => {
     return (
       <img 
-        src={backgroundImage.src}
+        src={backgroundImage}
         alt="Masterly"
         className={cn("w-16 h-16 object-contain transition-all duration-300 hover:scale-105", className)}
       />

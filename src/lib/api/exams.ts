@@ -259,6 +259,26 @@ class ExamsService {
         return { error: 'Failed to add seed to exam' };
       }
 
+      // Auto-generate flashcards and quiz for this seed if not already generated
+      try {
+        const { flashcardsService } = await import('./flashcards');
+        const { quizService } = await import('./quiz');
+
+        await Promise.all([
+          flashcardsService.createFlashcards({
+            seedId,
+            userId: session.user.id,
+          }).catch(() => {}), // Silently fail if already exists
+          quizService.createQuizQuestions({
+            seedId,
+            userId: session.user.id,
+          }).catch(() => {}), // Silently fail if already exists
+        ]);
+      } catch (genError) {
+        console.warn('Auto-generation failed for seed', seedId, genError);
+        // Don't return error - seed was successfully added to exam
+      }
+
       return { examSeed: examSeed as ExamSeed };
     } catch (error) {
       console.error('Add seed to exam exception:', error);

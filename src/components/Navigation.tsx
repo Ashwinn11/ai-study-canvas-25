@@ -71,7 +71,7 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
       {/* Desktop Navigation */}
       <header 
         className={cn(
-          "sticky top-0 z-50 w-full transition-all duration-300 backdrop-blur-md bg-white/10 dark:bg-dark-surface/10 border border-white/20 dark:border-border/20 shadow-medium",
+          "sticky top-0 z-50 w-full transition-all duration-300 backdrop-blur-md bg-background/80 border-b border-border/40 shadow-sm",
           className
         )}
       >

@@ -10,13 +10,13 @@ All colors MUST be HSL.
   :root {
     /* Masterly Brand Colors - Web Optimized */
     --background: 0 0% 100%;
-    --foreground: 0 0% 12%;
+    --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 12%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 12%;
+    --popover-foreground: 222 47% 11%;
 
     /* Masterly Brand Colors - Exact hex values from design.json */
     --primary: 6 100% 71%;
@@ -25,8 +25,8 @@ All colors MUST be HSL.
     --secondary: 286 100% 84%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 31%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
     --accent: 214 100% 67%;
     --accent-foreground: 0 0% 100%;
@@ -34,11 +34,11 @@ All colors MUST be HSL.
     --success: 142 52% 63%;
     --success-foreground: 0 0% 100%;
 
-    --destructive: 6 100% 71%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
     --ring: 6 100% 71%;
 
     --dark-surface: 222 47% 11%;
@@ -64,7 +64,41 @@ All colors MUST be HSL.
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
+  .dark {
+    /* Premium Dark Mode Palette */
+    --background: 222 47% 11%; /* Deep Blue-Gray */
+    --foreground: 210 40% 98%;
 
+    --card: 222 47% 14%; /* Slightly lighter than background */
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 14%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 6 100% 71%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 286 100% 84%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 6 100% 71%;
+
+    /* Adjust shadows for dark mode */
+    --shadow-soft: 0 4px 16px rgba(0, 0, 0, 0.4);
+    --shadow-medium: 0 8px 24px rgba(0, 0, 0, 0.5);
+    --shadow-elevated: 0 12px 32px rgba(0, 0, 0, 0.6);
+  }
 }
 
 @layer base {
@@ -73,12 +107,13 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-primary text-foreground font-sans;
+    @apply bg-background text-foreground font-sans;
     font-family: 'Poppins';
     position: relative;
     min-height: 100vh;
   }
 
+  /* Only show the gradient backgrounds in light mode or adjust for dark mode if desired */
   body::before {
     content: '';
     position: fixed;
@@ -88,6 +123,8 @@ All colors MUST be HSL.
     height: 100%;
     background: linear-gradient(180deg, rgba(255, 118, 100, 0.8) 0%, rgba(255, 118, 100, 1) 100%);
     z-index: -2;
+    opacity: 1;
+    transition: opacity 0.3s ease;
   }
 
   body::after {
@@ -108,6 +145,17 @@ All colors MUST be HSL.
     opacity: 0.06;
     z-index: -1;
     pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  /* Hide the bright orange gradient in dark mode */
+  .dark body::before {
+    opacity: 0;
+    background: none; /* Or a dark gradient if preferred */
+  }
+
+  .dark body::after {
+    opacity: 0.02; /* Faint pattern in dark mode */
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -117,7 +165,7 @@ All colors MUST be HSL.
 
 @layer utilities {
   .glass-card {
-    @apply backdrop-blur-md bg-white/60 dark:bg-dark-surface/60;
+    @apply backdrop-blur-md bg-white/60 dark:bg-card/60 border border-white/20 dark:border-border/20;
   }
 
   .btn-touch-target {

@@ -10,8 +10,8 @@ export default function DashboardPage() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-white">Welcome back!</h1>
-        <p className="mt-2 text-gray-400">
+        <h1 className="text-3xl font-bold">Welcome back!</h1>
+        <p className="mt-2 text-muted-foreground">
           Here's an overview of your learning progress
         </p>
       </div>
@@ -22,31 +22,31 @@ export default function DashboardPage() {
           title="Total Seeds"
           value="0"
           description="Study materials uploaded"
-          gradient="from-[#ff7664] to-[#ff8874]"
+          className="text-primary"
         />
         <StatCard
           title="Flashcards Due"
           value="0"
           description="Ready for review"
-          gradient="from-[#F5C6FF] to-[#E5B6FF]"
+          className="text-secondary"
         />
         <StatCard
           title="Learning Streak"
           value="0 days"
           description="Keep it up!"
-          gradient="from-[#78D6A1] to-[#68C691]"
+          className="text-success"
         />
         <StatCard
           title="Accuracy"
           value="0%"
           description="Overall performance"
-          gradient="from-[#54B5FF] to-[#44A5EF]"
+          className="text-accent"
         />
       </div>
 
       {/* Quick Actions */}
-      <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-xl p-6">
-        <h2 className="text-xl font-semibold text-white mb-4">Quick Actions</h2>
+      <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
+        <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
         <div className="grid gap-4 md:grid-cols-3">
           <QuickActionCard
             title="Upload Material"
@@ -70,9 +70,9 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent Activity */}
-      <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-xl p-6">
-        <h2 className="text-xl font-semibold text-white mb-4">Recent Activity</h2>
-        <div className="text-center py-12 text-gray-400">
+      <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
+        <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
+        <div className="text-center py-12 text-muted-foreground">
           <p>No recent activity yet</p>
           <p className="text-sm mt-2">Start by uploading your first study material!</p>
         </div>
@@ -85,22 +85,22 @@ function StatCard({
   title,
   value,
   description,
-  gradient,
+  className,
 }: {
   title: string;
   value: string;
   description: string;
-  gradient: string;
+  className?: string;
 }) {
   return (
-    <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-xl p-6">
+    <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <p className="text-sm font-medium text-gray-400">{title}</p>
-          <p className={`text-3xl font-bold bg-gradient-to-r ${gradient} bg-clip-text text-transparent`}>
+          <p className="text-sm font-medium text-muted-foreground">{title}</p>
+          <p className={`text-3xl font-bold ${className}`}>
             {value}
           </p>
-          <p className="text-xs text-gray-500">{description}</p>
+          <p className="text-xs text-muted-foreground">{description}</p>
         </div>
       </div>
     </div>
@@ -121,15 +121,15 @@ function QuickActionCard({
   return (
     <a
       href={href}
-      className="group rounded-lg border border-white/10 bg-white/5 backdrop-blur-xl p-6 transition-all hover:bg-white/10 hover:border-white/20"
+      className="group rounded-lg border border-border bg-card p-6 transition-all hover:bg-accent/50 hover:border-accent"
     >
       <div className="flex items-start gap-4">
         <div className="text-3xl">{icon}</div>
         <div className="space-y-1">
-          <p className="font-semibold text-white group-hover:text-[#ff7664] transition-colors">
+          <p className="font-semibold group-hover:text-primary transition-colors">
             {title}
           </p>
-          <p className="text-sm text-gray-400">{description}</p>
+          <p className="text-sm text-muted-foreground">{description}</p>
         </div>
       </div>
     </a>

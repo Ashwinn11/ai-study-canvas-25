@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { seedsService } from '@/lib/api/seeds';
-import { Seed } from '@/lib/supabase/types';
+import { seedsService } from '@/lib/api/seedsService';
+import { Seed } from '@/types';
 import { FileText, Image, Music, Video, Loader2, Upload as UploadIcon, Trash2, Youtube } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -33,28 +33,31 @@ export default function SeedsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user) {
-      loadSeeds();
-    }
-  }, [user]);
-
-  const loadSeeds = async () => {
+  const loadSeeds = useCallback(async () => {
     if (!user) return;
 
     setIsLoading(true);
     setError(null);
 
     try {
-      const userSeeds = await seedsService.getUserSeeds(user.id);
-      setSeeds(userSeeds);
+      const { seeds: userSeeds, error: err } = await seedsService.getSeeds();
+      if (err) {
+        throw new Error(err);
+      }
+      setSeeds(userSeeds || []);
     } catch (err) {
       console.error('Error loading seeds:', err);
       setError(err instanceof Error ? err.message : 'Failed to load seeds');
     } finally {
       setIsLoading(false);
+     }
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      loadSeeds();
     }
-  };
+  }, [user, loadSeeds]);
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);

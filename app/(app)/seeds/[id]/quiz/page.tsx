@@ -3,12 +3,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { quizService, QuizAttempt } from '@/lib/api/quiz';
+import { quizService } from '@/lib/api/quizService';
+import { QuizAttempt } from '@/types';
 import { xpService } from '@/lib/api/xpService';
 import { streakService } from '@/lib/api/streakService';
 import { achievementEngine } from '@/lib/api/achievementEngine';
 import { dailyGoalTrackerService } from '@/lib/api/dailyGoalTracker';
-import { QuizQuestion } from '@/lib/supabase/types';
+import { QuizQuestion } from '@/types';
 import {
   ArrowLeft,
   Loader2,
@@ -53,13 +54,7 @@ export default function QuizPage() {
 
   const currentQuestion = questions[currentIndex] ?? null;
 
-  useEffect(() => {
-    if (user && seedId) {
-      loadQuizQuestions();
-    }
-  }, [user, seedId]);
-
-  const loadQuizQuestions = async () => {
+  const loadQuizQuestions = useCallback(async () => {
     if (!user || !seedId) return;
 
     setIsLoading(true);
@@ -67,7 +62,11 @@ export default function QuizPage() {
 
     try {
       // Try to load existing quiz questions
-      const existingQuestions = await quizService.getQuizQuestionsBySeed(seedId, user.id);
+      const { data: existingQuestions, error: fetchError } = await quizService.getQuizQuestionsBySeed(seedId, user.id);
+
+      if (fetchError) {
+        throw new Error(fetchError);
+      }
 
       if (existingQuestions && existingQuestions.length > 0) {
         const questionStates: QuizQuestionState[] = existingQuestions.map((question) => ({
@@ -84,7 +83,7 @@ export default function QuizPage() {
       setIsGenerating(true);
       setIsLoading(false);
 
-      const createdQuestions = await quizService.createQuizQuestions({
+      const { data: createdQuestions, error: createError } = await quizService.createQuizQuestions({
         seedId,
         userId: user.id,
         quantity: 10,
@@ -93,6 +92,10 @@ export default function QuizPage() {
           setGenerationMessage(message);
         },
       });
+
+      if (createError) {
+        throw new Error(createError);
+      }
 
       if (!createdQuestions || createdQuestions.length === 0) {
         throw new Error('No quiz questions could be generated from this content');
@@ -109,10 +112,16 @@ export default function QuizPage() {
     } catch (err) {
       console.error('Error loading quiz questions:', err);
       setError(err instanceof Error ? err.message : 'Failed to load quiz questions');
-      setIsLoading(false);
-      setIsGenerating(false);
+       setIsLoading(false);
+       setIsGenerating(false);
+     }
+  }, [user, seedId]);
+
+  useEffect(() => {
+    if (user && seedId) {
+      loadQuizQuestions();
     }
-  };
+  }, [user, seedId, loadQuizQuestions]);
 
   const handleSelectAnswer = useCallback(
     async (answerIndex: number) => {
@@ -120,20 +129,20 @@ export default function QuizPage() {
 
       const isCorrect = answerIndex === currentQuestion.correct_answer;
 
-      // Award XP for quiz answer
-      const xpResult = xpService.calculateXP('quiz', isCorrect);
-      await xpService.awardXP(user.id, xpResult.amount);
+      // NOTE: Individual practice does NOT award XP
+      // Only exam reviews contribute to XP, streaks, accuracy, and grades
+      // This is purely for learning and practice
 
       // Track this attempt
       const attempt: QuizAttempt = {
-        questionId: currentQuestion.id,
-        selectedAnswer: String(answerIndex),
-        isCorrect,
-        timeSpent: 0,
+        question_id: currentQuestion.id,
+        selected_answer: answerIndex,
+        is_correct: isCorrect,
+        time_spent: 0,
       };
 
       setAttempts((prev) => {
-        const filteredAttempts = prev.filter((a) => a.questionId !== currentQuestion.id);
+        const filteredAttempts = prev.filter((a) => a.question_id !== currentQuestion.id);
         return [...filteredAttempts, attempt];
       });
 
@@ -180,7 +189,7 @@ export default function QuizPage() {
         try {
           const timeSpentSeconds = Math.round((Date.now() - sessionStartTime) / 1000);
 
-          // Save quiz session
+          // Save quiz session (for tracking only, does not affect XP/streaks)
           await quizService.createLearningSession(seedId, user.id, {
             totalItems: questions.length,
             correctItems: sessionStats.correct,
@@ -193,32 +202,12 @@ export default function QuizPage() {
             },
           });
 
-          // Get user's daily goal
-          const { data: profile } = await (await import('@/lib/supabase/client')).getSupabaseClient()
-            .from('profiles')
-            .select('daily_cards_goal')
-            .eq('id', user.id)
-            .maybeSingle();
-
-          const dailyGoal = (profile as Record<string, unknown> | null)?.['daily_cards_goal'] as number || 20;
-
-          // Count total items reviewed (quizzes count as cards)
-          const totalItemsReviewed = questions.length;
-
-          // Update streak after session
-          await streakService.updateStreakAfterSession(user.id, dailyGoal);
-
-          // Check for achievement unlocks
-          await achievementEngine.checkAndUnlockAchievements(user.id);
-
-          // Maybe surprise achievement
-          await achievementEngine.maybeSurpriseAchievement(user.id);
-
-          // Mark daily goal as celebrated (if met)
-          const alreadyCelebrated = await dailyGoalTrackerService.hasAlreadyCelebratedToday(user.id);
-          if (!alreadyCelebrated && totalItemsReviewed >= dailyGoal) {
-            await dailyGoalTrackerService.markGoalCelebratedToday(user.id);
-          }
+          // NOTE: Individual practice does NOT:
+          // - Update streaks
+          // - Unlock achievements
+          // - Count toward daily goals
+          // - Award XP
+          // Only exam reviews contribute to these metrics
         } catch (error) {
           console.error('Error finalizing quiz session:', error);
         }

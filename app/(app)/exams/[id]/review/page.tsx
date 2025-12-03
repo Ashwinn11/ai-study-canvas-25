@@ -3,9 +3,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { spacedRepetitionService, type ReviewItem } from '@/lib/api/spacedRepetition';
-import { flashcardsService } from '@/lib/api/flashcards';
-import { quizService } from '@/lib/api/quiz';
+import { spacedRepetitionService, type ReviewItem } from '@/lib/api/spacedRepetitionService';
+import { flashcardsService } from '@/lib/api/flashcardsService';
+import { quizService } from '@/lib/api/quizService';
 import { scoreToGrade } from '@/lib/utils/gradeUtils';
 import { Flashcard, QuizQuestion } from '@/lib/supabase/types';
 import { ArrowLeft, Loader2, RotateCw, Check, X, Target, Flame } from 'lucide-react';
@@ -46,13 +46,7 @@ export default function ExamReviewPage() {
   // Store quality ratings for each item
   const results = new Map<string, number>();
 
-  useEffect(() => {
-    if (user && examId) {
-      loadReviewItems();
-    }
-  }, [user, examId]);
-
-  const loadReviewItems = async () => {
+  const loadReviewItems = useCallback(async () => {
     if (!user || !examId) return;
 
     setIsLoading(true);
@@ -60,7 +54,7 @@ export default function ExamReviewPage() {
 
     try {
       const { flashcards, quizQuestions, error: fetchError } =
-        await spacedRepetitionService.getExamReviewItems(user.id, examId, isPracticeMode);
+        await spacedRepetitionService.getExamReviewItems(user.id, examId, 50);
 
       if (fetchError) {
         setError(fetchError);
@@ -108,9 +102,15 @@ export default function ExamReviewPage() {
     } catch (err) {
       console.error('Error loading review items:', err);
       setError(err instanceof Error ? err.message : 'Failed to load review items');
-      setIsLoading(false);
+       setIsLoading(false);
+     }
+  }, [user, examId, isPracticeMode]);
+
+  useEffect(() => {
+    if (user && examId) {
+      loadReviewItems();
     }
-  };
+  }, [user, examId, loadReviewItems]);
 
   const currentItem = reviewItems[currentIndex] || null;
   const isLastItem = currentIndex === reviewItems.length - 1;
@@ -151,6 +151,65 @@ export default function ExamReviewPage() {
             completed_at: new Date().toISOString(),
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } as any);
+
+          // Create exam report (matching iOS - this contributes to average grade)
+          // Only create report for actual review mode, not practice mode
+          if (!isPracticeMode) {
+            const scorePercentage = Math.round(score * 100);
+            const { scoreToGrade } = await import('@/lib/utils/gradeUtils');
+            const letterGrade = scoreToGrade(scorePercentage);
+
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            await supabase.from('exam_reports').insert({
+              user_id: user.id,
+              exam_id: examId,
+              letter_grade: letterGrade,
+              score_percentage: scorePercentage,
+              total_items: totalItems,
+              correct_items: correctItems,
+              metadata: {
+                flashcard_count: stats.flashcardTotal,
+                flashcard_correct: stats.flashcardCorrect,
+                quiz_count: stats.quizTotal,
+                quiz_correct: stats.quizCorrect,
+                time_spent: timeSpentSeconds,
+              },
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any);
+
+            // Award XP for exam completion (only in review mode)
+            const { xpService } = await import('@/lib/api/xpService');
+            const xpAmount = totalItems * 10; // 10 XP per item reviewed
+            await xpService.awardXP(user.id, xpAmount);
+
+            // Get user's daily goal
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('daily_cards_goal')
+              .eq('id', user.id)
+              .maybeSingle();
+
+            const dailyGoal = (profile as Record<string, unknown> | null)?.['daily_cards_goal'] as number || 20;
+
+            // Update streak after session
+            const { streakService } = await import('@/lib/api/streakService');
+            await streakService.updateStreakAfterSession(user.id, dailyGoal);
+
+            // Check for achievement unlocks
+            const { achievementEngine } = await import('@/lib/api/achievementEngine');
+            await achievementEngine.checkAndUnlockAchievements(user.id);
+
+            // Maybe surprise achievement
+            await achievementEngine.maybeSurpriseAchievement(user.id);
+
+            // Mark daily goal as celebrated (if met)
+            const { dailyGoalTrackerService } = await import('@/lib/api/dailyGoalTracker');
+            const alreadyCelebrated = await dailyGoalTrackerService.hasAlreadyCelebratedToday(user.id);
+            if (!alreadyCelebrated && totalItems >= dailyGoal) {
+              await dailyGoalTrackerService.markGoalCelebratedToday(user.id);
+            }
+          }
         } catch (error) {
           console.error('Error saving exam review session:', error);
         }

@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { examsService, type ExamWithSeeds } from '@/lib/api/exams';
-import { spacedRepetitionService, type ExamReviewStats } from '@/lib/api/spacedRepetition';
+import { examsService, type ExamWithSeeds } from '@/lib/api/examsService';
+import { spacedRepetitionService, type ReviewStats } from '@/lib/api/spacedRepetitionService';
 import { ArrowLeft, Loader2, Pencil, Trash2, PlayCircle, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -15,17 +15,11 @@ export default function ExamDetailPage() {
   const examId = params.id as string;
 
   const [exam, setExam] = useState<ExamWithSeeds | null>(null);
-  const [reviewStats, setReviewStats] = useState<ExamReviewStats | null>(null);
+  const [reviewStats, setReviewStats] = useState<ReviewStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user && examId) {
-      loadExamData();
-    }
-  }, [user, examId]);
-
-  const loadExamData = async () => {
+  const loadExamData = useCallback(async () => {
     if (!user || !examId) return;
 
     setIsLoading(true);
@@ -44,7 +38,7 @@ export default function ExamDetailPage() {
       setExam(examWithSeeds);
 
       // Load review stats
-      const stats = await spacedRepetitionService.getExamReviewStats(user.id, examId);
+      const stats = await spacedRepetitionService.getReviewStatsForExam(user.id, examId);
       setReviewStats(stats);
 
       setIsLoading(false);
@@ -52,8 +46,14 @@ export default function ExamDetailPage() {
       console.error('Error loading exam data:', err);
       setError(err instanceof Error ? err.message : 'Failed to load exam');
       setIsLoading(false);
+     }
+  }, [user, examId]);
+
+  useEffect(() => {
+    if (user && examId) {
+      loadExamData();
     }
-  };
+  }, [user, examId, loadExamData]);
 
   const handleStartReview = (isPracticeMode: boolean) => {
     router.push(`/exams/${examId}/review?mode=${isPracticeMode ? 'practice' : 'review'}`);
@@ -108,8 +108,8 @@ export default function ExamDetailPage() {
     );
   }
 
-  const hasReviewItems = reviewStats && reviewStats.total_items > 0;
-  const hasDueItems = reviewStats && (reviewStats.due_today > 0 || reviewStats.overdue > 0);
+  const hasReviewItems = reviewStats && reviewStats.totalItems > 0;
+  const hasDueItems = reviewStats && (reviewStats.dueToday > 0 || reviewStats.overdue > 0);
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -157,13 +157,13 @@ export default function ExamDetailPage() {
                 {/* Due Today */}
                 <div className="rounded-lg bg-white/5 p-4">
                   <div className="text-sm text-gray-400 mb-1">Today due</div>
-                  <div className="text-2xl font-bold text-white">{reviewStats.due_today}</div>
+                  <div className="text-2xl font-bold text-white">{reviewStats.dueToday}</div>
                 </div>
 
                 {/* Total Cards */}
                 <div className="rounded-lg bg-white/5 p-4">
                   <div className="text-sm text-gray-400 mb-1">Total Cards</div>
-                  <div className="text-2xl font-bold text-white">{reviewStats.total_items}</div>
+                  <div className="text-2xl font-bold text-white">{reviewStats.totalItems}</div>
                 </div>
               </div>
 
@@ -172,16 +172,16 @@ export default function ExamDetailPage() {
                 {/* Grade Display */}
                 <div
                   className={`rounded-lg px-4 py-2 ${
-                    reviewStats.average_grade ? 'bg-green-500/10' : 'bg-white/5'
+                    reviewStats.averageGrade ? 'bg-green-500/10' : 'bg-white/5'
                   }`}
                 >
                   <span className="text-sm font-semibold text-gray-400">Grade: </span>
                   <span
                     className={`text-sm font-bold ${
-                      reviewStats.average_grade ? 'text-green-400' : 'text-gray-500'
+                      reviewStats.averageGrade ? 'text-green-400' : 'text-gray-500'
                     }`}
                   >
-                    {reviewStats.average_grade || 'N/A'}
+                    {reviewStats.averageGrade || 'N/A'}
                   </span>
                 </div>
 

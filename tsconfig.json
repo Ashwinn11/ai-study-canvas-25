@@ -40,6 +40,9 @@
       ],
       "@/assets/*": [
         "./src/assets/*"
+      ],
+      "@/constants/*": [
+        "./src/constants/*"
       ]
     },
     "target": "ES2017"
@@ -51,6 +54,16 @@
     ".next/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "masterly",
+    "src/constants/AppIcons.ts",
+    "src/hooks/useUpload.ts",
+    "src/types/navigation.ts",
+    "src/utils/accessibilityReporter.ts",
+    "src/utils/examColors.ts",
+    "src/utils/navigationRef.ts",
+    "src/utils/orientationUtils.ts",
+    "src/utils/responsiveUtils.ts",
+    "src/utils/usePillarboxConstraints.ts"
   ]
 }

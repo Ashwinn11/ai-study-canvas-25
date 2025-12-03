@@ -68,6 +68,13 @@ export interface AppConfig {
     quiz: GenerationConfig;
     defaultCacheTtlMs?: number;
   };
+  network: {
+    documentAiTimeoutMs: number;
+    mediaTranscriptionTimeoutMs?: number;
+    defaultTimeoutMs: number;
+    maxRetries: number;
+    cacheTtlMs: number;
+  };
   prompts?: PromptsConfig;
   upload?: {
     maxFileSize?: number;
@@ -245,11 +252,11 @@ class ConfigService {
 
   async getMaxFileSizeByType(contentType: 'document' | 'image' | 'audio' | 'video'): Promise<number> {
     const config = await this.getConfig();
-    
+
     if (config.upload?.fileSizes?.[contentType]) {
       return config.upload.fileSizes[contentType];
     }
-    
+
     // Fallback to default limits matching iOS
     const defaultLimits = {
       document: 15 * 1024 * 1024, // 15MB
@@ -257,7 +264,7 @@ class ConfigService {
       audio: 50 * 1024 * 1024,     // 50MB
       video: 100 * 1024 * 1024,    // 100MB
     };
-    
+
     return defaultLimits[contentType] || await this.getMaxFileSize();
   }
 
@@ -294,6 +301,64 @@ class ConfigService {
     } catch (error) {
       console.warn('[ConfigService] Failed to clear cache:', error);
     }
+  }
+
+  /**
+   * Get flashcard distribution based on intent
+   */
+  async getFlashcardIntentDistribution(intent: string): Promise<Record<string, number>> {
+    // Default distribution if not configured
+    const defaults: Record<string, Record<string, number>> = {
+      educational: { definition: 0.4, concept: 0.3, application: 0.3 },
+      comprehension: { concept: 0.5, application: 0.3, analysis: 0.2 },
+      reference: { definition: 0.6, fact: 0.4 },
+      analytical: { analysis: 0.5, synthesis: 0.3, evaluation: 0.2 },
+      procedural: { step: 0.6, application: 0.4 },
+    };
+
+    return defaults[intent.toLowerCase()] || {
+      definition: 0.5, concept: 0.5
+    };
+  }
+
+  /**
+   * Get quiz distribution based on intent
+   */
+  async getQuizIntentDistribution(intent: string): Promise<Record<string, number>> {
+    // Default distribution if not configured
+    const defaults: Record<string, Record<string, number>> = {
+      educational: { remember: 0.3, understand: 0.4, apply: 0.3 },
+      comprehension: { understand: 0.5, apply: 0.3, analyze: 0.2 },
+      reference: { remember: 0.6, understand: 0.4 },
+      analytical: { analyze: 0.4, evaluate: 0.4, create: 0.2 },
+      procedural: { remember: 0.3, apply: 0.7 },
+    };
+
+    return defaults[intent.toLowerCase()] || { remember: 0.4, understand: 0.4, apply: 0.2 };
+  }
+
+  /**
+   * Get timeout for specific service
+   */
+  async getTimeout(service: 'documentAi' | 'mediaTranscription' | 'youtube' | 'default'): Promise<number> {
+    const config = await this.getConfig();
+
+    // Use network config if available, otherwise fall back to defaults
+    if (config.network) {
+      if (service === 'documentAi') return config.network.documentAiTimeoutMs;
+      if (service === 'mediaTranscription') return config.network.mediaTranscriptionTimeoutMs || 600000;
+      if (service === 'youtube') return 30000;
+      return config.network.defaultTimeoutMs;
+    }
+
+    // Default timeouts in ms if network config is missing
+    const defaults: Record<string, number> = {
+      documentAi: 60000,
+      mediaTranscription: 600000,
+      youtube: 30000,
+      default: 30000
+    };
+    return defaults[service] || 30000;
   }
 }
 

@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { examsService, Exam } from '@/lib/api/exams';
-import { spacedRepetitionService, ExamReviewStats } from '@/lib/api/spacedRepetition';
+import { examsService } from '@/lib/api/examsService';
+import { spacedRepetitionService } from '@/lib/api/spacedRepetitionService';
+import type { Exam, ReviewStats } from '@/types';
 import { Plus, BookOpen, Loader2, Trash2, Flame, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -12,17 +13,11 @@ export default function ExamsPage() {
   const router = useRouter();
   const { user } = useAuth();
   const [exams, setExams] = useState<Exam[]>([]);
-  const [reviewStats, setReviewStats] = useState<Record<string, ExamReviewStats>>({});
+  const [reviewStats, setReviewStats] = useState<Record<string, ReviewStats>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user) {
-      loadExams();
-    }
-  }, [user]);
-
-  const loadExams = async () => {
+  const loadExams = useCallback(async () => {
     if (!user) return;
 
     setIsLoading(true);
@@ -42,7 +37,7 @@ export default function ExamsPage() {
       if (data && data.length > 0) {
         const statsPromises = data.map(async (exam) => {
           try {
-            const stats = await spacedRepetitionService.getExamReviewStats(user.id, exam.id); // Fixed: userId first, examId second
+            const stats = await spacedRepetitionService.getReviewStatsForExam(user.id, exam.id);
             console.log(`[ExamStats] Exam ${exam.subject_name}:`, stats);
             return { examId: exam.id, stats };
           } catch (error) {
@@ -52,7 +47,7 @@ export default function ExamsPage() {
         });
 
         const statsResults = await Promise.all(statsPromises);
-        const statsMap: Record<string, ExamReviewStats> = {};
+        const statsMap: Record<string, ReviewStats> = {};
         statsResults.forEach(({ examId, stats }) => {
           if (stats) {
             statsMap[examId] = stats;
@@ -64,9 +59,15 @@ export default function ExamsPage() {
       console.error('Error loading exams:', err);
       setError('Failed to load exams');
     } finally {
-      setIsLoading(false);
+       setIsLoading(false);
+     }
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      loadExams();
     }
-  };
+  }, [user, loadExams]);
 
   const handleCreateExam = () => {
     router.push('/exams/create');
@@ -163,7 +164,7 @@ export default function ExamsPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {exams.map((exam) => {
             const stats = reviewStats[exam.id];
-            const hasDue = stats && stats.due_today > 0;
+            const hasDue = stats && stats.dueToday > 0;
             const hasOverdue = stats && stats.overdue > 0;
 
             return (
@@ -207,11 +208,11 @@ export default function ExamsPage() {
                         <div className="flex items-center gap-1.5 text-blue-500">
                           <Clock className="h-4 w-4" />
                           <span className="text-sm font-medium">
-                            {stats.due_today} card{stats.due_today !== 1 ? 's' : ''} due today
+                            {stats.dueToday} card{stats.dueToday !== 1 ? 's' : ''} due today
                           </span>
                         </div>
                       )}
-                      {!hasDue && stats.available_items > 0 && (
+                      {!hasDue && stats.upcoming > 0 && (
                         <div className="flex items-center gap-1.5 text-green-500">
                           <span className="text-sm font-medium">All caught up!</span>
                         </div>

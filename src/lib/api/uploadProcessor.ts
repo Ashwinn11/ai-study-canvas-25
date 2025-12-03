@@ -15,7 +15,7 @@
  */
 
 import { getSupabaseClient } from '@/lib/supabase/client';
-import { seedsService } from './seeds';
+import { seedsService } from './seedsService';
 import {
   processPdfOrImage,
   transcribeAudio,
@@ -26,8 +26,8 @@ import {
   type FeynmanResult,
 } from './documentProcessing';
 import { configService } from './configService';
-import { flashcardsService } from './flashcards';
-import { quizService } from './quiz';
+import { flashcardsService } from './flashcardsService';
+import { quizService } from './quizService';
 import type { ContentType } from '@/lib/supabase/types';
 
 export type UploadStageId =

@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { seedsService } from '@/lib/api/seeds';
-import { Seed } from '@/lib/supabase/types';
+import { seedsService } from '@/lib/api/seedsService';
+import { Seed } from '@/types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
@@ -18,8 +18,11 @@ import {
   Brain,
   Trophy,
   Star,
-  StarOff
+  StarOff,
+  Send,
+  Sparkles
 } from 'lucide-react';
+import { useChat } from '@/hooks/useChat';
 import { Button } from '@/components/ui/button';
 
 const CONTENT_TYPE_ICONS = {
@@ -47,27 +50,26 @@ export default function SeedDetailPage() {
   const [seed, setSeed] = useState<Seed | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'summary' | 'content'>('summary');
+  const [activeTab, setActiveTab] = useState<'summary' | 'content' | 'chat'>('summary');
+  const { messages, isLoading: chatLoading, error: chatError, sendMessage } = useChat({
+    seedTitle: seed?.title,
+    seedContent: seed?.content_text || seed?.feynman_explanation || undefined,
+  });
+  const [chatInput, setChatInput] = useState('');
 
   const seedId = params.id as string;
 
-  useEffect(() => {
-    if (user && seedId) {
-      loadSeed();
-    }
-  }, [user, seedId]);
-
-  const loadSeed = async () => {
+  const loadSeed = useCallback(async () => {
     if (!user || !seedId) return;
 
     setIsLoading(true);
     setError(null);
 
     try {
-      const seedData = await seedsService.getSeed(seedId, user.id);
+      const { seed: seedData, error: seedError } = await seedsService.getSeed(seedId);
 
-      if (!seedData) {
-        setError('Seed not found');
+      if (seedError || !seedData) {
+        setError(seedError || 'Seed not found');
         return;
       }
 
@@ -78,7 +80,13 @@ export default function SeedDetailPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, seedId]);
+
+  useEffect(() => {
+    if (user && seedId) {
+      loadSeed();
+    }
+  }, [user, seedId, loadSeed]);
 
   const handleToggleStar = async () => {
     if (!seed) return;
@@ -138,8 +146,8 @@ export default function SeedDetailPage() {
     );
   }
 
-  const Icon = CONTENT_TYPE_ICONS[seed.content_type];
-  const iconColor = CONTENT_TYPE_COLORS[seed.content_type];
+  const Icon = CONTENT_TYPE_ICONS[seed.content_type] || FileText;
+  const iconColor = CONTENT_TYPE_COLORS[seed.content_type] || 'text-gray-400';
 
   return (
     <div className="space-y-6">
@@ -254,6 +262,17 @@ export default function SeedDetailPage() {
             >
               Original Content
             </button>
+            <button
+              onClick={() => setActiveTab('chat')}
+              className={`px-4 py-2 font-medium transition-colors flex items-center gap-2 ${
+                activeTab === 'chat'
+                  ? 'text-primary border-b-2 border-primary'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              <Sparkles className="h-4 w-4" />
+              AI Tutor
+            </button>
           </div>
 
           {/* Content Display */}
@@ -311,6 +330,80 @@ export default function SeedDetailPage() {
               <p className="text-gray-400 text-center py-8">
                 No content available
               </p>
+            )}
+
+            {/* Chat Tab */}
+            {activeTab === 'chat' && (
+              <div className="flex flex-col h-[600px]">
+                {/* Messages */}
+                <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2">
+                  {messages.length === 0 ? (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="text-center space-y-3">
+                        <Sparkles className="h-12 w-12 text-primary mx-auto opacity-50" />
+                        <p className="text-gray-400">Ask me anything about this material!</p>
+                      </div>
+                    </div>
+                  ) : (
+                    messages.map((msg) => (
+                      <div
+                        key={msg.id}
+                        className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div
+                          className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                            msg.role === 'user'
+                              ? 'bg-primary text-white'
+                              : 'bg-white/10 text-gray-300 border border-white/20'
+                          }`}
+                        >
+                          <p className="text-sm whitespace-wrap break-words">{msg.content}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                  {chatLoading && (
+                    <div className="flex justify-start">
+                      <div className="bg-white/10 rounded-lg px-4 py-2 text-gray-300">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      </div>
+                    </div>
+                  )}
+                  {chatError && (
+                    <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-red-400 text-sm">
+                      {chatError}
+                    </div>
+                  )}
+                </div>
+
+                {/* Input */}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && !chatLoading) {
+                        sendMessage(chatInput);
+                        setChatInput('');
+                      }
+                    }}
+                    placeholder="Ask a question..."
+                    disabled={chatLoading}
+                    className="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  <button
+                    onClick={() => {
+                      sendMessage(chatInput);
+                      setChatInput('');
+                    }}
+                    disabled={chatLoading || !chatInput.trim()}
+                    className="bg-primary hover:bg-primary/90 disabled:bg-primary/50 text-white rounded-lg px-4 py-2 transition-colors"
+                  >
+                    <Send className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         </>

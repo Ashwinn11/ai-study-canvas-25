@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { profileUpdateService } from '@/lib/api/profileUpdateService';
@@ -52,13 +52,7 @@ export default function EditProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    if (user) {
-      loadProfileData();
-    }
-  }, [user]);
-
-  const loadProfileData = async () => {
+  const loadProfileData = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -88,12 +82,18 @@ export default function EditProfilePage() {
         });
       }
 
-      setIsLoading(false);
-    } catch (err) {
-      console.error('Error loading profile data:', err);
-      setIsLoading(false);
+       setIsLoading(false);
+     } catch (error) {
+       console.error('Error loading profile data:', error);
+       setIsLoading(false);
+     }
+  }, [user, supabase]);
+
+  useEffect(() => {
+    if (user) {
+      loadProfileData();
     }
-  };
+  }, [user, loadProfileData]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};

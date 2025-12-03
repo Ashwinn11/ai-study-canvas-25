@@ -11,7 +11,7 @@
  * 6. Update seed with results
  */
 
-import { seedsService } from './seeds';
+import { seedsService } from './seedsService';
 import {
   processPdfOrImage,
   transcribeAudio,
@@ -20,7 +20,7 @@ import {
   extractYouTubeUrl,
   ExtractionResult,
 } from './documentProcessing';
-import { Seed } from '../supabase/types';
+import { Seed } from '@/types';
 import { configService } from './configService';
 
 export type ContentType = 'pdf' | 'image' | 'audio' | 'text' | 'youtube';
@@ -45,6 +45,8 @@ export interface UploadOptions {
   file?: File;
   textContent?: string;
   youtubeUrl?: string;
+  audioContent?: string; // base64
+  audioMimeType?: string;
   onProgress?: (progress: UploadProgress) => void;
   accessToken: string;
 }
@@ -86,10 +88,10 @@ class UploadProcessor {
    * Process file upload
    */
   async processFile(options: UploadOptions): Promise<Seed> {
-    const { userId, title, file, textContent, youtubeUrl, onProgress, accessToken } = options;
+    const { userId, title, file, textContent, youtubeUrl, audioContent, audioMimeType, onProgress, accessToken } = options;
 
-    if (!file && !textContent && !youtubeUrl) {
-      throw new Error('Either file, textContent, or youtubeUrl must be provided');
+    if (!file && !textContent && !youtubeUrl && !audioContent) {
+      throw new Error('Either file, textContent, youtubeUrl, or audioContent must be provided');
     }
 
     // If YouTube URL is provided
@@ -97,6 +99,16 @@ class UploadProcessor {
       return this.processYoutubeUrl(youtubeUrl, {
         userId,
         title: title || 'YouTube Video',
+        onProgress,
+        accessToken,
+      });
+    }
+
+    // If audio content is provided directly (recording)
+    if (audioContent) {
+      return this.processAudioContent(audioContent, audioMimeType || 'audio/webm', {
+        userId,
+        title: title || 'Audio Recording',
         onProgress,
         accessToken,
       });
@@ -125,12 +137,12 @@ class UploadProcessor {
 
     // Validate file size using dynamic limits
     // Map content types to config service types
-    const configType = contentType === 'pdf' ? 'document' : 
-                      contentType === 'text' ? 'document' : 
-                      contentType as 'image' | 'audio';
-    
+    const configType = contentType === 'pdf' ? 'document' :
+      contentType === 'text' ? 'document' :
+        contentType as 'image' | 'audio';
+
     const maxSize = await configService.getMaxFileSizeByType(configType);
-    
+
     if (fileSize > maxSize) {
       const maxSizeMB = Math.round(maxSize / 1024 / 1024);
       const actualSizeMB = Math.round(fileSize / 1024 / 1024);
@@ -145,18 +157,25 @@ class UploadProcessor {
     const base64Data = await this.fileToBase64(file);
 
     // Create initial seed
-    const { id: seedId } = await seedsService.createInitialSeed({
-      userId,
+    const { seed: initialSeed, error: createError } = await seedsService.createSeed({
       title: title || file.name,
-      contentType,
-      fileSize,
+      content_type: contentType,
+      file_size: fileSize,
+      processing_status: 'pending',
     });
+
+    if (createError || !initialSeed) {
+      throw new Error(createError || 'Failed to create initial seed');
+    }
+
+    const seedId = initialSeed.id;
 
     try {
       // Update status to extracting
-      await seedsService.updateSeed(seedId, {
-        processingStatus: 'extracting',
+      const { error: updateError1 } = await seedsService.updateSeed(seedId, {
+        processing_status: 'extracting',
       });
+      if (updateError1) throw new Error(updateError1);
 
       this.emitProgress(onProgress, 'extracting');
 
@@ -172,9 +191,10 @@ class UploadProcessor {
       await this.validateContentQuality(extractionResult, contentType);
 
       // Update status to analyzing
-      await seedsService.updateSeed(seedId, {
-        processingStatus: 'analyzing',
+      const { error: updateError2 } = await seedsService.updateSeed(seedId, {
+        processing_status: 'analyzing',
       });
+      if (updateError2) throw new Error(updateError2);
 
       // Generate Feynman explanation
       this.emitProgress(onProgress, 'generating');
@@ -191,14 +211,15 @@ class UploadProcessor {
       this.emitProgress(onProgress, 'finalizing');
 
       // Update seed with final results
-      const completedSeed = await seedsService.updateSeed(seedId, {
-        contentText: extractionResult.content,
-        originalContent: extractionResult.content,
-        feynmanExplanation: feynmanResult.feynmanExplanation,
+      // Update seed with final results
+      const { seed: completedSeed, error: finalUpdateError } = await seedsService.updateSeed(seedId, {
+        content_text: extractionResult.content,
+        original_content: extractionResult.content,
+        feynman_explanation: feynmanResult.feynmanExplanation,
         intent: feynmanResult.intent,
-        confidenceScore: feynmanResult.processingMetadata.confidence,
-        processingStatus: 'completed',
-        extractionMetadata: {
+        confidence_score: feynmanResult.processingMetadata.confidence,
+        processing_status: 'completed',
+        extraction_metadata: {
           ...extractionResult.metadata,
           materialsStatus: {
             flashcards: 'pending',
@@ -207,10 +228,14 @@ class UploadProcessor {
             teachback: 'pending',
           },
         },
-        languageCode: extractionResult.metadata?.language || 'en',
-        isMixedLanguage: extractionResult.metadata?.isMixedLanguage || false,
-        languageMetadata: extractionResult.metadata?.languageMetadata || null,
+        language_code: extractionResult.metadata?.language || 'en',
+        is_mixed_language: extractionResult.metadata?.isMixedLanguage || false,
+        language_metadata: extractionResult.metadata?.languageMetadata || null,
       });
+
+      if (finalUpdateError || !completedSeed) {
+        throw new Error(finalUpdateError || 'Failed to update seed with results');
+      }
 
       this.emitProgress(onProgress, 'completed');
 
@@ -253,11 +278,17 @@ class UploadProcessor {
     this.emitProgress(onProgress, 'extracting');
 
     // Create seed
-    const { id: seedId } = await seedsService.createInitialSeed({
-      userId,
+    const { seed: initialSeed, error: createError } = await seedsService.createSeed({
       title,
-      contentType: 'text',
+      content_type: 'text',
+      processing_status: 'pending',
     });
+
+    if (createError || !initialSeed) {
+      throw new Error(createError || 'Failed to create initial seed');
+    }
+
+    const seedId = initialSeed.id;
 
     try {
       // Generate Feynman explanation
@@ -275,14 +306,15 @@ class UploadProcessor {
       this.emitProgress(onProgress, 'finalizing');
 
       // Update seed with results
-      const completedSeed = await seedsService.updateSeed(seedId, {
-        contentText: extractionResult.content,
-        originalContent: extractionResult.content,
-        feynmanExplanation: feynmanResult.feynmanExplanation,
+      // Update seed with results
+      const { seed: completedSeed, error: finalUpdateError } = await seedsService.updateSeed(seedId, {
+        content_text: extractionResult.content,
+        original_content: extractionResult.content,
+        feynman_explanation: feynmanResult.feynmanExplanation,
         intent: feynmanResult.intent,
-        confidenceScore: feynmanResult.processingMetadata.confidence,
-        processingStatus: 'completed',
-        extractionMetadata: {
+        confidence_score: feynmanResult.processingMetadata.confidence,
+        processing_status: 'completed',
+        extraction_metadata: {
           ...extractionResult.metadata,
           materialsStatus: {
             flashcards: 'pending',
@@ -291,10 +323,104 @@ class UploadProcessor {
             teachback: 'pending',
           },
         },
-        languageCode: extractionResult.metadata?.language || 'en',
-        isMixedLanguage: extractionResult.metadata?.isMixedLanguage || false,
-        languageMetadata: extractionResult.metadata?.languageMetadata || null,
+        language_code: extractionResult.metadata?.language || 'en',
+        is_mixed_language: extractionResult.metadata?.isMixedLanguage || false,
+        language_metadata: extractionResult.metadata?.languageMetadata || null,
       });
+
+      if (finalUpdateError || !completedSeed) {
+        throw new Error(finalUpdateError || 'Failed to update seed with results');
+      }
+
+      this.emitProgress(onProgress, 'completed');
+
+      return completedSeed;
+    } catch (error) {
+      // Delete the failed seed
+      await seedsService.deleteSeed(seedId);
+      throw error;
+    }
+  }
+
+  /**
+   * Process Audio Content (Direct base64)
+   */
+  private async processAudioContent(
+    base64Data: string,
+    mimeType: string,
+    options: {
+      userId: string;
+      title: string;
+      onProgress?: (progress: UploadProgress) => void;
+      accessToken: string;
+    }
+  ): Promise<Seed> {
+    const { userId, title, onProgress, accessToken } = options;
+
+    this.emitProgress(onProgress, 'validating');
+    this.emitProgress(onProgress, 'reading');
+    this.emitProgress(onProgress, 'extracting');
+
+    // Extract content from audio
+    const extractionResult = await transcribeAudio(base64Data, mimeType, accessToken);
+
+    // Validate content quality
+    await this.validateContentQuality(extractionResult, 'audio');
+
+    // Create seed
+    const { seed: initialSeed, error: createError } = await seedsService.createSeed({
+      title,
+      content_type: 'audio',
+      processing_status: 'pending',
+    });
+
+    if (createError || !initialSeed) {
+      throw new Error(createError || 'Failed to create initial seed');
+    }
+
+    const seedId = initialSeed.id;
+
+    try {
+      // Generate Feynman explanation
+      this.emitProgress(onProgress, 'generating');
+      const feynmanResult = await generateFeynman(
+        extractionResult.content,
+        title,
+        extractionResult.metadata?.language,
+        accessToken,
+        onProgress ? (progress: number, message: string) => {
+          onProgress({ stage: 'generating', progress, message });
+        } : undefined
+      );
+
+      this.emitProgress(onProgress, 'finalizing');
+
+      // Update seed with results
+      // Update seed with results
+      const { seed: completedSeed, error: finalUpdateError } = await seedsService.updateSeed(seedId, {
+        content_text: extractionResult.content,
+        original_content: extractionResult.content,
+        feynman_explanation: feynmanResult.feynmanExplanation,
+        intent: feynmanResult.intent,
+        confidence_score: feynmanResult.processingMetadata.confidence,
+        processing_status: 'completed',
+        extraction_metadata: {
+          ...extractionResult.metadata,
+          materialsStatus: {
+            flashcards: 'pending',
+            quiz: 'pending',
+            notes: 'pending',
+            teachback: 'pending',
+          },
+        },
+        language_code: extractionResult.metadata?.language || 'en',
+        is_mixed_language: extractionResult.metadata?.isMixedLanguage || false,
+        language_metadata: extractionResult.metadata?.languageMetadata || null,
+      });
+
+      if (finalUpdateError || !completedSeed) {
+        throw new Error(finalUpdateError || 'Failed to update seed with results');
+      }
 
       this.emitProgress(onProgress, 'completed');
 
@@ -338,11 +464,17 @@ class UploadProcessor {
     this.emitProgress(onProgress, 'extracting');
 
     // Create seed with YouTube content
-    const { id: seedId } = await seedsService.createInitialSeed({
-      userId,
+    const { seed: initialSeed, error: createError } = await seedsService.createSeed({
       title: finalTitle,
-      contentType: 'youtube',
+      content_type: 'youtube',
+      processing_status: 'pending',
     });
+
+    if (createError || !initialSeed) {
+      throw new Error(createError || 'Failed to create initial seed');
+    }
+
+    const seedId = initialSeed.id;
 
     try {
       // Generate Feynman explanation
@@ -360,14 +492,15 @@ class UploadProcessor {
       this.emitProgress(onProgress, 'finalizing');
 
       // Update seed with results
-      const completedSeed = await seedsService.updateSeed(seedId, {
-        contentText: extractionResult.content,
-        originalContent: extractionResult.content,
-        feynmanExplanation: feynmanResult.feynmanExplanation,
+      // Update seed with results
+      const { seed: completedSeed, error: finalUpdateError } = await seedsService.updateSeed(seedId, {
+        content_text: extractionResult.content,
+        original_content: extractionResult.content,
+        feynman_explanation: feynmanResult.feynmanExplanation,
         intent: feynmanResult.intent,
-        confidenceScore: feynmanResult.processingMetadata.confidence,
-        processingStatus: 'completed',
-        extractionMetadata: {
+        confidence_score: feynmanResult.processingMetadata.confidence,
+        processing_status: 'completed',
+        extraction_metadata: {
           ...extractionResult.metadata,
           materialsStatus: {
             flashcards: 'pending',
@@ -376,10 +509,14 @@ class UploadProcessor {
             teachback: 'pending',
           },
         },
-        languageCode: extractionResult.metadata?.language || 'en',
-        isMixedLanguage: extractionResult.metadata?.isMixedLanguage || false,
-        languageMetadata: extractionResult.metadata?.languageMetadata || null,
+        language_code: extractionResult.metadata?.language || 'en',
+        is_mixed_language: extractionResult.metadata?.isMixedLanguage || false,
+        language_metadata: extractionResult.metadata?.languageMetadata || null,
       });
+
+      if (finalUpdateError || !completedSeed) {
+        throw new Error(finalUpdateError || 'Failed to update seed with results');
+      }
 
       this.emitProgress(onProgress, 'completed');
 

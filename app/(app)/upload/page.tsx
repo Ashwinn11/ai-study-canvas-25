@@ -208,6 +208,172 @@ export default function UploadPage() {
     }
   };
 
+  const startAudioRecording = async () => {
+    try {
+      setError(null);
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+
+      const mimeType = getSupportedMimeType();
+      const recorder = new MediaRecorder(stream, {
+        mimeType,
+        audioBitsPerSecond: 128000,
+      });
+
+      const chunks: Blob[] = [];
+      recorder.ondataavailable = (event) => {
+        chunks.push(event.data);
+      };
+
+      setMediaRecorder(recorder);
+      setAudioChunks(chunks);
+      setIsRecording(true);
+      setRecordingDuration(0);
+
+      recorder.start();
+
+      // Update recording duration every second
+      const interval = setInterval(() => {
+        setRecordingDuration((prev) => prev + 1);
+      }, 1000);
+
+      // Store interval ID for cleanup
+      (recorder as any).intervalId = interval;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to start recording';
+      setError(errorMessage);
+    }
+  };
+
+  const stopAudioRecording = async () => {
+    if (!mediaRecorder || !user) {
+      setError('No active recording');
+      return;
+    }
+
+    if (!title.trim()) {
+      setError('Please provide a title for your recording');
+      return;
+    }
+
+    setUploadState('uploading');
+    setError(null);
+
+    try {
+      const supabase = getSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        throw new Error('Not authenticated');
+      }
+
+      mediaRecorder.onstop = async () => {
+        // Clear interval if it exists
+        const intervalId = (mediaRecorder as any).intervalId;
+        if (intervalId) clearInterval(intervalId);
+
+        // Stop all tracks
+        mediaRecorder.stream.getTracks().forEach((track) => track.stop());
+
+        const audioBlob = new Blob(audioChunks, {
+          type: mediaRecorder.mimeType,
+        });
+
+        // Convert to base64
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          try {
+            const base64 = (reader.result as string).split(',')[1];
+
+            await uploadProcessor.processFile({
+              userId: user.id,
+              title,
+              audioContent: base64,
+              audioMimeType: mediaRecorder.mimeType,
+              accessToken: session.access_token,
+              onProgress: (prog) => {
+                setProgress(prog);
+              },
+            });
+
+            setUploadState('success');
+            setIsRecording(false);
+
+            // Redirect to seeds page after 2 seconds
+            setTimeout(() => {
+              router.push('/seeds');
+            }, 2000);
+          } catch (err) {
+            console.error('Upload error:', err);
+            setError(err instanceof Error ? err.message : 'Upload failed');
+            setUploadState('error');
+            setIsRecording(false);
+          }
+        };
+
+        reader.onerror = () => {
+          setError('Failed to convert audio');
+          setUploadState('error');
+          setIsRecording(false);
+        };
+
+        reader.readAsDataURL(audioBlob);
+      };
+
+      mediaRecorder.stop();
+    } catch (err) {
+      console.error('Upload error:', err);
+      setError(err instanceof Error ? err.message : 'Upload failed');
+      setUploadState('error');
+      setIsRecording(false);
+    }
+  };
+
+  const cancelAudioRecording = () => {
+    if (mediaRecorder && isRecording) {
+      // Clear interval if it exists
+      const intervalId = (mediaRecorder as any).intervalId;
+      if (intervalId) clearInterval(intervalId);
+
+      mediaRecorder.stop();
+      mediaRecorder.stream.getTracks().forEach((track) => track.stop());
+    }
+
+    setIsRecording(false);
+    setRecordingDuration(0);
+    setMediaRecorder(null);
+    setAudioChunks([]);
+  };
+
+  const getSupportedMimeType = (): string => {
+    const mimeTypes = [
+      'audio/webm;codecs=opus',
+      'audio/webm',
+      'audio/mp4',
+      'audio/mpeg',
+      'audio/wav',
+    ];
+
+    for (const mimeType of mimeTypes) {
+      if (MediaRecorder.isTypeSupported(mimeType)) {
+        return mimeType;
+      }
+    }
+
+    return ''; // Fallback
+  };
+
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
   return (
     <div className="space-y-8">
       <div>
@@ -218,7 +384,7 @@ export default function UploadPage() {
       </div>
 
       {/* Upload Mode Toggle */}
-      <div className="flex gap-4">
+      <div className="flex gap-4 flex-wrap">
         <Button
           variant={uploadMode === 'file' ? 'default' : 'outline'}
           onClick={() => setUploadMode('file')}
@@ -242,6 +408,14 @@ export default function UploadPage() {
         >
           <Link className="h-4 w-4 mr-2" />
           YouTube Link
+        </Button>
+        <Button
+          variant={uploadMode === "audio" ? "default" : "outline"}
+          onClick={() => setUploadMode("audio")}
+          disabled={uploadState === "uploading"}
+        >
+          <Music className="h-4 w-4 mr-2" />
+          Record Audio
         </Button>
       </div>
 
@@ -374,6 +548,63 @@ export default function UploadPage() {
               </>
             )}
           </Button>
+        </div>
+      )}
+
+      {/* Audio Recording */}
+      {uploadMode === 'audio' && (
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-white">
+              Title <span className="text-red-400">*</span>
+            </label>
+            <Input
+              type="text"
+              placeholder="e.g., Physics Lecture Recording"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              disabled={uploadState === 'uploading' || isRecording}
+              className="bg-white/5 border-white/10 text-white"
+            />
+          </div>
+
+          {!isRecording ? (
+            <Button
+              onClick={startAudioRecording}
+              disabled={uploadState === 'uploading'}
+              className="w-full"
+              size="lg"
+            >
+              <Music className="h-4 w-4 mr-2" />
+              Start Recording
+            </Button>
+          ) : (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between p-4 rounded-lg bg-white/5 border border-white/10">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                  <span className="text-white font-medium">Recording...</span>
+                </div>
+                <span className="text-sm text-gray-400">{formatTime(recordingDuration)}</span>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  onClick={stopAudioRecording}
+                  className="flex-1"
+                  variant="default"
+                >
+                  Stop & Upload
+                </Button>
+                <Button
+                  onClick={cancelAudioRecording}
+                  className="flex-1"
+                  variant="outline"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

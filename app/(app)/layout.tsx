@@ -12,9 +12,10 @@ import {
   User,
   LogOut,
   Menu,
+  Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useState } from 'react';
 
 const sidebarLinks = [
@@ -37,6 +38,11 @@ const sidebarLinks = [
     name: 'Exams',
     href: '/exams',
     icon: GraduationCap,
+  },
+  {
+    name: 'AI Chat',
+    href: '/chat',
+    icon: Sparkles,
   },
   {
     name: 'Profile',
@@ -122,6 +128,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-72 border-r border-border bg-card p-0">
+              <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
               <div className="flex flex-col h-full px-6 pb-4">
                 {/* Logo */}
                 <div className="flex h-16 shrink-0 items-center">

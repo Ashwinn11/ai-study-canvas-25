@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { examsService } from '@/lib/api/exams';
+import { examsService } from '@/lib/api/examsService';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import { ArrowLeft, Loader2, Plus, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -28,13 +28,7 @@ export default function CreateExamPage() {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user) {
-      loadSeeds();
-    }
-  }, [user]);
-
-  const loadSeeds = async () => {
+  const loadSeeds = useCallback(async () => {
     try {
       const supabase = getSupabaseClient();
       const { data, error } = await supabase
@@ -55,9 +49,15 @@ export default function CreateExamPage() {
       console.error('Error loading seeds:', err);
       setError('Failed to load study materials');
     } finally {
-      setLoadingSeeds(false);
+       setLoadingSeeds(false);
+     }
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      loadSeeds();
     }
-  };
+  }, [user, loadSeeds]);
 
   const handleToggleSeed = (seedId: string) => {
     const newSelected = new Set(selectedSeedIds);

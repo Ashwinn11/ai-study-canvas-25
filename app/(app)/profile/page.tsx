@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { profileStatsService, type UserStats } from '@/lib/api/profileStats';
@@ -18,13 +18,7 @@ export default function ProfilePage() {
   const [badges, setBadges] = useState<BadgeState[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-      loadStats();
-    }
-  }, [user]);
-
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     if (!user) return;
 
     setIsLoading(true);
@@ -38,9 +32,15 @@ export default function ProfilePage() {
     } catch (err) {
       console.error('Error loading stats:', err);
     } finally {
-      setIsLoading(false);
+       setIsLoading(false);
+     }
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      loadStats();
     }
-  };
+  }, [user, loadStats]);
 
   const handleSignOut = async () => {
     if (confirm('Are you sure you want to sign out?')) {

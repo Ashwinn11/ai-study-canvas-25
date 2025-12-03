@@ -9,6 +9,7 @@ import { Upload, FileText, Image, Music, Link, CheckCircle2, XCircle, Loader2 } 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
 
 type UploadState = 'idle' | 'uploading' | 'success' | 'error';
 
@@ -40,7 +41,9 @@ export default function UploadPage() {
 
   const handleFileUpload = async (file: File) => {
     if (!user) {
-      setError('You must be logged in to upload files');
+      toast.error('Authentication required', {
+        description: 'You must be logged in to upload files',
+      });
       return;
     }
 
@@ -85,22 +88,27 @@ export default function UploadPage() {
 
   const handleTextUpload = async () => {
     if (!user) {
-      setError('You must be logged in to upload content');
+      toast.error('Authentication required', {
+        description: 'You must be logged in to upload content',
+      });
       return;
     }
 
     if (!title.trim()) {
-      setError('Please provide a title for your content');
+      toast.error('Title required', {
+        description: 'Please provide a title for your content',
+      });
       return;
     }
 
     if (!textContent.trim()) {
-      setError('Please provide some text content');
+      toast.error('Content required', {
+        description: 'Please provide some text content',
+      });
       return;
     }
 
     setUploadState('uploading');
-    setError(null);
     setProgress(null);
 
     try {
@@ -137,17 +145,20 @@ export default function UploadPage() {
 
   const handleYoutubeUpload = async () => {
     if (!user) {
-      setError('You must be logged in to upload content');
+      toast.error('Authentication required', {
+        description: 'You must be logged in to upload content',
+      });
       return;
     }
 
     if (!youtubeUrl.trim()) {
-      setError('Please provide a YouTube URL');
+      toast.error('URL required', {
+        description: 'Please provide a YouTube URL',
+      });
       return;
     }
 
     setUploadState('uploading');
-    setError(null);
     setProgress(null);
 
     try {
@@ -185,7 +196,6 @@ export default function UploadPage() {
   const resetUpload = () => {
     setUploadState('idle');
     setProgress(null);
-    setError(null);
     setTitle('');
     setTextContent('');
     setYoutubeUrl('');
@@ -210,7 +220,9 @@ export default function UploadPage() {
 
   const startAudioRecording = async () => {
     try {
-      setError(null);
+      setIsRecording(true); // Show UI immediately
+      setRecordingDuration(0);
+      
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
@@ -232,8 +244,6 @@ export default function UploadPage() {
 
       setMediaRecorder(recorder);
       setAudioChunks(chunks);
-      setIsRecording(true);
-      setRecordingDuration(0);
 
       recorder.start();
 
@@ -246,20 +256,31 @@ export default function UploadPage() {
       (recorder as any).intervalId = interval;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to start recording';
-      setError(errorMessage);
+      toast.error('Recording failed', {
+        description: errorMessage,
+      });
+      setIsRecording(false); // Reset on error
     }
   };
 
   const stopAudioRecording = async () => {
     if (!mediaRecorder || !user) {
-      setError('No active recording');
+      toast.error('Recording error', {
+        description: 'No active recording',
+      });
       return;
     }
 
-    if (!title.trim()) {
-      setError('Please provide a title for your recording');
-      return;
-    }
+    // Auto-generate title from timestamp
+    const timestamp = new Date().toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+    const autoTitle = `Audio Recording - ${timestamp}`;
 
     setUploadState('uploading');
     setError(null);
@@ -292,7 +313,7 @@ export default function UploadPage() {
 
             await uploadProcessor.processFile({
               userId: user.id,
-              title,
+              title: autoTitle,
               audioContent: base64,
               audioMimeType: mediaRecorder.mimeType,
               accessToken: session.access_token,
@@ -310,14 +331,19 @@ export default function UploadPage() {
             }, 2000);
           } catch (err) {
             console.error('Upload error:', err);
-            setError(err instanceof Error ? err.message : 'Upload failed');
+            const errorMessage = err instanceof Error ? err.message : 'Upload failed';
+            toast.error('Upload failed', {
+              description: errorMessage,
+            });
             setUploadState('error');
             setIsRecording(false);
           }
         };
 
         reader.onerror = () => {
-          setError('Failed to convert audio');
+          toast.error('Conversion failed', {
+            description: 'Failed to convert audio',
+          });
           setUploadState('error');
           setIsRecording(false);
         };
@@ -328,7 +354,10 @@ export default function UploadPage() {
       mediaRecorder.stop();
     } catch (err) {
       console.error('Upload error:', err);
-      setError(err instanceof Error ? err.message : 'Upload failed');
+      const errorMessage = err instanceof Error ? err.message : 'Upload failed';
+      toast.error('Upload failed', {
+        description: errorMessage,
+      });
       setUploadState('error');
       setIsRecording(false);
     }
@@ -497,7 +526,6 @@ export default function UploadPage() {
           <Button
             onClick={handleTextUpload}
             disabled={uploadState === 'uploading' || !textContent.trim()}
-            className="w-full"
           >
             {uploadState === 'uploading' ? (
               <>
@@ -534,7 +562,6 @@ export default function UploadPage() {
           <Button
             onClick={handleYoutubeUpload}
             disabled={uploadState === 'uploading' || !youtubeUrl.trim()}
-            className="w-full"
           >
             {uploadState === 'uploading' ? (
               <>
@@ -554,25 +581,10 @@ export default function UploadPage() {
       {/* Audio Recording */}
       {uploadMode === 'audio' && (
         <div className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-white">
-              Title <span className="text-red-400">*</span>
-            </label>
-            <Input
-              type="text"
-              placeholder="e.g., Physics Lecture Recording"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              disabled={uploadState === 'uploading' || isRecording}
-              className="bg-white/5 border-white/10 text-white"
-            />
-          </div>
-
           {!isRecording ? (
             <Button
               onClick={startAudioRecording}
               disabled={uploadState === 'uploading'}
-              className="w-full"
               size="lg"
             >
               <Music className="h-4 w-4 mr-2" />
@@ -583,26 +595,32 @@ export default function UploadPage() {
               <div className="flex items-center justify-between p-4 rounded-lg bg-white/5 border border-white/10">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                  <span className="text-white font-medium">Recording...</span>
+                  <span className="text-white font-medium">
+                    {mediaRecorder ? 'Recording...' : 'Requesting microphone access...'}
+                  </span>
                 </div>
-                <span className="text-sm text-gray-400">{formatTime(recordingDuration)}</span>
+                {mediaRecorder && (
+                  <span className="text-sm text-gray-400">{formatTime(recordingDuration)}</span>
+                )}
               </div>
-              <div className="flex gap-2">
-                <Button
-                  onClick={stopAudioRecording}
-                  className="flex-1"
-                  variant="default"
-                >
-                  Stop & Upload
-                </Button>
-                <Button
-                  onClick={cancelAudioRecording}
-                  className="flex-1"
-                  variant="outline"
-                >
-                  Cancel
-                </Button>
-              </div>
+              {mediaRecorder && (
+                <div className="flex gap-2">
+                  <Button
+                    onClick={stopAudioRecording}
+                    className="flex-1"
+                    variant="default"
+                  >
+                    Stop & Upload
+                  </Button>
+                  <Button
+                    onClick={cancelAudioRecording}
+                    className="flex-1"
+                    variant="outline"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -646,26 +664,6 @@ export default function UploadPage() {
                 Redirecting to your study materials...
               </p>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Error Message */}
-      {uploadState === 'error' && error && (
-        <div className="rounded-lg border border-red-500/20 bg-red-500/10 backdrop-blur-xl p-6">
-          <div className="flex items-start gap-3">
-            <XCircle className="h-6 w-6 text-red-500 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="font-medium text-red-500">Upload failed</p>
-              <p className="text-sm text-gray-400 mt-1">{error}</p>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={resetUpload}
-            >
-              Try Again
-            </Button>
           </div>
         </div>
       )}

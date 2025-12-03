@@ -7,6 +7,8 @@ import { seedsService } from '@/lib/api/seedsService';
 import { Seed } from '@/types';
 import { FileText, Image, Music, Video, Loader2, Upload as UploadIcon, Trash2, Youtube } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { toast } from 'sonner';
 
 const CONTENT_TYPE_ICONS = {
   pdf: FileText,
@@ -32,6 +34,7 @@ export default function SeedsPage() {
   const [seeds, setSeeds] = useState<Seed[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; title: string } | null>(null);
 
   const loadSeeds = useCallback(async () => {
     if (!user) return;
@@ -85,19 +88,25 @@ export default function SeedsPage() {
     return `${months}mo ago`;
   };
 
-  const handleDeleteSeed = async (seedId: string, e: React.MouseEvent) => {
+  const handleDeleteSeed = async (seedId: string, seedTitle: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    setDeleteConfirm({ id: seedId, title: seedTitle });
+  };
 
-    if (!confirm('Are you sure you want to delete this seed?')) {
-      return;
-    }
+  const confirmDelete = async () => {
+    if (!deleteConfirm) return;
 
     try {
-      await seedsService.deleteSeed(seedId);
-      setSeeds(seeds.filter(s => s.id !== seedId));
+      await seedsService.deleteSeed(deleteConfirm.id);
+      setSeeds(seeds.filter(s => s.id !== deleteConfirm.id));
+      toast.success('Seed deleted successfully');
     } catch (err) {
       console.error('Error deleting seed:', err);
-      setError(err instanceof Error ? err.message : 'Failed to delete seed');
+      toast.error('Failed to delete seed', {
+        description: err instanceof Error ? err.message : 'An error occurred',
+      });
+    } finally {
+      setDeleteConfirm(null);
     }
   };
 
@@ -204,7 +213,7 @@ export default function SeedsPage() {
                 </div>
 
                 <button
-                  onClick={(e) => handleDeleteSeed(seed.id, e)}
+                  onClick={(e) => handleDeleteSeed(seed.id, seed.title, e)}
                   className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors flex-shrink-0"
                   aria-label="Delete seed"
                 >
@@ -215,6 +224,18 @@ export default function SeedsPage() {
           })}
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={!!deleteConfirm}
+        onClose={() => setDeleteConfirm(null)}
+        onConfirm={confirmDelete}
+        title="Delete Seed?"
+        description={`Are you sure you want to delete "${deleteConfirm?.title}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+      />
     </div>
   );
 }

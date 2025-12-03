@@ -1,7 +1,10 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { chatCompletion } from '@/lib/api/openAIClient';
+import { brainBotService, ExplanationMode } from '@/lib/api/brainBotService';
+import { ServiceError } from '@/lib/api/serviceError';
+
+export type { ExplanationMode };
 
 export interface ChatMessage {
   id: string;
@@ -13,12 +16,14 @@ export interface ChatMessage {
 interface UseChatOptions {
   seedContent?: string;
   seedTitle?: string;
+  explanationMode?: ExplanationMode;
 }
 
 export function useChat(options: UseChatOptions = {}) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [conversationId, setConversationId] = useState<string | null>(null);
 
   const sendMessage = useCallback(
     async (content: string) => {
@@ -27,10 +32,11 @@ export function useChat(options: UseChatOptions = {}) {
       setError(null);
 
       // Add user message
+      const trimmedContent = content.trim();
       const userMessage: ChatMessage = {
         id: `user-${Date.now()}`,
         role: 'user',
-        content: content.trim(),
+        content: trimmedContent,
         timestamp: Date.now(),
       };
 
@@ -38,62 +44,53 @@ export function useChat(options: UseChatOptions = {}) {
       setIsLoading(true);
 
       try {
-        // Build conversation history
-        const conversationHistory = messages.map((msg) => ({
-          role: msg.role,
-          content: msg.content,
-        }));
+        const { answer, conversationId: nextConversationId } = await brainBotService.askQuestion(
+          trimmedContent,
+          {
+            feynmanExplanation: options.seedContent ?? '',
+            seedTitle: options.seedTitle,
+            explanationMode: options.explanationMode,
+          },
+          conversationId ?? undefined,
+        );
 
-        // Build system prompt
-        let systemPrompt =
-          'You are an AI tutor helping a student learn. Provide clear, concise explanations and ask clarifying questions when needed.';
+        setConversationId(nextConversationId);
 
-        if (options.seedTitle || options.seedContent) {
-          systemPrompt = `You are an AI tutor helping a student understand their study material. ${
-            options.seedTitle ? `The topic is "${options.seedTitle}". ` : ''
-          }${options.seedContent ? `Context: ${options.seedContent.substring(0, 500)}...` : ''}`;
-        }
-
-        // Get AI response using the chatCompletion function
-        const assistantContent = await chatCompletion({
-          model: 'gpt-4-turbo',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            ...conversationHistory,
-            { role: 'user', content: content.trim() },
-          ],
-          temperature: 0.7,
-          maxTokens: 500,
-        });
-
-        if (!assistantContent) {
-          throw new Error('No response from AI');
-        }
-
-        // Add assistant message
         const assistantMessage: ChatMessage = {
           id: `assistant-${Date.now()}`,
           role: 'assistant',
-          content: assistantContent,
+          content: answer,
           timestamp: Date.now(),
         };
 
         setMessages((prev) => [...prev, assistantMessage]);
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to send message';
+        let errorMessage = 'Failed to send message';
+
+        if (err instanceof ServiceError) {
+          errorMessage = err.getUserMessage();
+        } else if (err instanceof Error) {
+          errorMessage = err.message;
+        }
+
         setError(errorMessage);
         console.error('[useChat] Error:', err);
       } finally {
         setIsLoading(false);
       }
     },
-    [messages, options]
+    [conversationId, options.seedContent, options.seedTitle, options.explanationMode]
   );
 
   const clearMessages = useCallback(() => {
+    if (conversationId) {
+      brainBotService.clearConversation(conversationId);
+    }
+
+    setConversationId(null);
     setMessages([]);
     setError(null);
-  }, []);
+  }, [conversationId]);
 
   return {
     messages,

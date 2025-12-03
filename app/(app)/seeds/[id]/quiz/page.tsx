@@ -22,6 +22,7 @@ import {
   Rocket,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 
 interface QuizQuestionState extends QuizQuestion {
   selectedAnswer?: number;
@@ -48,6 +49,7 @@ export default function QuizPage() {
     incorrect: 0,
     completed: false,
   });
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [sessionStartTime] = useState<number>(Date.now());
   const [attempts, setAttempts] = useState<QuizAttempt[]>([]);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -218,9 +220,11 @@ export default function QuizPage() {
   };
 
   const handleClose = () => {
-    if (confirm('Are you sure you want to exit this quiz session?')) {
-      router.push(`/seeds/${seedId}`);
-    }
+    setShowExitConfirm(true);
+  };
+
+  const confirmExit = () => {
+    router.push(`/seeds/${seedId}`);
   };
 
   const restartQuiz = () => {
@@ -258,7 +262,7 @@ export default function QuizPage() {
           <h1 className="text-2xl font-bold text-white">Generating Quiz</h1>
         </div>
 
-        <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-xl p-8">
+        <div className="rounded-lg border-2 border-blue-300 bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 shadow-lg p-8">
           <div className="space-y-4">
             <div className="flex items-center justify-center">
               <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -394,97 +398,109 @@ export default function QuizPage() {
       </div>
 
       {/* Question Card */}
-      <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-xl p-8 space-y-6">
-        <div>
-          <div className="text-sm text-gray-400 mb-4">Question {currentIndex + 1}</div>
-          <h2 className="text-xl text-white font-medium leading-relaxed">
+      <div className="rounded-2xl border-2 border-blue-300 bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 shadow-lg p-8 min-h-[300px] flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-sm text-purple-600 mb-4 font-medium">Question {currentIndex + 1}</div>
+          <h2 className="text-xl text-gray-800 font-semibold leading-relaxed">
             {currentQuestion.question}
           </h2>
         </div>
+      </div>
 
-        {/* Options */}
-        <div className="space-y-3">
-          {currentQuestion.options.map((option, index) => {
-            const isSelected = currentQuestion.selectedAnswer === index;
-            const isCorrect = index === currentQuestion.correct_answer;
-            const showResult = currentQuestion.showResult;
+      {/* Answer Options */}
+      <div className="space-y-3">
+        {currentQuestion.options.map((option, index) => {
+          const isSelected = currentQuestion.selectedAnswer === index;
+          const isCorrect = index === currentQuestion.correct_answer;
+          const showResult = currentQuestion.showResult;
 
-            let buttonClass =
-              'w-full text-left p-4 rounded-lg border transition-all duration-200 ';
+          let buttonClass =
+            'w-full text-left p-4 rounded-lg border transition-all duration-200 ';
 
-            if (!showResult) {
-              // Before answer
-              buttonClass +=
-                'border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 text-white';
-            } else if (isSelected && isCorrect) {
-              // Selected correct answer
-              buttonClass +=
-                'border-green-500/50 bg-green-500/20 text-green-400 font-medium';
-            } else if (isSelected && !isCorrect) {
-              // Selected incorrect answer
-              buttonClass += 'border-red-500/50 bg-red-500/20 text-red-400 font-medium';
-            } else if (isCorrect) {
-              // Show correct answer
-              buttonClass +=
-                'border-green-500/50 bg-green-500/20 text-green-400 font-medium';
-            } else {
-              // Other options
-              buttonClass += 'border-white/10 bg-white/5 text-gray-400';
-            }
+          if (!showResult) {
+            // Before answer
+            buttonClass +=
+              'border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 text-white';
+          } else if (isSelected && isCorrect) {
+            // Selected correct answer
+            buttonClass +=
+              'border-green-500/50 bg-green-500/20 text-green-400 font-medium';
+          } else if (isSelected && !isCorrect) {
+            // Selected incorrect answer
+            buttonClass += 'border-red-500/50 bg-red-500/20 text-red-400 font-medium';
+          } else if (isCorrect) {
+            // Show correct answer
+            buttonClass +=
+              'border-green-500/50 bg-green-500/20 text-green-400 font-medium';
+          } else {
+            // Other options
+            buttonClass += 'border-white/10 bg-white/5 text-gray-400';
+          }
 
-            return (
-              <button
-                key={index}
-                onClick={() => handleSelectAnswer(index)}
-                disabled={currentQuestion.isAnswered}
-                className={buttonClass}
-              >
-                <div className="flex items-center justify-between gap-4">
-                  <span className="flex-1">{option}</span>
-                  {showResult && isSelected && isCorrect && (
-                    <CheckCircle2 className="h-5 w-5 text-green-400 flex-shrink-0" />
-                  )}
-                  {showResult && isSelected && !isCorrect && (
-                    <XCircle className="h-5 w-5 text-red-400 flex-shrink-0" />
-                  )}
-                  {showResult && !isSelected && isCorrect && (
-                    <CheckCircle2 className="h-5 w-5 text-green-400 flex-shrink-0" />
-                  )}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Explanation (shown after answer) */}
-        {showFeedback && currentQuestion.explanation && (
-          <div
-            className={`p-4 rounded-lg border ${
-              isCorrectAnswer
-                ? 'border-green-500/20 bg-green-500/10'
-                : 'border-red-500/20 bg-red-500/10'
-            }`}
-          >
-            <div className="flex items-start gap-3">
-              {isCorrectAnswer ? (
-                <CheckCircle2 className="h-5 w-5 text-green-400 flex-shrink-0 mt-0.5" />
-              ) : (
-                <XCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
-              )}
-              <div className="flex-1">
-                <div
-                  className={`font-medium mb-1 ${
-                    isCorrectAnswer ? 'text-green-400' : 'text-red-400'
-                  }`}
-                >
-                  {isCorrectAnswer ? 'Correct!' : 'Incorrect'}
-                </div>
-                <p className="text-sm text-gray-300">{currentQuestion.explanation}</p>
+          return (
+            <button
+              key={index}
+              onClick={() => handleSelectAnswer(index)}
+              disabled={currentQuestion.isAnswered}
+              className={buttonClass}
+            >
+              <div className="flex items-center justify-between gap-4">
+                <span className="flex-1">{option}</span>
+                {showResult && isSelected && isCorrect && (
+                  <CheckCircle2 className="h-5 w-5 text-green-400 flex-shrink-0" />
+                )}
+                {showResult && isSelected && !isCorrect && (
+                  <XCircle className="h-5 w-5 text-red-400 flex-shrink-0" />
+                )}
+                {showResult && !isSelected && isCorrect && (
+                  <CheckCircle2 className="h-5 w-5 text-green-400 flex-shrink-0" />
+                )}
               </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Explanation (shown after answer) */}
+      {showFeedback && currentQuestion.explanation && (
+        <div
+          className={`p-4 rounded-lg border ${
+            isCorrectAnswer
+              ? 'border-green-500/20 bg-green-500/10'
+              : 'border-red-500/20 bg-red-500/10'
+          }`}
+        >
+          <div className="flex items-start gap-3">
+            {isCorrectAnswer ? (
+              <CheckCircle2 className="h-5 w-5 text-green-400 flex-shrink-0 mt-0.5" />
+            ) : (
+              <XCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
+            )}
+            <div className="flex-1">
+              <div
+                className={`font-medium mb-1 ${
+                  isCorrectAnswer ? 'text-green-400' : 'text-red-400'
+                }`}
+              >
+                {isCorrectAnswer ? 'Correct!' : 'Incorrect'}
+              </div>
+              <p className="text-sm text-gray-300">{currentQuestion.explanation}</p>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Exit Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={showExitConfirm}
+        onClose={() => setShowExitConfirm(false)}
+        onConfirm={confirmExit}
+        title="Exit Quiz?"
+        description="Are you sure you want to exit this quiz session? Your progress will not be saved."
+        confirmText="Exit"
+        cancelText="Continue Quiz"
+        variant="warning"
+      />
     </div>
   );
 }

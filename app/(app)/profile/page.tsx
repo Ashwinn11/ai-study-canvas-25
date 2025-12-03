@@ -3,12 +3,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { profileStatsService, type UserStats } from '@/lib/api/profileStats';
+import { profileStatsService, type UserStats } from '@/lib/api/profileStatsService';
 import { evaluateBadges, type BadgeState } from '@/lib/api/badges';
 import { Flame, Book, CheckCircle, Sparkles, Trophy, Star, Target, LogOut, Loader2, Edit2, Shield, FileText, Trash2, Bell, BarChart3, HelpCircle, CreditCard, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { QuickStats } from '@/components/profile/QuickStats';
 import { BadgesGrid } from '@/components/profile/BadgesGrid';
+import { useScreenRefresh } from '@/hooks/useScreenRefresh';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -32,9 +33,30 @@ export default function ProfilePage() {
     } catch (err) {
       console.error('Error loading stats:', err);
     } finally {
-       setIsLoading(false);
-     }
+      setIsLoading(false);
+    }
   }, [user]);
+
+  const refreshStats = useCallback(async () => {
+    if (!user) return;
+    try {
+      const { data: statsData, error } = await profileStatsService.getUserStats(user.id);
+      if (statsData && !error) {
+        setStats(statsData);
+        const evaluatedBadges = evaluateBadges(statsData);
+        setBadges(evaluatedBadges);
+      }
+    } catch (err) {
+      console.error('Error refreshing stats:', err);
+    }
+  }, [user]);
+
+  useScreenRefresh({
+    screenName: user ? `profile-${user.id}` : 'profile',
+    refreshFn: refreshStats,
+    refreshOnMount: false,
+    refreshOnFocus: false,
+  });
 
   useEffect(() => {
     if (user) {
@@ -66,6 +88,9 @@ export default function ProfilePage() {
     }
   };
 
+  const cardsReviewedToday = stats?.today?.cardsReviewedToday ?? stats?.cardsReviewedToday ?? 0;
+  const dailyCardsGoal = stats?.preferences?.dailyCardsGoal ?? stats?.dailyCardsGoal ?? 0;
+
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-20">
       {/* Header with Avatar and XP Badge */}
@@ -78,7 +103,9 @@ export default function ProfilePage() {
           {stats && (
             <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/3 bg-white/10 backdrop-blur border border-white/20 px-3 py-1 rounded-full flex items-center gap-1">
               <Sparkles className="h-3 w-3 text-primary" />
-              <span className="text-white font-bold text-xs">0 XP</span>
+              <span className="text-white font-bold text-xs">
+                {(stats.current?.xp ?? 0).toLocaleString()} XP
+              </span>
             </div>
           )}
         </div>
@@ -212,47 +239,59 @@ export default function ProfilePage() {
             <>
               {/* Quick Stats */}
               <QuickStats
-                currentStreak={stats.currentCommitmentStreak || stats.currentStreak}
-                cardsReviewed={stats.totalCards}
+                currentStreak={
+                  stats.current?.currentStreak ??
+                  stats.currentCommitmentStreak ??
+                  stats.currentStreak ??
+                  0
+                }
+                cardsReviewed={
+                  stats.historical?.totalCardsReviewed ??
+                  stats.totalCards ??
+                  0
+                }
                 averageGrade={stats.averageGrade}
               />
 
               {/* Daily Goal Progress */}
-              <div className={`rounded-xl border p-4 ${
-                stats.cardsReviewedToday >= stats.dailyCardsGoal
-                  ? 'bg-green-500/10 border-green-500/30'
-                  : 'bg-white/5 border-white/10'
-              }`}>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Target className="h-5 w-5 text-primary" />
-                    <span className="text-white font-semibold">Today's Goal</span>
+                <div className={`rounded-xl border p-4 ${
+                  dailyCardsGoal > 0 && cardsReviewedToday >= dailyCardsGoal
+                    ? 'bg-green-500/10 border-green-500/30'
+                    : 'bg-white/5 border-white/10'
+                }`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Target className="h-5 w-5 text-primary" />
+                      <span className="text-white font-semibold">Today's Goal</span>
+                    </div>
+                    <span className="text-white font-bold">
+                      {cardsReviewedToday}/{dailyCardsGoal}
+                    </span>
                   </div>
-                  <span className="text-white font-bold">
-                    {stats.cardsReviewedToday}/{stats.dailyCardsGoal}
-                  </span>
-                </div>
-                <div className="w-full bg-white/10 rounded-full h-2 mb-2">
-                  <div
-                    className={`h-2 rounded-full transition-all ${
-                      stats.cardsReviewedToday >= stats.dailyCardsGoal
-                        ? 'bg-green-500'
-                        : 'bg-primary'
-                    }`}
-                    style={{
-                      width: `${Math.min(100, (stats.cardsReviewedToday / stats.dailyCardsGoal) * 100)}%`,
-                    }}
-                  />
-                </div>
-                <p className="text-sm text-gray-400 flex items-center gap-1">
-                  {stats.cardsReviewedToday >= stats.dailyCardsGoal ? (
+                  <div className="w-full bg-white/10 rounded-full h-2 mb-2">
+                    <div
+                      className={`h-2 rounded-full transition-all ${
+                        dailyCardsGoal > 0 && cardsReviewedToday >= dailyCardsGoal
+                          ? 'bg-green-500'
+                          : 'bg-primary'
+                      }`}
+                      style={{
+                        width: dailyCardsGoal > 0
+                          ? `${Math.min(100, (cardsReviewedToday / dailyCardsGoal) * 100)}%`
+                          : '0%'
+                      }}
+                    />
+                  </div>
+                  <p className="text-sm text-gray-400 flex items-center gap-1">
+                    {dailyCardsGoal > 0 && cardsReviewedToday >= dailyCardsGoal ? (
+
                     <>
                       <Trophy className="w-4 h-4 text-yellow-500" />
                       Goal achieved! Keep your streak going
                     </>
                   ) : (
                     <>
-                      {stats.dailyCardsGoal - stats.cardsReviewedToday} cards left to maintain streak
+                      {Math.max(0, dailyCardsGoal - cardsReviewedToday)} cards left to maintain streak
                       <Flame className="w-4 h-4 text-orange-500" />
                     </>
                   )}

@@ -7,6 +7,7 @@ import {
 import { DistributedLockService } from "./distributedLock";
 import { logger } from "@/utils/logger";
 import { safeJSONParse } from "@/utils/safeJson";
+import { spacedRepetitionService } from "./spacedRepetitionService";
 import { ErrorHandler } from "@/utils/errorHandler";
 // QA judge removed - AI prompts enforce quality via temperature 0.1, Bloom taxonomy, and structured schemas
 
@@ -751,23 +752,15 @@ export class QuizService {
     isCorrect: boolean,
   ): Promise<QuizServiceResult<void>> {
     try {
-      // TODO: Implement full SM2 algorithm here or call spacedRepetitionService
-      // For now, just update last_reviewed to fix the build and provide basic functionality
-      const updates = {
-        last_reviewed: new Date().toISOString(),
-        // Simple increment for now
-        repetitions: isCorrect ? 1 : 0,
-      };
-
-      const { error } = await this.getSupabase()
-        .from("quiz_questions")
-        .update(updates)
-        .eq("id", questionId);
+      const { error } = await spacedRepetitionService.updateQuizQuestionSM2(
+        questionId,
+        isCorrect,
+      );
 
       if (error) {
         logger.error("[QuizService] Error reviewing quiz question:", error);
         return {
-          error: `Failed to review quiz question: ${error.message}`,
+          error,
         };
       }
 

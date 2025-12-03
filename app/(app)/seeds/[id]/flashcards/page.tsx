@@ -11,6 +11,7 @@ import { dailyGoalTrackerService } from '@/lib/api/dailyGoalTracker';
 import { Flashcard } from '@/types';
 import { ArrowLeft, Loader2, RotateCw, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 
 interface FlashcardState extends Flashcard {
   isFlipped: boolean;
@@ -35,6 +36,7 @@ export default function FlashcardsPracticePage() {
   });
   const [sessionStartTime] = useState<number>(Date.now());
   const [sessionComplete, setSessionComplete] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
 
   const currentCard = flashcards[currentIndex] ?? null;
 
@@ -162,9 +164,11 @@ export default function FlashcardsPracticePage() {
   };
 
   const handleClose = () => {
-    if (confirm('Exit flashcard practice?')) {
-      router.push(`/seeds/${seedId}`);
-    }
+    setShowExitConfirm(true);
+  };
+
+  const confirmExit = () => {
+    router.push(`/seeds/${seedId}`);
   };
 
   if (isLoading) {
@@ -194,7 +198,7 @@ export default function FlashcardsPracticePage() {
         <p className="text-gray-400">{generationMessage}</p>
         <div className="w-64 h-1 bg-gray-700 rounded-full overflow-hidden">
           <div
-            className="h-full bg-orange-500 transition-all"
+            className="h-full bg-gradient-to-r from-purple-400 to-pink-400 transition-all"
             style={{ width: `${generationProgress * 100}%` }}
           />
         </div>
@@ -210,7 +214,7 @@ export default function FlashcardsPracticePage() {
           Back to Material
         </Button>
 
-        <div className="rounded-lg border border-orange-500/30 bg-gradient-to-br from-orange-500/5 to-transparent p-8">
+        <div className="rounded-lg border-2 border-purple-300 bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 shadow-lg p-8">
           <div className="text-center space-y-4">
             <h2 className="text-2xl font-bold text-white">Practice Complete</h2>
             <p className="text-gray-400">
@@ -253,29 +257,27 @@ export default function FlashcardsPracticePage() {
         style={{ perspective: '1000px' }}
       >
         <div
-          className={`relative h-80 rounded-lg border border-orange-500/30 bg-gradient-to-br from-slate-800 to-slate-900 p-6 flex items-center justify-center transition-transform duration-500 ${
+          className={`relative h-80 rounded-lg border-2 border-purple-300 bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 p-6 flex items-center justify-center transition-transform duration-500 shadow-lg ${
             currentCard.isFlipped ? 'scale-95' : ''
           }`}
           style={{
             transform: currentCard.isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
             transformStyle: 'preserve-3d',
-            backfaceVisibility: 'hidden',
           }}
         >
           <div 
-            className="text-center absolute inset-0 flex flex-col items-center justify-center p-6"
+            className="text-center absolute inset-0 flex flex-col items-center justify-center p-6 bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 rounded-lg"
             style={{
-              backfaceVisibility: 'hidden',
               transform: currentCard.isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
             }}
           >
-            <p className="text-xs text-gray-500 mb-2">
+            <p className="text-xs text-purple-600 mb-2 font-medium">
               {currentCard.isFlipped ? 'Answer' : 'Question'}
             </p>
-            <p className="text-xl text-white leading-relaxed">
+            <p className="text-xl text-gray-800 leading-relaxed font-medium">
               {currentCard.isFlipped ? currentCard.answer : currentCard.question}
             </p>
-            <p className="text-xs text-gray-500 mt-4">Click to flip</p>
+            <p className="text-xs text-purple-500 mt-4">Click to flip</p>
           </div>
         </div>
       </div>
@@ -284,7 +286,7 @@ export default function FlashcardsPracticePage() {
       <div className="flex gap-2 justify-center">
         <Button
           onClick={nextCard}
-          className="bg-orange-500 hover:bg-orange-600 text-white"
+          className="bg-gradient-to-r from-purple-400 to-pink-400 hover:from-purple-500 hover:to-pink-500 text-white"
         >
           Next Card
         </Button>
@@ -293,12 +295,24 @@ export default function FlashcardsPracticePage() {
       {/* Progress */}
       <div className="w-full h-1 bg-gray-700 rounded-full overflow-hidden">
         <div
-          className="h-full bg-orange-500 transition-all"
+          className="h-full bg-gradient-to-r from-purple-400 to-pink-400 transition-all"
           style={{
             width: `${((sessionStats.reviewed + 1) / sessionStats.total) * 100}%`,
           }}
         />
       </div>
+
+      {/* Exit Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={showExitConfirm}
+        onClose={() => setShowExitConfirm(false)}
+        onConfirm={confirmExit}
+        title="Exit Flashcard Practice?"
+        description="Are you sure you want to exit? Your progress will be saved."
+        confirmText="Exit"
+        cancelText="Continue Practicing"
+        variant="warning"
+      />
     </div>
   );
 }

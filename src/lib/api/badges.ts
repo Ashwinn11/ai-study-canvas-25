@@ -1,4 +1,4 @@
-import type { UserStats } from './profileStats';
+import type { UserStats } from './profileStatsService';
 
 export type BadgeId = 'xp' | 'seeds' | 'streak' | 'mastery' | 'accuracy' | 'grades';
 
@@ -49,7 +49,7 @@ export const badgeDefinitions: TieredBadgeDefinition[] = [
     name: 'Legendary Learner',
     iconName: 'sparkles',
     color: 'rgb(59, 130, 246)', // Blue
-    value: () => 0, // XP not tracked in web yet
+    value: (s) => s.current?.xp ?? 0,
     tiers: [
       { threshold: 100, label: 'Earned 100 XP', shortLabel: '100', unit: 'XP' },
       { threshold: 500, label: 'Earned 500 XP', shortLabel: '500', unit: 'XP' },

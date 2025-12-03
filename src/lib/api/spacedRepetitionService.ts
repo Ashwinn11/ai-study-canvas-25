@@ -241,7 +241,7 @@ export class SpacedRepetitionService {
             : currentCard.lapses || 0,
       };
 
-      const { data, error } = await this.supabase
+      const { data, error } = await this.getSupabase()
         .from("flashcards")
         .update(updateData)
         .eq("id", flashcardId)
@@ -306,7 +306,7 @@ export class SpacedRepetitionService {
     isCorrect: boolean,
   ): Promise<{ data?: QuizQuestion; error?: string }> {
     try {// Get current quiz question data
-      const { data: currentQuestion, error: fetchError } = await this.supabase
+      const { data: currentQuestion, error: fetchError } = await this.getSupabase()
         .from("quiz_questions")
         .select("*")
         .eq("id", questionId)
@@ -351,7 +351,7 @@ export class SpacedRepetitionService {
           : currentQuestion.lapses || 0,
       };
 
-      const { data, error } = await this.supabase
+      const { data, error } = await this.getSupabase()
         .from("quiz_questions")
         .update(updateData)
         .eq("id", questionId)
@@ -424,7 +424,7 @@ export class SpacedRepetitionService {
 
       // Initialize specific flashcards
       if (flashcardIds && flashcardIds.length > 0) {
-        const { error: flashcardError } = await this.supabase
+        const { error: flashcardError } = await this.getSupabase()
           .from("flashcards")
           .update({
             interval: 1,
@@ -449,7 +449,7 @@ export class SpacedRepetitionService {
 
       // Initialize specific quiz questions
       if (quizQuestionIds && quizQuestionIds.length > 0) {
-        const { error: quizError } = await this.supabase
+        const { error: quizError } = await this.getSupabase()
           .from("quiz_questions")
           .update({
             interval: 1,
@@ -530,7 +530,7 @@ export class SpacedRepetitionService {
       );
 
       // Initialize flashcards without SM2 data
-      const { error: flashcardError } = await this.supabase
+      const { error: flashcardError } = await this.getSupabase()
         .from("flashcards")
         .update({
           interval: 1,
@@ -552,7 +552,7 @@ export class SpacedRepetitionService {
       }
 
       // Backfill next_due_date if missing but interval exists (older rows)
-      const { error: flashcardDateBackfillError } = await this.supabase
+      const { error: flashcardDateBackfillError } = await this.getSupabase()
         .from("flashcards")
         .update({
           next_due_date: new Date().toISOString().split("T")[0],
@@ -569,7 +569,7 @@ export class SpacedRepetitionService {
       }
 
       // Initialize quiz questions without SM2 data
-      const { error: quizError } = await this.supabase
+      const { error: quizError } = await this.getSupabase()
         .from("quiz_questions")
         .update({
           interval: 1,
@@ -591,7 +591,7 @@ export class SpacedRepetitionService {
       }
 
       // Backfill quiz next_due_date if missing but interval exists
-      const { error: quizDateBackfillError } = await this.supabase
+      const { error: quizDateBackfillError } = await this.getSupabase()
         .from("quiz_questions")
         .update({
           next_due_date: new Date().toISOString().split("T")[0],
@@ -643,14 +643,14 @@ export class SpacedRepetitionService {
       }
 
       // Get flashcard IDs
-      const { data: flashcards, error: flashcardError } = await this.supabase
+      const { data: flashcards, error: flashcardError } = await this.getSupabase()
         .from("flashcards")
         .select("id")
         .eq("user_id", userId)
         .in("seed_id", seedIds);
 
       // Get quiz question IDs
-      const { data: quizQuestions, error: quizError } = await this.supabase
+      const { data: quizQuestions, error: quizError } = await this.getSupabase()
         .from("quiz_questions")
         .select("id")
         .eq("user_id", userId)
@@ -788,7 +788,7 @@ export class SpacedRepetitionService {
       const today = getLocalDate();
 
       // OPTIMIZED: Get seed IDs first, then fetch content with simpler queries
-      const { data: examSeeds, error: seedsError } = await this.supabase
+      const { data: examSeeds, error: seedsError } = await this.getSupabase()
         .from("exam_seeds")
         .select("seed_id")
         .eq("exam_id", examId)
@@ -820,7 +820,7 @@ export class SpacedRepetitionService {
 
       // OPTIMIZED: Parallel queries with indexed lookups instead of complex joins
       const [flashcardsResult, quizQuestionsResult] = await Promise.all([
-        this.supabase
+        this.getSupabase()
           .from("flashcards")
           .select(
             "id, seed_id, next_due_date, interval, repetitions, easiness_factor",
@@ -829,7 +829,7 @@ export class SpacedRepetitionService {
           .in("seed_id", seedIds)
           .not("interval", "is", null),
 
-        this.supabase
+        this.getSupabase()
           .from("quiz_questions")
           .select(
             "id, seed_id, next_due_date, interval, repetitions, easiness_factor",

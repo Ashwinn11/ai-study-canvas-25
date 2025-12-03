@@ -6,7 +6,7 @@
 
 import { getSupabaseClient } from '@/lib/supabase/client';
 import { evaluateBadges, getBadgeTiers, type BadgeState, type BadgeId } from './badges';
-import { profileStatsService } from './profileStats';
+import { profileStatsService } from './profileStatsService';
 
 export interface Achievement {
   id?: string;

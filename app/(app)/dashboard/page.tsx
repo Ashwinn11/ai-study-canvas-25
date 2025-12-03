@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { profileStatsService } from '@/lib/api/profileStatsService';
 import { streakService } from '@/lib/api/streakService';
 import { seedsService } from '@/lib/api/seedsService';
 import { spacedRepetitionService } from '@/lib/api/spacedRepetitionService';
+import { useScreenRefresh } from '@/hooks/useScreenRefresh';
 import { Upload, BookOpen, GraduationCap, Flame, TrendingUp, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -29,34 +30,67 @@ export default function DashboardPage() {
     loading: true,
   });
 
+  const loadStats = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const [userStats, streakData, seedCounts, reviewStats] = await Promise.all([
+        profileStatsService.getUserStats(user.id),
+        streakService.getCurrentStreak(user.id),
+        seedsService.getSeedCounts(),
+        spacedRepetitionService.getReviewStatistics(user.id),
+      ]);
+
+      setStats({
+        totalSeeds: seedCounts.total || 0,
+        dueFlashcards: reviewStats?.data?.dueToday || 0,
+        streak: streakData || 0,
+        accuracy: userStats?.data?.accuracy || 0,
+        xp: userStats?.data?.current?.xp || 0,
+        loading: false,
+      });
+    } catch (error) {
+      console.error('Failed to load dashboard stats:', error);
+      setStats(prev => ({ ...prev, loading: false }));
+    }
+  }, [user]);
+
+  const refreshStats = useCallback(async () => {
+    if (!user) return;
+    try {
+      const [userStats, streakData, seedCounts, reviewStats] = await Promise.all([
+        profileStatsService.getUserStats(user.id),
+        streakService.getCurrentStreak(user.id),
+        seedsService.getSeedCounts(),
+        spacedRepetitionService.getReviewStatistics(user.id),
+      ]);
+
+      setStats(prev => ({
+        totalSeeds: seedCounts.total || 0,
+        dueFlashcards: reviewStats?.data?.dueToday || 0,
+        streak: streakData || 0,
+        accuracy: userStats?.data?.accuracy || 0,
+        xp: userStats?.data?.current?.xp || 0,
+        loading: false,
+      }));
+    } catch (error) {
+      console.error('Failed to refresh dashboard stats:', error);
+    }
+  }, [user]);
+
+  useScreenRefresh({
+    screenName: user ? `dashboard-${user.id}` : 'dashboard',
+    refreshFn: refreshStats,
+    refreshOnMount: false,
+    refreshOnFocus: false,
+  });
+
   useEffect(() => {
     if (!user) return;
 
-    const loadStats = async () => {
-      try {
-        const [userStats, streakData, seedCounts, reviewStats] = await Promise.all([
-          profileStatsService.getUserStats(user.id),
-          streakService.getCurrentStreak(user.id),
-          seedsService.getSeedCounts(),
-          spacedRepetitionService.getReviewStatistics(user.id),
-        ]);
-
-        setStats({
-          totalSeeds: seedCounts.total || 0,
-          dueFlashcards: reviewStats?.data?.dueToday || 0,
-          streak: streakData || 0,
-          accuracy: userStats?.data?.accuracy || 0,
-          xp: userStats?.data?.current?.xp || 0,
-          loading: false,
-        });
-      } catch (error) {
-        console.error('Failed to load dashboard stats:', error);
-        setStats(prev => ({ ...prev, loading: false }));
-      }
-    };
-
+    setStats(prev => ({ ...prev, loading: true }));
     loadStats();
-  }, [user]);
+  }, [user, loadStats]);
 
   if (!user) {
     return (
@@ -138,18 +172,21 @@ export default function DashboardPage() {
             description="Add new study content"
             href="/upload"
             icon={<Upload className="w-8 h-8" />}
+            colorScheme="pink"
           />
           <QuickActionCard
             title="Practice Flashcards"
             description="Review due cards"
             href="/seeds"
             icon={<BookOpen className="w-8 h-8" />}
+            colorScheme="purple"
           />
           <QuickActionCard
             title="Create Exam"
             description="Organize your materials"
             href="/exams"
             icon={<GraduationCap className="w-8 h-8" />}
+            colorScheme="blue"
           />
         </div>
       </div>
@@ -206,26 +243,40 @@ function QuickActionCard({
   description,
   href,
   icon,
+  colorScheme = 'pink',
 }: {
   title: string;
   description: string;
   href: string;
   icon: React.ReactNode;
+  colorScheme?: 'pink' | 'purple' | 'blue';
 }) {
+  const colorClasses = {
+    pink: 'border-pink-300 bg-pink-100 hover:bg-pink-200',
+    purple: 'border-purple-300 bg-purple-100 hover:bg-purple-200',
+    blue: 'border-blue-300 bg-blue-100 hover:bg-blue-200',
+  };
+
+  const iconColorClasses = {
+    pink: 'text-pink-600 group-hover:text-pink-700',
+    purple: 'text-purple-600 group-hover:text-purple-700',
+    blue: 'text-blue-600 group-hover:text-blue-700',
+  };
+
   return (
     <Link
       href={href}
-      className="group rounded-lg border border-border bg-card p-6 transition-all hover:bg-accent/50 hover:border-accent hover:shadow-md"
+      className={`group rounded-lg border-2 shadow-lg p-6 transition-all hover:shadow-xl ${colorClasses[colorScheme]}`}
     >
       <div className="flex items-start gap-4">
-        <div className="flex-shrink-0 text-primary/60 group-hover:text-primary transition-colors">
+        <div className={`flex-shrink-0 transition-colors ${iconColorClasses[colorScheme]}`}>
           {icon}
         </div>
         <div className="space-y-1">
-          <p className="font-semibold group-hover:text-primary transition-colors">
+          <p className="font-semibold text-gray-800 transition-colors">
             {title}
           </p>
-          <p className="text-sm text-muted-foreground">{description}</p>
+          <p className="text-sm text-gray-600">{description}</p>
         </div>
       </div>
     </Link>

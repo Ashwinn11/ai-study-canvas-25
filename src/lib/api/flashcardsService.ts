@@ -5,7 +5,9 @@ import {
   FlashcardGenerationBundle,
 } from "./contentGenerator";
 import { logger } from "@/utils/logger";
+import { spacedRepetitionService, SpacedRepetitionService } from "./spacedRepetitionService";
 // QA judge removed - AI prompts enforce quality via temperature 0.1 and structured schemas
+
 
 export interface FlashcardsServiceResult<T = any> {
   data?: T;
@@ -627,25 +629,29 @@ export class FlashcardsService {
   async reviewFlashcard(
     flashcardId: string,
     direction: 'left' | 'right' | 'up',
+    qualityOverride?: number,
   ): Promise<FlashcardsServiceResult<void>> {
     try {
-      // TODO: Implement full SM2 algorithm here or call spacedRepetitionService
-      // For now, just update last_reviewed to fix the build and provide basic functionality
-      const updates = {
-        last_reviewed: new Date().toISOString(),
-        // Simple logic for now
-        easiness_factor: direction === 'right' ? 2.6 : direction === 'up' ? 2.5 : 2.4,
+      const qualityMap: Record<'left' | 'right' | 'up', number> = {
+        left: SpacedRepetitionService.QUALITY_SCALE.FORGOT,
+        up: SpacedRepetitionService.QUALITY_SCALE.SOMEWHAT,
+        right: SpacedRepetitionService.QUALITY_SCALE.CONFIDENT,
       };
 
-      const { error } = await this.getSupabase()
-        .from("flashcards")
-        .update(updates)
-        .eq("id", flashcardId);
+      const quality =
+        qualityOverride ??
+        qualityMap[direction] ??
+        SpacedRepetitionService.QUALITY_SCALE.SOMEWHAT;
+
+      const { error } = await spacedRepetitionService.updateFlashcardSM2(
+        flashcardId,
+        quality,
+      );
 
       if (error) {
         logger.error("[FlashcardsService] Error reviewing flashcard:", error);
         return {
-          error: `Failed to review flashcard: ${error.message}`,
+          error,
         };
       }
 

@@ -1,15 +1,32 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { spacedRepetitionService, type ReviewItem } from '@/lib/api/spacedRepetitionService';
 import { flashcardsService } from '@/lib/api/flashcardsService';
 import { quizService } from '@/lib/api/quizService';
-import { scoreToGrade } from '@/lib/utils/gradeUtils';
+import { dailyGoalTrackerService } from '@/lib/api/dailyGoalTracker';
+import { xpService } from '@/lib/api/xpService';
+import { streakService } from '@/lib/api/streakService';
+import { achievementEngine } from '@/lib/api/achievementEngine';
+import { reviewProgressService } from '@/lib/api/reviewProgressService';
+import { useGlobalRefresh } from '@/hooks/useGlobalRefresh';
+import { scoreToGrade, getGradeMessage } from '@/lib/utils/gradeUtils';
 import { Flashcard, QuizQuestion } from '@/lib/supabase/types';
-import { ArrowLeft, Loader2, RotateCw, Check, X, Target, Flame } from 'lucide-react';
+import { getSupabaseClient } from '@/lib/supabase/client';
+import { ArrowLeft, Loader2, RotateCw, Check, X, Target, Flame, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { toast } from 'sonner';
+
+const MOMENTUM_MESSAGES: Array<{ text: string; emoji: string }> = [
+  { text: 'You’re building momentum!', emoji: '🚀' },
+  { text: 'Great flow—keep going!', emoji: '🔥' },
+  { text: 'Nice streak, stay sharp!', emoji: '⚡️' },
+  { text: 'Learning mode: engaged!', emoji: '🎯' },
+  { text: 'Brains are warming up!', emoji: '🧠' },
+];
 
 export default function ExamReviewPage() {
   const router = useRouter();
@@ -35,6 +52,7 @@ export default function ExamReviewPage() {
     quizTotal: 0,
   });
   const [sessionComplete, setSessionComplete] = useState(false);
+  const [completionStreak, setCompletionStreak] = useState<number | null>(null);
   const [exitAnimation, setExitAnimation] = useState<'left' | 'right' | 'up' | null>(null);
 
   // Drag state for smooth swipe animations
@@ -43,8 +61,51 @@ export default function ExamReviewPage() {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | 'up' | null>(null);
 
-  // Store quality ratings for each item
-  const results = new Map<string, number>();
+  const { refreshGlobal } = useGlobalRefresh();
+
+  const supabaseRef = useRef(getSupabaseClient());
+  const chunkSequenceRef = useRef(0);
+
+  useEffect(() => {
+    reviewProgressService.setSupabase(supabaseRef.current);
+  }, []);
+
+  useEffect(() => {
+    if (user && !isPracticeMode) {
+      const today = new Date().toISOString().split('T')[0];
+      dailyGoalTrackerService.setSessionDate(user.id, today);
+    }
+  }, [user, isPracticeMode]);
+
+  const [sessionXP, setSessionXP] = useState(0);
+  const [xpFeedback, setXpFeedback] = useState<{ amount: number; label: string } | null>(null);
+
+  // Daily goal tracking
+  const [dailyGoal, setDailyGoal] = useState<number>(20);
+  const [dailyGoalMet, setDailyGoalMet] = useState<boolean>(false);
+
+  // Momentum + motivation cues
+  const [showMomentumBadge, setShowMomentumBadge] = useState(false);
+  const [momentumMessage, setMomentumMessage] = useState<{ text: string; emoji: string }>({ text: '', emoji: '' });
+
+  // Achievement celebration modal state
+  const [unlockedAchievement, setUnlockedAchievement] = useState<{ name: string; description?: string } | null>(null);
+
+  // Confirmation dialog state
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+
+  // Internal refs for tracking session progress
+  const resultsRef = useRef<Map<string, number>>(new Map());
+  const cardsSinceBadgeRef = useRef(0);
+  const nextBadgeThresholdRef = useRef(3 + Math.floor(Math.random() * 3));
+  const goalCelebratedRef = useRef(false);
+
+  useEffect(() => {
+    goalCelebratedRef.current = false;
+    cardsSinceBadgeRef.current = 0;
+    nextBadgeThresholdRef.current = 3 + Math.floor(Math.random() * 3);
+    setDailyGoalMet(false);
+  }, [examId, user]);
 
   const loadReviewItems = useCallback(async () => {
     if (!user || !examId) return;
@@ -99,11 +160,24 @@ export default function ExamReviewPage() {
       const shuffled = items.sort(() => Math.random() - 0.5);
       setReviewItems(shuffled);
       setIsLoading(false);
+      
+      // Load user's daily goal
+      const { data: profile } = await supabaseRef.current
+        .from('profiles')
+        .select('daily_cards_goal')
+        .eq('id', user.id)
+        .maybeSingle();
+        
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((profile as any)?.daily_cards_goal) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setDailyGoal((profile as any).daily_cards_goal);
+      }
     } catch (err) {
       console.error('Error loading review items:', err);
       setError(err instanceof Error ? err.message : 'Failed to load review items');
-       setIsLoading(false);
-     }
+      setIsLoading(false);
+    }
   }, [user, examId, isPracticeMode]);
 
   useEffect(() => {
@@ -112,8 +186,111 @@ export default function ExamReviewPage() {
     }
   }, [user, examId, loadReviewItems]);
 
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const already = await dailyGoalTrackerService.hasAlreadyCelebratedToday(user.id);
+        if (!cancelled) {
+          goalCelebratedRef.current = already;
+          setDailyGoalMet(already);
+        }
+      } catch (err) {
+        console.error('Error checking daily goal status:', err);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  useEffect(() => {
+    if (!showMomentumBadge) {
+      setMomentumMessage({ text: '', emoji: '' });
+      return;
+    }
+    const timer = setTimeout(() => setShowMomentumBadge(false), 2200);
+    return () => clearTimeout(timer);
+  }, [showMomentumBadge]);
+
+  const recordProgress = useCallback(
+    (updatedStats: typeof stats) => {
+      const totalAttempts = updatedStats.quizTotal + updatedStats.flashcardTotal;
+
+      // Momentum badge logic
+      cardsSinceBadgeRef.current += 1;
+      if (cardsSinceBadgeRef.current >= nextBadgeThresholdRef.current) {
+        cardsSinceBadgeRef.current = 0;
+        nextBadgeThresholdRef.current = 3 + Math.floor(Math.random() * 3);
+
+        const cue = MOMENTUM_MESSAGES[Math.floor(Math.random() * MOMENTUM_MESSAGES.length)];
+        setMomentumMessage(cue);
+        setShowMomentumBadge(true);
+      }
+
+      if (!user) return;
+
+      // Daily goal celebration
+      if (dailyGoal > 0 && totalAttempts >= dailyGoal && !goalCelebratedRef.current) {
+        goalCelebratedRef.current = true;
+        setDailyGoalMet(true);
+        dailyGoalTrackerService
+          .markGoalCelebratedToday(user.id)
+          .catch((err) => {
+            console.error('Error marking daily goal celebration:', err);
+            goalCelebratedRef.current = false;
+            setDailyGoalMet(false);
+          });
+
+        toast.success('Daily Goal Crushed!', {
+          description: `You reviewed ${totalAttempts} cards today!`,
+          duration: 4000,
+          icon: <Target className="w-5 h-5 text-green-500" />,
+        });
+      }
+    },
+    [dailyGoal, user]
+  );
+
+  const logReviewChunk = useCallback(
+    async (item: ReviewItem, isCorrect: boolean, quality: number, isFinal: boolean) => {
+      if (!user || isPracticeMode) return;
+      try {
+        chunkSequenceRef.current += 1;
+        await reviewProgressService.logChunk({
+          userId: user.id,
+          seedId: item.seed_id,
+          sessionType: item.type === 'quiz' ? 'quiz' : 'flashcards',
+          totalItems: 1,
+          correctItems: isCorrect ? 1 : 0,
+          examId,
+          chunkStartIndex: currentIndex,
+          chunkEndIndex: currentIndex,
+          totalReviewItems: reviewItems.length,
+          isFinalChunk: isFinal,
+          chunkSequence: chunkSequenceRef.current,
+          reviewedCardIds: [item.id],
+        });
+      } catch (err) {
+        console.error('Error logging review chunk:', err);
+      }
+    },
+    [user, isPracticeMode, examId, currentIndex, reviewItems.length]
+  );
+
   const currentItem = reviewItems[currentIndex] || null;
   const isLastItem = currentIndex === reviewItems.length - 1;
+
+  const showXPFeedbackAnim = (amount: number, label: string) => {
+    setXpFeedback({ amount, label });
+    // Hide after animation
+    setTimeout(() => {
+      setXpFeedback(null);
+    }, 1500);
+  };
 
   const moveToNext = useCallback(async () => {
     if (isLastItem) {
@@ -146,7 +323,8 @@ export default function ExamReviewPage() {
               flashcard_correct: stats.flashcardCorrect,
               quiz_count: stats.quizTotal,
               quiz_correct: stats.quizCorrect,
-              reviewed_card_ids: Array.from(results.keys()),
+               reviewed_card_ids: Array.from(resultsRef.current.keys()),
+
             },
             completed_at: new Date().toISOString(),
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -156,7 +334,6 @@ export default function ExamReviewPage() {
           // Only create report for actual review mode, not practice mode
           if (!isPracticeMode) {
             const scorePercentage = Math.round(score * 100);
-            const { scoreToGrade } = await import('@/lib/utils/gradeUtils');
             const letterGrade = scoreToGrade(scorePercentage);
 
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -178,37 +355,71 @@ export default function ExamReviewPage() {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } as any);
 
-            // Award XP for exam completion (only in review mode)
-            const { xpService } = await import('@/lib/api/xpService');
-            const xpAmount = totalItems * 10; // 10 XP per item reviewed
-            await xpService.awardXP(user.id, xpAmount);
-
-            // Get user's daily goal
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('daily_cards_goal')
-              .eq('id', user.id)
-              .maybeSingle();
-
-            const dailyGoal = (profile as Record<string, unknown> | null)?.['daily_cards_goal'] as number || 20;
+            // NOTE: XP is now awarded per-card, so we don't award it here anymore.
 
             // Update streak after session
-            const { streakService } = await import('@/lib/api/streakService');
-            await streakService.updateStreakAfterSession(user.id, dailyGoal);
+            const streakResult = await streakService.updateStreakAfterSession(user.id, dailyGoal);
+            setCompletionStreak(streakResult.currentStreak);
 
             // Check for achievement unlocks
-            const { achievementEngine } = await import('@/lib/api/achievementEngine');
-            await achievementEngine.checkAndUnlockAchievements(user.id);
+            const newAchievements = await achievementEngine.checkAndUnlockAchievements(user.id);
 
             // Maybe surprise achievement
-            await achievementEngine.maybeSurpriseAchievement(user.id);
+            const surprise = await achievementEngine.maybeSurpriseAchievement(user.id);
+            if (surprise) newAchievements.push(surprise);
 
             // Mark daily goal as celebrated (if met)
-            const { dailyGoalTrackerService } = await import('@/lib/api/dailyGoalTracker');
-            const alreadyCelebrated = await dailyGoalTrackerService.hasAlreadyCelebratedToday(user.id);
-            if (!alreadyCelebrated && totalItems >= dailyGoal) {
-              await dailyGoalTrackerService.markGoalCelebratedToday(user.id);
+            let showGoalToast = false;
+            if (dailyGoal > 0 && totalItems >= dailyGoal && !goalCelebratedRef.current) {
+              try {
+                await dailyGoalTrackerService.markGoalCelebratedToday(user.id);
+              } catch (err) {
+                console.error('Error marking daily goal at completion:', err);
+              }
+              goalCelebratedRef.current = true;
+              setDailyGoalMet(true);
+              showGoalToast = true;
             }
+
+            // Filter newly unlocked achievements (avoid duplicates)
+            const freshAchievements = newAchievements.filter((achievement) => {
+              if (!achievement.unlocked_at) return false;
+              const unlockedMs = new Date(achievement.unlocked_at).getTime();
+              return Date.now() - unlockedMs < 5000;
+            });
+
+            if (freshAchievements.length > 0 && !unlockedAchievement) {
+              const first = freshAchievements[0];
+              setUnlockedAchievement({
+                name: first.name || 'Achievement Unlocked',
+                description: first.description || 'You earned a new badge!',
+              });
+            }
+
+            // Show toasts (staggered)
+            let delay = 500;
+
+            if (showGoalToast) {
+              setTimeout(() => {
+                toast.success('Daily Goal Crushed!', {
+                  description: `You reviewed ${totalItems} cards today!`,
+                  duration: 4000,
+                  icon: <Target className="w-5 h-5 text-green-500" />,
+                });
+              }, delay);
+              delay += 1500;
+            }
+
+            freshAchievements.forEach((achievement, index) => {
+              setTimeout(() => {
+                toast.success(achievement.name ?? 'Achievement Unlocked', {
+                  description: achievement.description || 'New badge unlocked!',
+                  duration: 4000,
+                  icon: <Award className="w-5 h-5 text-purple-500" />,
+                });
+              }, delay + index * 1500);
+            });
+            await refreshGlobal({ refreshAll: true, force: true });
           }
         } catch (error) {
           console.error('Error saving exam review session:', error);
@@ -224,7 +435,7 @@ export default function ExamReviewPage() {
       setSwipeDirection(null);
       setDragOffset({ x: 0, y: 0 });
     }
-  }, [isLastItem, user, examId, sessionStartTime, stats, results]);
+  }, [isLastItem, user, examId, sessionStartTime, stats, dailyGoal, isPracticeMode, refreshGlobal, unlockedAchievement]);
 
   // Quiz answer handler (matching iOS lines 1011-1057)
   const handleQuizAnswer = async (answerIndex: number) => {
@@ -240,19 +451,35 @@ export default function ExamReviewPage() {
     // Correct = 3 (proves understanding, consistent progression)
     // Incorrect = 1 (forces interval reset to 1 day for proper SM2 algorithm)
     const quality = isCorrect ? 3 : 1;
-    results.set(currentItem.id, quality);
+    resultsRef.current.set(currentItem.id, quality);
 
-    setStats((prev) => ({
-      ...prev,
-      quizCorrect: prev.quizCorrect + (isCorrect ? 1 : 0),
-      quizTotal: prev.quizTotal + 1,
-    }));
+    setStats((prev) => {
+      const updated = {
+        ...prev,
+        quizCorrect: prev.quizCorrect + (isCorrect ? 1 : 0),
+        quizTotal: prev.quizTotal + 1,
+      };
+      recordProgress(updated);
+      return updated;
+    });
 
     // Update SM2 in background (non-blocking) - Skip in practice mode
     if (!isPracticeMode) {
       quizService
         .reviewQuizQuestion(currentItem.id, isCorrect)
         .catch((err) => console.error('Error updating quiz SM2:', err));
+    }
+
+    // Calculate and award XP (matching iOS)
+    const xpResult = xpService.calculateXP('quiz', isCorrect);
+    setSessionXP((prev) => prev + xpResult.amount);
+    await xpService.awardXP(user.id, xpResult.amount);
+    showXPFeedbackAnim(xpResult.amount, xpResult.reason);
+
+    if (!isPracticeMode && currentItem) {
+      logReviewChunk(currentItem, isCorrect, quality, isLastItem).catch((err) =>
+        console.error('Error logging quiz chunk:', err)
+      );
     }
 
     // Move to next immediately with minimal feedback delay
@@ -267,18 +494,35 @@ export default function ExamReviewPage() {
 
     const isCorrect = quality >= 3;
 
-    results.set(currentItem.id, quality);
-    setStats((prev) => ({
-      ...prev,
-      flashcardCorrect: prev.flashcardCorrect + (isCorrect ? 1 : 0),
-      flashcardTotal: prev.flashcardTotal + 1,
-    }));
+    resultsRef.current.set(currentItem.id, quality);
+
+    setStats((prev) => {
+      const updated = {
+        ...prev,
+        flashcardCorrect: prev.flashcardCorrect + (isCorrect ? 1 : 0),
+        flashcardTotal: prev.flashcardTotal + 1,
+      };
+      recordProgress(updated);
+      return updated;
+    });
 
     // Update SM2 in background (non-blocking) - Skip in practice mode
     if (!isPracticeMode) {
       flashcardsService
-        .reviewFlashcard(currentItem.id, direction)
+        .reviewFlashcard(currentItem.id, direction, quality)
         .catch((err) => console.error('Error updating flashcard SM2:', err));
+    }
+
+    // Calculate and award XP (matching iOS)
+    const xpResult = xpService.calculateXP('flashcard', quality);
+    setSessionXP((prev) => prev + xpResult.amount);
+    await xpService.awardXP(user.id, xpResult.amount);
+    showXPFeedbackAnim(xpResult.amount, xpResult.reason);
+
+    if (!isPracticeMode && currentItem) {
+      logReviewChunk(currentItem, isCorrect, quality, isLastItem).catch((err) =>
+        console.error('Error logging flashcard chunk:', err)
+      );
     }
 
     // Trigger exit animation
@@ -376,9 +620,11 @@ export default function ExamReviewPage() {
   };
 
   const handleExit = () => {
-    if (confirm('Are you sure you want to exit this review session?')) {
-      router.push(`/exams/${examId}`);
-    }
+    setShowExitConfirm(true);
+  };
+
+  const confirmExit = () => {
+    router.push(`/exams/${examId}`);
   };
 
   // Calculate overlay opacity and border width based on drag distance
@@ -470,75 +716,150 @@ export default function ExamReviewPage() {
   const scoreColor = getScoreColor(scorePercentage);
   const gradeColor = getGradeColor(letterGrade);
 
-  // Completion modal (matching iOS exam completion)
+  // Completion modal (matching iOS exam completion - Receipt Style)
   if (sessionComplete) {
+    const timeSpentSeconds = Math.round((Date.now() - sessionStartTime) / 1000);
+    const mins = Math.floor(timeSpentSeconds / 60);
+    const secs = timeSpentSeconds % 60;
+    const timeString = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+    const displayStreak = completionStreak ?? 0;
+
     return (
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-white/10 p-8 max-w-md w-full space-y-6 shadow-2xl">
-          {/* Score Circle */}
-          <div className="flex flex-col items-center space-y-4">
-            <div className={`w-36 h-36 rounded-full ${scoreColor} flex items-center justify-center`}>
-              <span className="text-5xl font-bold text-white">{scorePercentage}%</span>
-            </div>
-
-            {/* Letter Grade */}
-            <div className={`text-4xl font-bold ${gradeColor}`}>{letterGrade}</div>
-
-            {/* Title */}
-            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-              {isPracticeMode ? (
-                <>
-                  <Target className="w-6 h-6 text-blue-500" />
-                  Practice Complete!
-                </>
-              ) : (
-                <>
-                  <Flame className="w-6 h-6 text-orange-500" />
-                  Review Session Complete!
-                </>
-              )}
-            </h2>
-
-            {/* Score Breakdown */}
-            <div className="w-full space-y-2">
-              {stats.flashcardTotal > 0 && (
-                <div className="flex justify-between text-gray-300">
-                  <span>Flashcards:</span>
-                  <span className="font-semibold">
-                    {stats.flashcardCorrect}/{stats.flashcardTotal}
-                  </span>
-                </div>
-              )}
-              {stats.quizTotal > 0 && (
-                <div className="flex justify-between text-gray-300">
-                  <span>Quiz:</span>
-                  <span className="font-semibold">
-                    {stats.quizCorrect}/{stats.quizTotal}
-                  </span>
-                </div>
-              )}
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        {/* Report Card Container */}
+        <div className="bg-[#F8F9FA] rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
+          
+          {/* 1. Header Strip (Receipt Look) */}
+          <div className="bg-white px-6 py-4 border-b-2 border-dashed border-gray-200 flex justify-between items-center">
+            <span className="font-mono text-gray-900 uppercase tracking-widest font-bold text-sm">
+              Session Report
+            </span>
+            <div className="bg-gray-900 px-2 py-1 rounded text-[10px] text-white font-bold tracking-wider">
+              COMPLETED
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col gap-3">
-            <Button onClick={() => router.push(`/exams/${examId}`)} className="w-full" size="lg">
-              Back to Exam
-            </Button>
-            <Button
-              onClick={() => {
+          {/* 2. Main Body */}
+          <div className="p-8 flex flex-col items-center">
+            
+            {/* Topic */}
+            <div className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">
+              TOPIC
+            </div>
+            <h2 className="text-xl font-extrabold text-gray-900 text-center mb-8 line-clamp-2">
+              {isPracticeMode ? 'Practice Session' : 'Exam Review'}
+            </h2>
+
+            {/* Grade Hero */}
+            <div className="relative mb-8">
+              <div className={`w-32 h-32 rounded-full border-4 ${
+                letterGrade.startsWith('A') ? 'border-green-400 bg-green-50' :
+                letterGrade.startsWith('B') ? 'border-blue-400 bg-blue-50' :
+                letterGrade.startsWith('C') ? 'border-purple-400 bg-purple-50' :
+                'border-orange-400 bg-orange-50'
+              } flex items-center justify-center`}>
+                <span className={`text-6xl font-black ${
+                  letterGrade.startsWith('A') ? 'text-green-500' :
+                  letterGrade.startsWith('B') ? 'text-blue-500' :
+                  letterGrade.startsWith('C') ? 'text-purple-500' :
+                  'text-orange-500'
+                }`}>
+                  {letterGrade}
+                </span>
+              </div>
+              {/* Score Badge */}
+              <div className={`absolute -bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full border-2 border-white text-xs font-bold text-white shadow-sm ${
+                letterGrade.startsWith('A') ? 'bg-green-500' :
+                letterGrade.startsWith('B') ? 'bg-blue-500' :
+                letterGrade.startsWith('C') ? 'bg-purple-500' :
+                'bg-orange-500'
+              }`}>
+                {scorePercentage}% SCORE
+              </div>
+            </div>
+
+            {/* Stats Grid */}
+            <div className="w-full space-y-3 font-mono text-sm">
+              {/* Items Reviewed */}
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500 uppercase">Items Reviewed</span>
+                <div className="flex-1 mx-3 border-b border-dotted border-gray-300 h-1 relative top-1"></div>
+                <span className="font-bold text-gray-900">{totalItems}</span>
+              </div>
+
+              {/* Time Spent */}
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500 uppercase">Time Spent</span>
+                <div className="flex-1 mx-3 border-b border-dotted border-gray-300 h-1 relative top-1"></div>
+                <span className="font-bold text-gray-900">{timeString}</span>
+              </div>
+
+              {/* Streak */}
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500 uppercase">Streak</span>
+                <div className="flex-1 mx-3 border-b border-dotted border-gray-300 h-1 relative top-1"></div>
+                <div className="flex items-center gap-1 font-bold text-orange-500">
+                  {displayStreak} Days <Flame className="w-4 h-4 fill-orange-500" />
+                </div>
+              </div>
+            </div>
+
+            {/* Breakdown */}
+            {(stats.flashcardTotal > 0 || stats.quizTotal > 0) && (
+              <div className="w-full mt-6 pt-4 border-t border-dashed border-gray-200 space-y-1">
+                {stats.flashcardTotal > 0 && (
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>Flashcards</span>
+                    <span>{stats.flashcardCorrect}/{stats.flashcardTotal}</span>
+                  </div>
+                )}
+                {stats.quizTotal > 0 && (
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>Quiz Questions</span>
+                    <span>{stats.quizCorrect}/{stats.quizTotal}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+          </div>
+
+          {/* 3. Footer Actions */}
+          <div className="bg-gray-100 p-6 border-t border-gray-200 flex flex-col gap-4 items-center">
+            <p className="text-xs italic text-gray-500 text-center">
+              "{getGradeMessage(letterGrade)}"
+            </p>
+            
+            <div className="flex w-full gap-3">
+              <Button 
+                onClick={() => router.push(`/exams/${examId}`)} 
+                className="flex-1 bg-gray-900 hover:bg-gray-800 text-white"
+              >
+                Done
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1 border-gray-300 hover:bg-white"
+                onClick={() => {
                 setSessionComplete(false);
                 setCurrentIndex(0);
                 setStats({ flashcardCorrect: 0, flashcardTotal: 0, quizCorrect: 0, quizTotal: 0 });
-                results.clear();
+                setSessionXP(0);
+                setXpFeedback(null);
+                setShowMomentumBadge(false);
+                setMomentumMessage({ text: '', emoji: '' });
+                cardsSinceBadgeRef.current = 0;
+                nextBadgeThresholdRef.current = 3 + Math.floor(Math.random() * 3);
+                resultsRef.current.clear();
                 loadReviewItems();
-              }}
-              variant="outline"
-              className="w-full"
-            >
-              Try Again
-            </Button>
+
+                }}
+              >
+                Try Again
+              </Button>
+            </div>
           </div>
+
         </div>
       </div>
     );
@@ -557,6 +878,14 @@ export default function ExamReviewPage() {
           <ArrowLeft className="h-4 w-4" />
           Exit
         </Button>
+        
+        {/* Session XP Display */}
+        {sessionXP > 0 && (
+          <div className="flex items-center gap-1 bg-primary/10 px-3 py-1 rounded-full">
+            <span className="text-xs font-bold text-primary">+{sessionXP} XP</span>
+          </div>
+        )}
+
         <div className="text-sm text-gray-400">
           {isPracticeMode ? 'Practice Test' : 'Review Mode'}
         </div>
@@ -595,8 +924,8 @@ export default function ExamReviewPage() {
       {currentItem.type === 'quiz' && (
         <div className="space-y-6">
           {/* Question Card */}
-          <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-xl p-8 min-h-[300px] flex items-center justify-center">
-            <p className="text-xl text-white text-center leading-relaxed">
+          <div className="rounded-2xl border-2 border-blue-300 bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 shadow-lg p-8 min-h-[300px] flex items-center justify-center">
+            <p className="text-xl text-gray-800 text-center leading-relaxed font-semibold">
               {(currentItem.content as QuizQuestion).question}
             </p>
           </div>
@@ -608,7 +937,7 @@ export default function ExamReviewPage() {
               const isCorrect = index === (currentItem.content as QuizQuestion).correct_answer;
               const showResult = showQuizResult;
 
-              let buttonClass = 'rounded-xl border border-white/10 bg-white/5 p-4 text-left transition-all hover:border-primary/30 hover:bg-white/10';
+              let buttonClass = 'rounded-xl border border-white/10 bg-white/5 p-4 text-left transition-all hover:border-primary/30 hover:bg-white/10 text-white';
 
               if (showResult) {
                 if (isCorrect) {
@@ -700,7 +1029,7 @@ export default function ExamReviewPage() {
                 >
                   {/* Front - Question */}
                   <div
-                    className={`absolute inset-0 backface-hidden rounded-2xl border bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-xl p-8 ${
+                    className={`absolute inset-0 backface-hidden rounded-2xl border-2 border-purple-300 bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 shadow-lg p-8 ${
                       !isFlipped ? 'opacity-100' : 'opacity-0'
                     }`}
                     style={{
@@ -713,13 +1042,13 @@ export default function ExamReviewPage() {
                     }}
                   >
                     <div className="flex flex-col h-full">
-                      <div className="text-sm text-gray-400 mb-4">Question</div>
+                      <div className="text-sm text-purple-600 mb-4 font-medium">Question</div>
                       <div className="flex-1 flex items-center justify-center">
-                        <p className="text-xl text-white text-center leading-relaxed">
+                        <p className="text-xl text-gray-800 text-center leading-relaxed font-medium">
                           {(currentItem.content as Flashcard).question}
                         </p>
                       </div>
-                      <div className="flex items-center justify-center gap-2 text-sm text-gray-500 mt-4">
+                      <div className="flex items-center justify-center gap-2 text-sm text-purple-500 mt-4 font-medium">
                         <RotateCw className="h-4 w-4" />
                         <span>Tap to flip</span>
                       </div>
@@ -748,7 +1077,7 @@ export default function ExamReviewPage() {
 
                   {/* Back - Answer */}
                   <div
-                    className={`absolute inset-0 backface-hidden rounded-2xl border bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-xl p-8 ${
+                    className={`absolute inset-0 backface-hidden rounded-2xl border-2 border-purple-300 bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 shadow-lg p-8 ${
                       isFlipped ? 'opacity-100' : 'opacity-0'
                     }`}
                     style={{
@@ -762,9 +1091,9 @@ export default function ExamReviewPage() {
                     }}
                   >
                     <div className="flex flex-col h-full">
-                      <div className="text-sm text-gray-400 mb-4">Answer</div>
+                      <div className="text-sm text-purple-600 mb-4 font-medium">Answer</div>
                       <div className="flex-1 flex items-center justify-center">
-                        <p className="text-xl text-white text-center leading-relaxed">
+                        <p className="text-xl text-gray-800 text-center leading-relaxed font-medium">
                           {(currentItem.content as Flashcard).answer}
                         </p>
                       </div>
@@ -835,6 +1164,56 @@ export default function ExamReviewPage() {
           )}
         </div>
       )}
+
+      {/* Floating XP Feedback */}
+      {xpFeedback && (
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-50 flex flex-col items-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="text-5xl font-bold text-primary drop-shadow-lg">
+            +{xpFeedback.amount} XP
+          </div>
+          <div className="text-xl font-medium text-white drop-shadow-md mt-2">
+            {xpFeedback.label}
+          </div>
+        </div>
+      )}
+
+      {showMomentumBadge && momentumMessage.text && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="flex items-center gap-2 rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white shadow-lg">
+            <span>{momentumMessage.emoji}</span>
+            <span>{momentumMessage.text}</span>
+          </div>
+        </div>
+      )}
+
+      {unlockedAchievement && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-3xl bg-white px-8 py-10 text-center shadow-2xl">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-2xl">
+              🏅
+            </div>
+            <h3 className="text-xl font-bold text-slate-900">{unlockedAchievement.name}</h3>
+            <p className="mt-2 text-sm text-slate-600">
+              {unlockedAchievement.description || 'You earned a new badge!'}
+            </p>
+            <Button className="mt-6 w-full" onClick={() => setUnlockedAchievement(null)}>
+              Keep going
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Exit Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={showExitConfirm}
+        onClose={() => setShowExitConfirm(false)}
+        onConfirm={confirmExit}
+        title="Exit Review Session?"
+        description="Are you sure you want to exit this review session? Your progress will be saved."
+        confirmText="Exit"
+        cancelText="Continue Reviewing"
+        variant="warning"
+      />
     </div>
   );
 }

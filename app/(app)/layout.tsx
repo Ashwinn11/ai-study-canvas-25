@@ -12,8 +12,7 @@ import {
   User,
   LogOut,
   Menu,
-  Sparkles,
-} from 'lucide-react';
+ } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useState } from 'react';
@@ -38,11 +37,6 @@ const sidebarLinks = [
     name: 'Exams',
     href: '/exams',
     icon: GraduationCap,
-  },
-  {
-    name: 'AI Chat',
-    href: '/chat',
-    icon: Sparkles,
   },
   {
     name: 'Profile',

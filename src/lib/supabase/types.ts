@@ -41,7 +41,7 @@ export type Database = {
           id: string;
           user_id: string;
           title: string;
-          content_type: 'pdf' | 'image' | 'audio' | 'video' | 'text';
+          content_type: 'pdf' | 'image' | 'audio' | 'text' | 'youtube';
           content_url: string | null;
           content_text: string | null;
           original_content: string | null;
@@ -67,7 +67,7 @@ export type Database = {
           id?: string;
           user_id: string;
           title: string;
-          content_type: 'pdf' | 'image' | 'audio' | 'video' | 'text';
+          content_type: 'pdf' | 'image' | 'audio' | 'text' | 'youtube';
           content_url?: string | null;
           content_text?: string | null;
           original_content?: string | null;
@@ -93,7 +93,7 @@ export type Database = {
           id?: string;
           user_id?: string;
           title?: string;
-          content_type?: 'pdf' | 'image' | 'audio' | 'video' | 'text';
+          content_type?: 'pdf' | 'image' | 'audio' | 'text' | 'youtube';
           content_url?: string | null;
           content_text?: string | null;
           original_content?: string | null;

@@ -1,0 +1,73 @@
+
+> masterly@0.0.0 build
+> next build
+
+   ▲ Next.js 15.5.6
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 4.1s
+   Linting and checking validity of types ...
+
+ ⚠ The Next.js plugin was not detected in your ESLint configuration. See https://nextjs.org/docs/app/api-reference/config/eslint#migrating-existing-config
+
+Failed to compile.
+
+./app/(app)/dashboard/page.tsx
+3:14  Warning: Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.  react-refresh/only-export-components
+
+./app/(app)/exams/[id]/page.tsx
+26:6  Warning: React Hook useEffect has a missing dependency: 'loadExamData'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/(app)/exams/[id]/review/page.tsx
+47:9  Warning: The 'results' object construction makes the dependencies of useCallback Hook (at line 168) change on every render. To fix this, wrap the initialization of 'results' in its own useMemo() Hook.  react-hooks/exhaustive-deps
+53:6  Warning: React Hook useEffect has a missing dependency: 'loadReviewItems'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+135:11  Warning: Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any').
+153:16  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+570:54  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+573:66  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/(app)/exams/create/page.tsx
+35:6  Warning: React Hook useEffect has a missing dependency: 'loadSeeds'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/(app)/exams/page.tsx
+23:6  Warning: React Hook useEffect has a missing dependency: 'loadExams'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/(app)/profile/page.tsx
+24:6  Warning: React Hook useEffect has a missing dependency: 'loadStats'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/(app)/seeds/[id]/flashcards/page.tsx
+41:6  Warning: React Hook useEffect has a missing dependency: 'loadFlashcards'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/(app)/seeds/[id]/page.tsx
+56:6  Warning: React Hook useEffect has a missing dependency: 'loadSeed'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/(app)/seeds/[id]/quiz/page.tsx
+52:6  Warning: React Hook useEffect has a missing dependency: 'loadQuizQuestions'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+161:5  Warning: React Hook useCallback has a missing dependency: 'handleContinue'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/(app)/seeds/page.tsx
+38:6  Warning: React Hook useEffect has a missing dependency: 'loadSeeds'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/(auth)/login/page.tsx
+5:14  Warning: Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.  react-refresh/only-export-components
+
+./app/(auth)/signup/page.tsx
+6:14  Warning: Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.  react-refresh/only-export-components
+
+./app/auth/auth-code-error/page.tsx
+7:14  Warning: Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.  react-refresh/only-export-components
+
+./src/components/ui/form.tsx
+117:10  Warning: Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.  react-refresh/only-export-components
+
+./src/components/ui/navigation-menu.tsx
+109:3  Warning: Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.  react-refresh/only-export-components
+
+./src/components/ui/sidebar.tsx
+617:3  Warning: Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.  react-refresh/only-export-components
+
+./src/contexts/AuthContext.tsx
+123:17  Warning: Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.  react-refresh/only-export-components
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules

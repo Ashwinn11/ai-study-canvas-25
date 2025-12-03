@@ -45,73 +45,47 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
+          DEFAULT: "#ff7664", // Brand Primary
+          foreground: "#FFFFFF",
+          hover: "#e66a5a", // Darker shade
         },
         secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
+          DEFAULT: "#1CB0F6", // Duolingo Macaw Blue
+          foreground: "#FFFFFF",
+          hover: "#1899D6",
         },
         destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
+          DEFAULT: "#FF4B4B", // Duolingo Red
+          foreground: "#FFFFFF",
+          hover: "#D33131",
         },
         muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+          DEFAULT: "#1e293b", // Darker muted for dark theme
+          foreground: "#94a3b8", // Slate-400
         },
         accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
-        },
-        success: {
-          DEFAULT: "hsl(var(--success))",
-          foreground: "hsl(var(--success-foreground))",
-        },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
+          DEFAULT: "#FFC800", // Duolingo Bee Yellow
+          foreground: "#4B4B4B",
+          hover: "#E5B400",
         },
         card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+          DEFAULT: "#1e293b", // Slate-800 for cards in dark mode
+          foreground: "#FFFFFF",
         },
-        "dark-surface": "hsl(var(--dark-surface))",
-      },
-      backgroundImage: {
-        "gradient-primary": "var(--gradient-primary)",
-        "gradient-accent": "var(--gradient-accent)",
-        "gradient-hero": "var(--gradient-hero)",
-      },
-      boxShadow: {
-        soft: "var(--shadow-soft)",
-        medium: "var(--shadow-medium)",
-        elevated: "var(--shadow-elevated)",
-        card: '0px 2px 8px rgba(0,0,0,0.08)',
-        floating: '0px 8px 24px rgba(0,0,0,0.16)',
-        prominent: '0px 12px 32px rgba(0,0,0,0.20)',
-      },
-      transitionDuration: {
-        'micro': '80ms',
-        'fast': '150ms',
-        'normal': '250ms',
-        'slow': '400ms',
-        'celebration': '600ms',
-      },
-      transitionTimingFunction: {
-        smooth: "cubic-bezier(0.4, 0.0, 0.2, 1)",
-        standard: 'cubic-bezier(0.4, 0.0, 0.2, 1)',
-        emphasized: 'cubic-bezier(0.2, 0.0, 0, 1)',
-        bounce: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+        "duolingo-green": "#ff7664", // Replaced with Brand Primary
+        "duolingo-feather": "#89E219",
+        "duolingo-bee": "#FFC800",
+        "duolingo-macaw": "#1CB0F6",
+        "duolingo-fox": "#FF9600",
+        "duolingo-card": "#1e293b", // Dark card
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
-        xxs: '6px',
-        xs: '8px',
-        xl: '28px',
-        full: '9999px',
+        "xl-custom": "20px",
+        "2xl-custom": "32px",
+        "3xl-custom": "48px",
       },
       keyframes: {
         "accordion-down": {
@@ -122,35 +96,37 @@ export default {
           from: { height: "var(--radix-accordion-content-height)", opacity: "1" },
           to: { height: "0", opacity: "0" },
         },
-        "fade-in": {
-          from: { opacity: "0", transform: "translateY(20px)" },
-          to: { opacity: "1", transform: "translateY(0)" },
-        },
         "fade-in-up": {
           from: { opacity: "0", transform: "translateY(40px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
-        "slide-in-left": {
-          from: { opacity: "0", transform: "translateX(-40px)" },
-          to: { opacity: "1", transform: "translateX(0)" },
+        "bounce-in": {
+          "0%": { opacity: "0", transform: "scale(0.3)" },
+          "50%": { opacity: "1", transform: "scale(1.05)" },
+          "70%": { transform: "scale(0.9)" },
+          "100%": { transform: "scale(1)" },
         },
-        "slide-in-right": {
-          from: { opacity: "0", transform: "translateX(40px)" },
-          to: { opacity: "1", transform: "translateX(0)" },
+        "float": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-10px)" },
         },
-        "scale-in": {
-          from: { opacity: "0", transform: "scale(0.95)" },
-          to: { opacity: "1", transform: "scale(1)" },
+        "squish": {
+          "0%, 100%": { transform: "scale(1)" },
+          "50%": { transform: "scale(0.95, 1.05)" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.3s ease-out",
         "accordion-up": "accordion-up 0.3s ease-out",
-        "fade-in": "fade-in 0.6s ease-out forwards",
-        "fade-in-up": "fade-in-up 0.8s ease-out forwards",
-        "slide-in-left": "slide-in-left 0.6s ease-out forwards",
-        "slide-in-right": "slide-in-right 0.6s ease-out forwards",
-        "scale-in": "scale-in 0.5s ease-out forwards",
+        "fade-in-up": "fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        "bounce-in": "bounce-in 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards",
+        "float": "float 3s ease-in-out infinite",
+        "squish": "squish 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+      },
+      boxShadow: {
+        '3d': '0px 4px 0px 0px rgba(0,0,0,0.2)', // Button shadow
+        '3d-hover': '0px 2px 0px 0px rgba(0,0,0,0.2)', // Pressed button shadow
+        'card': '0px 4px 0px 0px #E5E5E5', // Card shadow
       },
     },
   },

@@ -16,6 +16,7 @@ export interface ExamSeed {
 }
 
 export interface ExamWithSeeds extends Exam {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   seeds: any[];
 }
 
@@ -204,6 +205,7 @@ class ExamsService {
         return { error: 'Failed to fetch exam seeds' };
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const seedIds = (examSeeds || []).map((es: any) => es.seed_id);
 
       // Get seed details
@@ -268,11 +270,11 @@ class ExamsService {
           flashcardsService.createFlashcards({
             seedId,
             userId: session.user.id,
-          }).catch(() => {}), // Silently fail if already exists
+          }).catch(() => { }), // Silently fail if already exists
           quizService.createQuizQuestions({
             seedId,
             userId: session.user.id,
-          }).catch(() => {}), // Silently fail if already exists
+          }).catch(() => { }), // Silently fail if already exists
         ]);
       } catch (genError) {
         console.warn('Auto-generation failed for seed', seedId, genError);

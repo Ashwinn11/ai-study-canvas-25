@@ -40,7 +40,7 @@ export default function CreateExamPage() {
       const { data, error } = await supabase
         .from('seeds')
         .select('*')
-        .eq('user_id', user?.id)
+        .eq('user_id', user?.id || '')
         .eq('processing_status', 'completed')
         .order('created_at', { ascending: false });
 

@@ -110,7 +110,7 @@ export default function QuizPage() {
     async (answerIndex: number) => {
       if (!currentQuestion || currentQuestion.isAnswered || !user) return;
 
-      const isCorrect = answerIndex === currentQuestion.correct_answer;
+      const isCorrect = answerIndex === parseInt(currentQuestion.correct_answer);
 
       // Track this attempt
       const attempt: QuizAttempt = {

@@ -334,7 +334,7 @@ export default function QuizPage() {
 
   if (!currentQuestion) return null;
 
-  const isCorrectAnswer = currentQuestion.selectedAnswer === currentQuestion.correct_answer;
+  const isCorrectAnswer = currentQuestion.selectedAnswer === parseInt(currentQuestion.correct_answer);
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">

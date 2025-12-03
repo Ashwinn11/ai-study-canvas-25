@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { Flame } from "lucide-react";
 
 import { LottieAnimation } from "@/components/ui/LottieAnimation";
-import thinkingAnimation from "@/assets/animations/learning.json";
+import thinkingAnimation from "@/assets/animations/Learning.json";
 
 export const Hero = () => {
   return (

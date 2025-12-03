@@ -158,12 +158,9 @@ export default function QuizPage() {
 
       setShowFeedback(true);
 
-      // Review question with SM-2
-      try {
-        await quizService.reviewQuizQuestion(currentQuestion.id, isCorrect);
-      } catch (err) {
-        console.error('Error reviewing quiz question:', err);
-      }
+      // NOTE: Individual quiz practice does NOT update SM-2
+      // SM-2 is only used in exam review mode
+      // This matches iOS behavior where practice is separate from spaced repetition
 
       // Auto-advance after 1.5 seconds
       setTimeout(() => {
@@ -192,7 +189,7 @@ export default function QuizPage() {
             metadata: {
               incorrect: sessionStats.incorrect,
               sessionType: 'quiz',
-              source: 'exam-review',
+              source: 'individual-practice',
             },
           });
 

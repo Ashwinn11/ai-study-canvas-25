@@ -136,7 +136,7 @@ export default function FlashcardsPracticePage() {
             timeSpent: timeSpentSeconds,
             metadata: {
               sessionType: 'flashcards-practice',
-              source: 'exam-review',
+              source: 'individual-practice',
             },
           });
 
@@ -261,6 +261,7 @@ export default function FlashcardsPracticePage() {
       <div
         onClick={flipCard}
         className="cursor-pointer perspective"
+        style={{ perspective: '1000px' }}
       >
         <div
           className={`relative h-80 rounded-lg border border-orange-500/30 bg-gradient-to-br from-slate-800 to-slate-900 p-6 flex items-center justify-center transition-transform duration-500 ${
@@ -269,9 +270,16 @@ export default function FlashcardsPracticePage() {
           style={{
             transform: currentCard.isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
             transformStyle: 'preserve-3d',
+            backfaceVisibility: 'hidden',
           }}
         >
-          <div className="text-center">
+          <div 
+            className="text-center absolute inset-0 flex flex-col items-center justify-center p-6"
+            style={{
+              backfaceVisibility: 'hidden',
+              transform: currentCard.isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+            }}
+          >
             <p className="text-xs text-gray-500 mb-2">
               {currentCard.isFlipped ? 'Answer' : 'Question'}
             </p>

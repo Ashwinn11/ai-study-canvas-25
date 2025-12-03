@@ -1,5 +1,5 @@
 import { getSupabaseClient } from '../supabase/client';
-import { Seed } from '../supabase/types';
+import { Seed, type Database } from '../supabase/types';
 
 export interface CreateSeedParams {
   userId: string;
@@ -14,12 +14,12 @@ export interface UpdateSeedParams {
   feynmanExplanation?: string;
   intent?: 'Educational' | 'Comprehension' | 'Reference' | 'Analytical' | 'Procedural';
   confidenceScore?: number;
-  processingStatus?: 'pending' | 'extracting' | 'analyzing' | 'summarizing' | 'feynman_processing' | 'completed' | 'failed';
-  extractionMetadata?: Record<string, unknown>;
+  processingStatus?: 'pending' | 'extracting' | 'analyzing' | 'completed' | 'failed';
+  extractionMetadata?: unknown;
   processingError?: string;
   languageCode?: string;
   isMixedLanguage?: boolean;
-  languageMetadata?: Record<string, number> | null;
+  languageMetadata?: unknown;
 }
 
 export class SeedsService {
@@ -29,17 +29,21 @@ export class SeedsService {
   async createInitialSeed(params: CreateSeedParams): Promise<{ id: string }> {
     const supabase = getSupabaseClient();
 
-    const { data, error } = await supabase
+    const seedData: Database['public']['Tables']['seeds']['Insert'] = {
+      user_id: params.userId,
+      title: params.title,
+      content_type: params.contentType,
+      file_size: params.fileSize,
+      processing_status: 'pending',
+      is_starred: false,
+      is_archived: false,
+    };
+
+    // Type assertion workaround for Supabase client typing issue
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any)
       .from('seeds')
-      .insert({
-        user_id: params.userId,
-        title: params.title,
-        content_type: params.contentType,
-        file_size: params.fileSize,
-        processing_status: 'pending',
-        is_starred: false,
-        is_archived: false,
-      })
+      .insert(seedData)
       .select('id')
       .single();
 
@@ -56,7 +60,7 @@ export class SeedsService {
   async updateSeed(seedId: string, params: UpdateSeedParams): Promise<Seed> {
     const supabase = getSupabaseClient();
 
-    const updateData: Record<string, unknown> = {};
+    const updateData: Partial<Database['public']['Tables']['seeds']['Update']> = {};
 
     if (params.contentText !== undefined) updateData.content_text = params.contentText;
     if (params.originalContent !== undefined) updateData.original_content = params.originalContent;
@@ -64,13 +68,17 @@ export class SeedsService {
     if (params.intent !== undefined) updateData.intent = params.intent;
     if (params.confidenceScore !== undefined) updateData.confidence_score = params.confidenceScore;
     if (params.processingStatus !== undefined) updateData.processing_status = params.processingStatus;
-    if (params.extractionMetadata !== undefined) updateData.extraction_metadata = params.extractionMetadata;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (params.extractionMetadata !== undefined) updateData.extraction_metadata = params.extractionMetadata as any;
     if (params.processingError !== undefined) updateData.processing_error = params.processingError;
     if (params.languageCode !== undefined) updateData.language_code = params.languageCode;
     if (params.isMixedLanguage !== undefined) updateData.is_mixed_language = params.isMixedLanguage;
-    if (params.languageMetadata !== undefined) updateData.language_metadata = params.languageMetadata;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (params.languageMetadata !== undefined) updateData.language_metadata = params.languageMetadata as any;
 
-    const { data, error } = await supabase
+    // Type assertion workaround for Supabase client typing issue
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any)
       .from('seeds')
       .update(updateData)
       .eq('id', seedId)

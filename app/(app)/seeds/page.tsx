@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { seedsService } from '@/lib/api/seeds';
 import { Seed } from '@/lib/supabase/types';
-import { FileText, Image, Music, Video, Loader2, Upload as UploadIcon, Trash2 } from 'lucide-react';
+import { FileText, Image, Music, Video, Loader2, Upload as UploadIcon, Trash2, Youtube } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const CONTENT_TYPE_ICONS = {
@@ -14,6 +14,7 @@ const CONTENT_TYPE_ICONS = {
   audio: Music,
   video: Video,
   text: FileText,
+  youtube: Youtube,
 };
 
 const CONTENT_TYPE_COLORS = {
@@ -22,6 +23,7 @@ const CONTENT_TYPE_COLORS = {
   audio: 'text-purple-400',
   video: 'text-green-400',
   text: 'text-gray-400',
+  youtube: 'text-red-500',
 };
 
 export default function SeedsPage() {

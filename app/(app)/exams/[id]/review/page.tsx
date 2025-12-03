@@ -172,7 +172,7 @@ export default function ExamReviewPage() {
     if (!user || showQuizResult || currentItem.type !== 'quiz') return;
 
     const quizContent = currentItem.content as QuizQuestion;
-    const isCorrect = answerIndex === parseInt(quizContent.correct_answer);
+    const isCorrect = answerIndex === quizContent.correct_answer;
 
     setSelectedAnswer(answerIndex);
     setShowQuizResult(true);
@@ -536,7 +536,7 @@ export default function ExamReviewPage() {
           <div className="grid gap-3">
             {(currentItem.content as QuizQuestion).options.map((option, index) => {
               const isSelected = selectedAnswer === index;
-              const isCorrect = index === parseInt((currentItem.content as QuizQuestion).correct_answer);
+              const isCorrect = index === (currentItem.content as QuizQuestion).correct_answer;
               const showResult = showQuizResult;
 
               let buttonClass = 'rounded-xl border border-white/10 bg-white/5 p-4 text-left transition-all hover:border-primary/30 hover:bg-white/10';

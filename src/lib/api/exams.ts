@@ -1,4 +1,5 @@
 import { getSupabaseClient } from '@/lib/supabase/client';
+import type { Database } from '@/lib/supabase/types';
 
 export interface Exam {
   id: string;
@@ -43,12 +44,16 @@ class ExamsService {
         return { error: 'User authentication required to create exams. Please sign in first.' };
       }
 
-      const { data: exam, error } = await supabase
+      const insertData: Database['public']['Tables']['exams']['Insert'] = {
+        user_id: session.user.id,
+        subject_name: data.subject_name,
+      };
+
+      // Type assertion workaround for Supabase client typing issue
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: exam, error } = await (supabase as any)
         .from('exams')
-        .insert({
-          user_id: session.user.id,
-          subject_name: data.subject_name,
-        })
+        .insert(insertData)
         .select()
         .single();
 
@@ -126,9 +131,13 @@ class ExamsService {
         return { error: 'Authentication required' };
       }
 
-      const { data: exam, error } = await supabase
+      const updateData: Database['public']['Tables']['exams']['Update'] = data;
+
+      // Type assertion workaround for Supabase client typing issue
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: exam, error } = await (supabase as any)
         .from('exams')
-        .update(data)
+        .update(updateData)
         .eq('id', id)
         .eq('user_id', session.user.id)
         .select()
@@ -209,7 +218,7 @@ class ExamsService {
       const seedIds = (examSeeds || []).map((es: any) => es.seed_id);
 
       // Get seed details
-      let seeds = [];
+      let seeds: Database['public']['Tables']['seeds']['Row'][] = [];
       if (seedIds.length > 0) {
         const { data: seedsData, error: seedsError } = await supabase
           .from('seeds')
@@ -227,7 +236,7 @@ class ExamsService {
       }
 
       const examWithSeeds: ExamWithSeeds = {
-        ...exam,
+        ...(exam as Exam),
         seeds,
       };
 
@@ -246,13 +255,17 @@ class ExamsService {
         return { error: 'Authentication required' };
       }
 
-      const { data: examSeed, error } = await supabase
+      const examSeedData: Database['public']['Tables']['exam_seeds']['Insert'] = {
+        exam_id: examId,
+        seed_id: seedId,
+        user_id: session.user.id,
+      };
+
+      // Type assertion workaround for Supabase client typing issue
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: examSeed, error } = await (supabase as any)
         .from('exam_seeds')
-        .insert({
-          exam_id: examId,
-          seed_id: seedId,
-          user_id: session.user.id,
-        })
+        .insert(examSeedData)
         .select()
         .single();
 

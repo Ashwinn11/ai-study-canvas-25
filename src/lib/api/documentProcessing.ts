@@ -45,7 +45,7 @@ export async function processPdfOrImage(
   base64Data: string,
   mimeType: string,
   accessToken: string
-): Promise<{ text: string; metadata?: Record<string, unknown> }> {
+): Promise<ExtractionResult> {
   if (!API_BASE_URL) {
     throw new Error('Backend URL not configured');
   }
@@ -79,7 +79,10 @@ export async function processPdfOrImage(
   }
 
   const result = await response.json();
-  return result;
+  return {
+    content: result.text,
+    metadata: result.metadata,
+  };
 }
 
 /**
@@ -90,7 +93,7 @@ export async function transcribeAudio(
   mimeType: string,
   accessToken: string,
   languageHints?: string[]
-): Promise<{ text: string; metadata?: Record<string, unknown> }> {
+): Promise<ExtractionResult> {
   if (!API_BASE_URL) {
     throw new Error('Backend URL not configured');
   }
@@ -125,7 +128,10 @@ export async function transcribeAudio(
   }
 
   const result = await response.json();
-  return result;
+  return {
+    content: result.text,
+    metadata: result.metadata,
+  };
 }
 
 /**
@@ -136,7 +142,7 @@ export async function transcribeVideo(
   mimeType: string,
   accessToken: string,
   languageHints?: string[]
-): Promise<{ text: string; metadata?: Record<string, unknown> }> {
+): Promise<ExtractionResult> {
   if (!API_BASE_URL) {
     throw new Error('Backend URL not configured');
   }
@@ -171,7 +177,10 @@ export async function transcribeVideo(
   }
 
   const result = await response.json();
-  return result;
+  return {
+    content: result.text,
+    metadata: result.metadata,
+  };
 }
 
 /**
@@ -181,7 +190,7 @@ export async function extractDocument(
   base64Data: string,
   mimeType: string,
   accessToken: string
-): Promise<{ text: string; metadata?: Record<string, unknown> }> {
+): Promise<ExtractionResult> {
   if (!API_BASE_URL) {
     throw new Error('Backend URL not configured');
   }
@@ -215,7 +224,10 @@ export async function extractDocument(
   }
 
   const result = await response.json();
-  return result;
+  return {
+    content: result.text,
+    metadata: result.metadata,
+  };
 }
 
 /**
@@ -435,7 +447,7 @@ function getContentLength(content: string, language?: string): number {
 export async function extractYouTubeUrl(
   url: string,
   accessToken: string
-): Promise<{ text: string; metadata?: Record<string, unknown> }> {
+): Promise<ExtractionResult> {
   if (!API_BASE_URL) {
     throw new Error('Backend URL not configured');
   }
@@ -468,5 +480,8 @@ export async function extractYouTubeUrl(
   }
 
   const result = await response.json();
-  return result;
+  return {
+    content: result.text,
+    metadata: result.metadata,
+  };
 }

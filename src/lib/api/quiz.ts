@@ -1,5 +1,5 @@
 import { getSupabaseClient } from '@/lib/supabase/client';
-import { QuizQuestion } from '@/lib/supabase/types';
+import { QuizQuestion, type Database } from '@/lib/supabase/types';
 import { calculateSM2, quizToQuality, getLocalDate } from '@/lib/algorithms/sm2';
 
 export interface CreateQuizRequest {
@@ -302,19 +302,21 @@ class QuizService {
     const lapses = !isCorrect ? (question.lapses || 0) + 1 : question.lapses || 0;
 
     // Update quiz question in database
-    const { data: updatedQuestion, error: updateError } = await supabase
-      .from('quiz_questions')
+    const updateData: Database['public']['Tables']['quiz_questions']['Update'] = {
+      interval: sm2Result.interval,
+      repetitions: sm2Result.repetitions,
+      easiness_factor: sm2Result.easinessFactor,
+      next_due_date: sm2Result.nextDueDate.toISOString().split('T')[0],
+      last_reviewed: new Date().toISOString(),
+      streak,
+      lapses,
+    };
 
-      .update({
-        interval: sm2Result.interval,
-        repetitions: sm2Result.repetitions,
-        easiness_factor: sm2Result.easinessFactor,
-        next_due_date: sm2Result.nextDueDate.toISOString().split('T')[0],
-        last_reviewed: new Date().toISOString(),
-        last_reviewed_date: today,
-        streak,
-        lapses,
-      })
+    // Type assertion workaround for Supabase client typing issue
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: updatedQuestion, error: updateError } = await (supabase as any)
+      .from('quiz_questions')
+      .update(updateData)
       .eq('id', questionId)
       .select()
       .single();

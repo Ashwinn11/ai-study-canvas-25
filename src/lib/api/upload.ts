@@ -174,7 +174,9 @@ class UploadProcessor {
         title || file.name,
         extractionResult.metadata?.language,
         accessToken,
-        onProgress
+        onProgress ? (progress: number, message: string) => {
+          onProgress({ stage: 'generating', progress, message });
+        } : undefined
       );
 
       this.emitProgress(onProgress, 'finalizing');
@@ -199,7 +201,6 @@ class UploadProcessor {
         languageCode: extractionResult.metadata?.language || 'en',
         isMixedLanguage: extractionResult.metadata?.isMixedLanguage || false,
         languageMetadata: extractionResult.metadata?.languageMetadata || null,
-        processingError: null,
       });
 
       this.emitProgress(onProgress, 'completed');
@@ -257,7 +258,9 @@ class UploadProcessor {
         title,
         extractionResult.metadata?.language,
         accessToken,
-        onProgress
+        onProgress ? (progress: number, message: string) => {
+          onProgress({ stage: 'generating', progress, message });
+        } : undefined
       );
 
       this.emitProgress(onProgress, 'finalizing');
@@ -282,7 +285,6 @@ class UploadProcessor {
         languageCode: extractionResult.metadata?.language || 'en',
         isMixedLanguage: extractionResult.metadata?.isMixedLanguage || false,
         languageMetadata: extractionResult.metadata?.languageMetadata || null,
-        processingError: null,
       });
 
       this.emitProgress(onProgress, 'completed');
@@ -317,8 +319,8 @@ class UploadProcessor {
 
     // Use video title if available
     const finalTitle =
-      title === 'YouTube Video' && extractionResult.metadata?.videoTitle
-        ? extractionResult.metadata.videoTitle
+      title === 'YouTube Video' && typeof extractionResult.metadata?.videoTitle === 'string'
+        ? (extractionResult.metadata.videoTitle as string)
         : title;
 
     // Validate content quality
@@ -341,7 +343,9 @@ class UploadProcessor {
         finalTitle,
         extractionResult.metadata?.language,
         accessToken,
-        onProgress
+        onProgress ? (progress: number, message: string) => {
+          onProgress({ stage: 'generating', progress, message });
+        } : undefined
       );
 
       this.emitProgress(onProgress, 'finalizing');
@@ -366,7 +370,6 @@ class UploadProcessor {
         languageCode: extractionResult.metadata?.language || 'en',
         isMixedLanguage: extractionResult.metadata?.isMixedLanguage || false,
         languageMetadata: extractionResult.metadata?.languageMetadata || null,
-        processingError: null,
       });
 
       this.emitProgress(onProgress, 'completed');

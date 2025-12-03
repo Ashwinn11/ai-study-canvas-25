@@ -19,6 +19,7 @@ interface QuizQuestionState extends QuizQuestion {
   selectedAnswer?: number;
   isAnswered: boolean;
   showResult: boolean;
+  explanation?: string;
 }
 
 export default function QuizPage() {
@@ -110,7 +111,7 @@ export default function QuizPage() {
     async (answerIndex: number) => {
       if (!currentQuestion || currentQuestion.isAnswered || !user) return;
 
-      const isCorrect = answerIndex === parseInt(currentQuestion.correct_answer);
+      const isCorrect = answerIndex === currentQuestion.correct_answer;
 
       // Track this attempt
       const attempt: QuizAttempt = {
@@ -334,7 +335,7 @@ export default function QuizPage() {
 
   if (!currentQuestion) return null;
 
-  const isCorrectAnswer = currentQuestion.selectedAnswer === parseInt(currentQuestion.correct_answer);
+  const isCorrectAnswer = currentQuestion.selectedAnswer === currentQuestion.correct_answer;
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">

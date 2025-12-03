@@ -47,7 +47,7 @@ export type Database = {
           original_content: string | null;
           file_size: number | null;
           feynman_explanation: string | null;
-          processing_status: 'pending' | 'extracting' | 'analyzing' | 'completed' | 'failed';
+          processing_status: 'pending' | 'extracting' | 'analyzing' | 'summarizing' | 'feynman_processing' | 'completed' | 'failed';
           intent: 'Educational' | 'Comprehension' | 'Reference' | 'Analytical' | 'Procedural' | null;
           language_code: string | null;
           is_mixed_language: boolean | null;
@@ -73,7 +73,7 @@ export type Database = {
           original_content?: string | null;
           file_size?: number | null;
           feynman_explanation?: string | null;
-          processing_status?: 'pending' | 'extracting' | 'analyzing' | 'completed' | 'failed';
+          processing_status?: 'pending' | 'extracting' | 'analyzing' | 'summarizing' | 'feynman_processing' | 'completed' | 'failed';
           intent?: 'Educational' | 'Comprehension' | 'Reference' | 'Analytical' | 'Procedural' | null;
           language_code?: string | null;
           is_mixed_language?: boolean | null;
@@ -99,7 +99,7 @@ export type Database = {
           original_content?: string | null;
           file_size?: number | null;
           feynman_explanation?: string | null;
-          processing_status?: 'pending' | 'extracting' | 'analyzing' | 'completed' | 'failed';
+          processing_status?: 'pending' | 'extracting' | 'analyzing' | 'summarizing' | 'feynman_processing' | 'completed' | 'failed';
           intent?: 'Educational' | 'Comprehension' | 'Reference' | 'Analytical' | 'Procedural' | null;
           language_code?: string | null;
           is_mixed_language?: boolean | null;
@@ -185,7 +185,7 @@ export type Database = {
           user_id: string;
           question: string;
           options: string[];
-          correct_answer: string;
+          correct_answer: number;
           difficulty: number;
           interval: number;
           repetitions: number;
@@ -204,7 +204,7 @@ export type Database = {
           user_id: string;
           question: string;
           options: string[];
-          correct_answer: string;
+          correct_answer: number;
           difficulty?: number;
           interval?: number;
           repetitions?: number;

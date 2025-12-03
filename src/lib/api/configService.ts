@@ -46,6 +46,18 @@ export interface PromptsConfig {
   feynmanUserTemplate: string;
 }
 
+export interface MediaLimitsConfig {
+  maxDurationSeconds: number;
+  maxFileSizeBytes: number;
+}
+
+export interface FileSizeConfig {
+  document: number;
+  image: number;
+  audio: number;
+  video: number;
+}
+
 export interface AppConfig {
   version: string;
   timestamp: string;
@@ -57,6 +69,12 @@ export interface AppConfig {
     defaultCacheTtlMs?: number;
   };
   prompts?: PromptsConfig;
+  upload?: {
+    maxFileSize?: number;
+    maxTextContentCharacters?: number;
+    fileSizes?: FileSizeConfig;
+    mediaLimits?: MediaLimitsConfig;
+  };
 }
 
 /**
@@ -214,6 +232,54 @@ class ConfigService {
         'Configuration unavailable. Please check your internet connection and try again.'
       );
     }
+  }
+
+  /**
+   * Get maximum file size for specific content type
+   * Matching iOS lines 349-388
+   */
+  async getMaxFileSize(): Promise<number> {
+    const config = await this.getConfig();
+    return config.upload?.maxFileSize || 20 * 1024 * 1024; // Default 20MB
+  }
+
+  async getMaxFileSizeByType(contentType: 'document' | 'image' | 'audio' | 'video'): Promise<number> {
+    const config = await this.getConfig();
+    
+    if (config.upload?.fileSizes?.[contentType]) {
+      return config.upload.fileSizes[contentType];
+    }
+    
+    // Fallback to default limits matching iOS
+    const defaultLimits = {
+      document: 15 * 1024 * 1024, // 15MB
+      image: 10 * 1024 * 1024,     // 10MB
+      audio: 50 * 1024 * 1024,     // 50MB
+      video: 100 * 1024 * 1024,    // 100MB
+    };
+    
+    return defaultLimits[contentType] || await this.getMaxFileSize();
+  }
+
+  async getMaxTextContentCharacters(): Promise<number> {
+    const config = await this.getConfig();
+    return config.upload?.maxTextContentCharacters || 50000; // Default 50K characters
+  }
+
+  async getMediaLimits(): Promise<MediaLimitsConfig> {
+    const config = await this.getConfig();
+    return config.upload?.mediaLimits || {
+      maxDurationSeconds: 600, // 10 minutes
+      maxFileSizeBytes: 50 * 1024 * 1024, // 50MB
+    };
+  }
+
+  async getAILimits(): Promise<{ maxWords: number; maxCharacters: number }> {
+    const feynmanConfig = await this.getAIConfig('feynman');
+    return {
+      maxWords: feynmanConfig.maxWords,
+      maxCharacters: feynmanConfig.maxCharacters,
+    };
   }
 
   /**

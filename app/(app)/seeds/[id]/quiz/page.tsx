@@ -4,6 +4,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { quizService, QuizAttempt } from '@/lib/api/quiz';
+import { xpService } from '@/lib/api/xpService';
+import { streakService } from '@/lib/api/streakService';
+import { achievementEngine } from '@/lib/api/achievementEngine';
+import { dailyGoalTrackerService } from '@/lib/api/dailyGoalTracker';
 import { QuizQuestion } from '@/lib/supabase/types';
 import {
   ArrowLeft,
@@ -12,6 +16,9 @@ import {
   XCircle,
   Trophy,
   RotateCw,
+  Sparkles,
+  Star,
+  Rocket,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -113,6 +120,10 @@ export default function QuizPage() {
 
       const isCorrect = answerIndex === currentQuestion.correct_answer;
 
+      // Award XP for quiz answer
+      const xpResult = xpService.calculateXP('quiz', isCorrect);
+      await xpService.awardXP(user.id, xpResult.amount);
+
       // Track this attempt
       const attempt: QuizAttempt = {
         questionId: currentQuestion.id,
@@ -171,6 +182,8 @@ export default function QuizPage() {
       if (user && seedId) {
         try {
           const timeSpentSeconds = Math.round((Date.now() - sessionStartTime) / 1000);
+
+          // Save quiz session
           await quizService.createLearningSession(seedId, user.id, {
             totalItems: questions.length,
             correctItems: sessionStats.correct,
@@ -179,11 +192,38 @@ export default function QuizPage() {
             metadata: {
               incorrect: sessionStats.incorrect,
               sessionType: 'quiz',
-              source: 'individual-practice',
+              source: 'exam-review',
             },
           });
+
+          // Get user's daily goal
+          const { data: profile } = await (await import('@/lib/supabase/client')).getSupabaseClient()
+            .from('profiles')
+            .select('daily_cards_goal')
+            .eq('id', user.id)
+            .maybeSingle();
+
+          const dailyGoal = (profile as Record<string, unknown> | null)?.['daily_cards_goal'] as number || 20;
+
+          // Count total items reviewed (quizzes count as cards)
+          const totalItemsReviewed = questions.length;
+
+          // Update streak after session
+          await streakService.updateStreakAfterSession(user.id, dailyGoal);
+
+          // Check for achievement unlocks
+          await achievementEngine.checkAndUnlockAchievements(user.id);
+
+          // Maybe surprise achievement
+          await achievementEngine.maybeSurpriseAchievement(user.id);
+
+          // Mark daily goal as celebrated (if met)
+          const alreadyCelebrated = await dailyGoalTrackerService.hasAlreadyCelebratedToday(user.id);
+          if (!alreadyCelebrated && totalItemsReviewed >= dailyGoal) {
+            await dailyGoalTrackerService.markGoalCelebratedToday(user.id);
+          }
         } catch (error) {
-          console.error('Error saving quiz session:', error);
+          console.error('Error finalizing quiz session:', error);
         }
       }
 
@@ -310,7 +350,10 @@ export default function QuizPage() {
             </div>
 
             {/* Title - Emotional (matching iOS) */}
-            <h2 className="text-2xl font-bold text-white">💯 Solid performance!</h2>
+            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+              <Star className="w-6 h-6 text-yellow-500" />
+              Solid performance!
+            </h2>
 
             {/* Combined summary - No redundancy (matching iOS) */}
             <p className="text-lg text-gray-300">
@@ -325,7 +368,8 @@ export default function QuizPage() {
               className="px-8"
               size="lg"
             >
-              Try Again & Ace It 🚀
+              Try Again & Ace It
+              <Rocket className="w-4 h-4 ml-2" />
             </Button>
           </div>
         </div>

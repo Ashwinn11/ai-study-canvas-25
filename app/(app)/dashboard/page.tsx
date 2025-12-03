@@ -1,4 +1,6 @@
 import { Metadata } from 'next';
+import { Upload, CreditCard, BookOpen } from 'lucide-react';
+import { ReactNode } from 'react';
 
 export const metadata: Metadata = {
   title: 'Dashboard - Masterly',
@@ -52,19 +54,19 @@ export default function DashboardPage() {
             title="Upload Material"
             description="Add new study content"
             href="/upload"
-            icon="📤"
+            icon={<Upload className="w-8 h-8 text-primary" />}
           />
           <QuickActionCard
             title="Practice Flashcards"
             description="Review due cards"
             href="/seeds"
-            icon="🎴"
+            icon={<CreditCard className="w-8 h-8 text-secondary" />}
           />
           <QuickActionCard
             title="Create Exam"
             description="Organize your materials"
             href="/exams"
-            icon="📚"
+            icon={<BookOpen className="w-8 h-8 text-accent" />}
           />
         </div>
       </div>
@@ -116,7 +118,7 @@ function QuickActionCard({
   title: string;
   description: string;
   href: string;
-  icon: string;
+  icon: ReactNode;
 }) {
   return (
     <a
@@ -124,7 +126,7 @@ function QuickActionCard({
       className="group rounded-lg border border-border bg-card p-6 transition-all hover:bg-accent/50 hover:border-accent"
     >
       <div className="flex items-start gap-4">
-        <div className="text-3xl">{icon}</div>
+        <div className="flex-shrink-0">{icon}</div>
         <div className="space-y-1">
           <p className="font-semibold group-hover:text-primary transition-colors">
             {title}

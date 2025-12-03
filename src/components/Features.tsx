@@ -1,11 +1,16 @@
 import { cn } from "@/lib/utils";
 import { Brain, FileText, LineChart, Mic, Upload } from "lucide-react";
+import { LottieAnimation } from "@/components/ui/LottieAnimation";
+import booksAnimation from "@/assets/animations/Books-stack.json";
+import finishingStudiesAnimation from "@/assets/animations/finish_study.json";
+import quizAnimation from "@/assets/animations/quiz.json";
+import thinkingAnimation from "@/assets/animations/thinking.json";
+import examAnimation from "@/assets/animations/certificaciones.json";
 
 const FeatureRow = ({ 
   title, 
   description, 
-  imageSrc, 
-  imageAlt, 
+  animationData,
   icon: Icon, 
   imageSide = "right",
   className,
@@ -13,8 +18,7 @@ const FeatureRow = ({
 }: {
   title: string;
   description: string;
-  imageSrc: string;
-  imageAlt: string;
+  animationData: unknown;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   icon: any;
   imageSide?: "left" | "right";
@@ -41,13 +45,12 @@ const FeatureRow = ({
             </p>
           </div>
 
-          {/* Image Content */}
+          {/* Animation Content */}
           <div className="flex-1 w-full max-w-md md:max-w-none animate-bounce-in [animation-timeline:view()] [animation-range:entry_20%_cover_40%]">
             <div className="relative aspect-square md:aspect-[4/3] w-full flex items-center justify-center">
-              <img 
-                src={imageSrc} 
-                alt={imageAlt} 
-                className="w-full h-full object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-500 hover:rotate-2"
+              <LottieAnimation 
+                animationData={animationData} 
+                className="w-full h-full drop-shadow-2xl hover:scale-105 transition-transform duration-500 hover:rotate-2"
               />
             </div>
           </div>
@@ -65,8 +68,7 @@ export const Features = () => {
           title="Everything you need, in one place."
           description="Upload PDFs, images, record lectures, or paste YouTube links. We handle it all."
           icon={Upload}
-          imageSrc="/assets/features/raccoon_capture.png"
-          imageAlt="Raccoon collecting files"
+          animationData={booksAnimation}
           imageSide="right"
           bgColor="bg-transparent"
         />
@@ -75,8 +77,7 @@ export const Features = () => {
           title="Notes that write themselves."
           description="AI turns your chaos into structured, easy-to-read study guides instantly."
           icon={FileText}
-          imageSrc="/assets/features/raccoon_notes.png"
-          imageAlt="Raccoon writing notes"
+          animationData={finishingStudiesAnimation}
           imageSide="left"
           bgColor="bg-white/5"
         />
@@ -85,8 +86,7 @@ export const Features = () => {
           title="Study like a scientist."
           description="Generate Flashcards & Quizzes instantly. Master topics with Spaced Repetition."
           icon={Brain}
-          imageSrc="/assets/features/raccoon_recall.png"
-          imageAlt="Raccoon with flashcards"
+          animationData={quizAnimation}
           imageSide="right"
           bgColor="bg-transparent"
         />
@@ -95,8 +95,7 @@ export const Features = () => {
           title="A personal tutor in your pocket."
           description="Stuck on a concept? Chat with your personal AI tutor 24/7."
           icon={Mic}
-          imageSrc="/assets/features/raccoon_tutor.png"
-          imageAlt="Raccoon tutor"
+          animationData={thinkingAnimation}
           imageSide="left"
           bgColor="bg-white/5"
         />
@@ -105,8 +104,7 @@ export const Features = () => {
           title="Watch your grades soar."
           description="Daily exam practice & detailed report cards to track your success."
           icon={LineChart}
-          imageSrc="/assets/features/raccoon_success.png"
-          imageAlt="Raccoon celebrating"
+          animationData={examAnimation}
           imageSide="right"
           bgColor="bg-transparent"
         />

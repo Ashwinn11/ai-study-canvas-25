@@ -1,5 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Flame } from "lucide-react";
+
+import { LottieAnimation } from "@/components/ui/LottieAnimation";
+import thinkingAnimation from "@/assets/animations/learning.json";
 
 export const Hero = () => {
   return (
@@ -55,10 +59,9 @@ export const Hero = () => {
           <div className="flex-1 w-full max-w-lg lg:max-w-xl relative animate-bounce-in delay-300">
             <div className="relative aspect-square flex items-center justify-center">
               {/* Main Mascot Placeholder */}
-              <img 
-                src="/assets/features/raccoon_success.png" 
-                alt="Masterly Raccoon Mascot" 
-                className="w-full h-full object-contain drop-shadow-2xl animate-float"
+              <LottieAnimation 
+                animationData={thinkingAnimation} 
+                className="w-full h-full drop-shadow-2xl animate-float"
               />
               
               {/* Floating Elements (Decorations) */}
@@ -66,8 +69,8 @@ export const Hero = () => {
                 <span className="text-4xl">🅰️+</span>
               </div>
               <div className="absolute bottom-10 left-0 bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-xl-custom shadow-card transform -rotate-6 animate-pulse-slow delay-700 hidden md:block">
-                <span className="text-4xl">🔥</span>
-              </div>
+                 <Flame className="w-10 h-10 text-orange-500" />
+               </div>
             </div>
           </div>
 

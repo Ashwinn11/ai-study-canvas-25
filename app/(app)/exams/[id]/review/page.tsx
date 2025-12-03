@@ -8,7 +8,7 @@ import { flashcardsService } from '@/lib/api/flashcards';
 import { quizService } from '@/lib/api/quiz';
 import { scoreToGrade } from '@/lib/utils/gradeUtils';
 import { Flashcard, QuizQuestion } from '@/lib/supabase/types';
-import { ArrowLeft, Loader2, RotateCw, Check, X } from 'lucide-react';
+import { ArrowLeft, Loader2, RotateCw, Check, X, Target, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function ExamReviewPage() {
@@ -426,8 +426,18 @@ export default function ExamReviewPage() {
             <div className={`text-4xl font-bold ${gradeColor}`}>{letterGrade}</div>
 
             {/* Title */}
-            <h2 className="text-2xl font-bold text-white">
-              {isPracticeMode ? '🎯 Practice Complete!' : '🔥 Review Session Complete!'}
+            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+              {isPracticeMode ? (
+                <>
+                  <Target className="w-6 h-6 text-blue-500" />
+                  Practice Complete!
+                </>
+              ) : (
+                <>
+                  <Flame className="w-6 h-6 text-orange-500" />
+                  Review Session Complete!
+                </>
+              )}
             </h2>
 
             {/* Score Breakdown */}

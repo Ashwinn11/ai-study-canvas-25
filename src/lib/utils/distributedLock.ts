@@ -25,7 +25,7 @@ const DEFAULT_RETRY_DELAY = 100; // milliseconds
 export class DistributedLockService {
   private static instance: DistributedLockService;
 
-  private constructor() {}
+  private constructor() { }
 
   static getInstance(): DistributedLockService {
     if (!DistributedLockService.instance) {
@@ -52,8 +52,9 @@ export class DistributedLockService {
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       try {
         // Try to insert lock record (will fail if already exists due to unique constraint)
-        const { error } = await supabase
-          .from('distributed_locks')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase
+          .from('distributed_locks') as any)
           .insert({
             lock_key: lockKey,
             acquired_at: new Date().toISOString(),
@@ -65,8 +66,9 @@ export class DistributedLockService {
         }
 
         // If lock already exists, check if it's expired
-        const { data: existingLock } = await supabase
-          .from('distributed_locks')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: existingLock } = await (supabase
+          .from('distributed_locks') as any)
           .select('expires_at')
           .eq('lock_key', lockKey)
           .single();
@@ -75,8 +77,9 @@ export class DistributedLockService {
           const expiryTime = new Date(existingLock.expires_at).getTime();
           if (expiryTime < Date.now()) {
             // Lock is expired, try to delete it and retry
-            await supabase
-              .from('distributed_locks')
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await (supabase
+              .from('distributed_locks') as any)
               .delete()
               .eq('lock_key', lockKey);
             continue; // Retry acquisition
@@ -106,8 +109,9 @@ export class DistributedLockService {
     const supabase = getSupabaseClient();
 
     try {
-      const { error } = await supabase
-        .from('distributed_locks')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase
+        .from('distributed_locks') as any)
         .delete()
         .eq('lock_key', lockKey);
 

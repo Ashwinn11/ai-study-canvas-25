@@ -1,6 +1,6 @@
 import type { UserStats } from './profileStats';
 
-export type BadgeId = 'seeds' | 'streak' | 'mastery' | 'accuracy' | 'grades';
+export type BadgeId = 'xp' | 'seeds' | 'streak' | 'mastery' | 'accuracy' | 'grades';
 
 export interface BadgeTier {
   threshold: number;
@@ -43,6 +43,22 @@ const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
 
 // Badge definitions - matching iOS exactly
 export const badgeDefinitions: TieredBadgeDefinition[] = [
+  // 0. LEGENDARY LEARNER - XP Badge
+  {
+    id: 'xp',
+    name: 'Legendary Learner',
+    iconName: 'sparkles',
+    color: 'rgb(59, 130, 246)', // Blue
+    value: () => 0, // XP not tracked in web yet
+    tiers: [
+      { threshold: 100, label: 'Earned 100 XP', shortLabel: '100', unit: 'XP' },
+      { threshold: 500, label: 'Earned 500 XP', shortLabel: '500', unit: 'XP' },
+      { threshold: 1000, label: 'Earned 1,000 XP', shortLabel: '1k', unit: 'XP' },
+      { threshold: 5000, label: 'Earned 5,000 XP', shortLabel: '5k', unit: 'XP' },
+      { threshold: 10000, label: 'Earned 10,000 XP', shortLabel: '10k', unit: 'XP' },
+    ],
+  },
+
   // 1. CONTENT CREATOR
   {
     id: 'seeds',

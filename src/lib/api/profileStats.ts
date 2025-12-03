@@ -178,10 +178,10 @@ class ProfileStatsService {
 
         // Get user preferences (daily_cards_goal)
         supabase
-          .from('users')
+          .from('profiles')
           .select('daily_cards_goal')
           .eq('id', userId)
-          .single(),
+          .maybeSingle(),
 
         // Get today's EXAM-REVIEW sessions for daily goal (matching iOS lines 245-275)
         supabase
@@ -203,10 +203,10 @@ class ProfileStatsService {
 
         // Get user's current_grade from onboarding (for average grade calculation)
         supabase
-          .from('users')
+          .from('profiles')
           .select('current_grade')
           .eq('id', userId)
-          .single(),
+          .maybeSingle(),
 
         // Get ALL exam reports for average grade (matching iOS lines 404-408)
         supabase

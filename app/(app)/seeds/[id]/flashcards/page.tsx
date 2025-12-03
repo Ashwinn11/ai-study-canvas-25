@@ -4,8 +4,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { flashcardsService } from '@/lib/api/flashcards';
+import { xpService } from '@/lib/api/xpService';
+import { streakService } from '@/lib/api/streakService';
+import { achievementEngine } from '@/lib/api/achievementEngine';
+import { dailyGoalTrackerService } from '@/lib/api/dailyGoalTracker';
 import { Flashcard } from '@/lib/supabase/types';
-import { ArrowLeft, Loader2, RotateCw } from 'lucide-react';
+import { ArrowLeft, Loader2, RotateCw, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface FlashcardState extends Flashcard {
@@ -106,6 +110,12 @@ export default function FlashcardsPracticePage() {
     const newReviewedCount = sessionStats.reviewed + 1;
     setSessionStats({ ...sessionStats, reviewed: newReviewedCount });
 
+    // Award XP for flashcard review (assuming all reviews = confident)
+    if (user) {
+      const xpResult = xpService.calculateXP('flashcard', 4); // Quality 4 = confident
+      await xpService.awardXP(user.id, xpResult.amount);
+    }
+
     if (currentIndex < flashcards.length - 1) {
       setCurrentIndex((prev) => prev + 1);
       setFlashcards((prev) =>
@@ -114,21 +124,47 @@ export default function FlashcardsPracticePage() {
         )
       );
     } else {
-      // Session completed - no modal, just save session
+      // Session completed
       if (user) {
         try {
           const timeSpentSeconds = Math.round((Date.now() - sessionStartTime) / 1000);
+
+          // Save learning session
           await flashcardsService.createLearningSession(seedId, user.id, {
             totalItems: flashcards.length,
             correctItems: newReviewedCount,
             timeSpent: timeSpentSeconds,
             metadata: {
               sessionType: 'flashcards-practice',
-              source: 'individual-practice',
+              source: 'exam-review',
             },
           });
+
+          // Get user's daily goal
+          const { data: profile } = await (await import('@/lib/supabase/client')).getSupabaseClient()
+            .from('profiles')
+            .select('daily_cards_goal')
+            .eq('id', user.id)
+            .maybeSingle();
+
+          const dailyGoal = (profile as Record<string, unknown> | null)?.['daily_cards_goal'] as number || 20;
+
+          // Update streak after session
+          await streakService.updateStreakAfterSession(user.id, dailyGoal);
+
+          // Check for achievement unlocks
+          await achievementEngine.checkAndUnlockAchievements(user.id);
+
+          // Maybe surprise achievement
+          await achievementEngine.maybeSurpriseAchievement(user.id);
+
+          // Mark daily goal as celebrated (if met)
+          const alreadyCelebrated = await dailyGoalTrackerService.hasAlreadyCelebratedToday(user.id);
+          if (!alreadyCelebrated && newReviewedCount >= dailyGoal) {
+            await dailyGoalTrackerService.markGoalCelebratedToday(user.id);
+          }
         } catch (error) {
-          console.error('Error saving session:', error);
+          console.error('Error finalizing session:', error);
         }
       }
 

@@ -21,6 +21,7 @@ import {
   ExtractionResult,
 } from './documentProcessing';
 import { Seed } from '../supabase/types';
+import { configService } from './configService';
 
 export type ContentType = 'pdf' | 'image' | 'audio' | 'text' | 'youtube';
 
@@ -122,11 +123,19 @@ class UploadProcessor {
     const contentType = this.getContentTypeFromFile(file);
     const fileSize = file.size;
 
-    // Validate file size (max 20MB for all files)
-    const maxSize = 20 * 1024 * 1024;
+    // Validate file size using dynamic limits
+    // Map content types to config service types
+    const configType = contentType === 'pdf' ? 'document' : 
+                      contentType === 'text' ? 'document' : 
+                      contentType as 'image' | 'audio';
+    
+    const maxSize = await configService.getMaxFileSizeByType(configType);
+    
     if (fileSize > maxSize) {
+      const maxSizeMB = Math.round(maxSize / 1024 / 1024);
+      const actualSizeMB = Math.round(fileSize / 1024 / 1024);
       throw new Error(
-        `File too large. Maximum size is ${Math.round(maxSize / 1024 / 1024)}MB`
+        `Your file is ${actualSizeMB}MB. Maximum allowed is ${maxSizeMB}MB.`
       );
     }
 

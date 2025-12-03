@@ -1,6 +1,6 @@
 'use client';
 
-import { Mail } from "lucide-react";
+import { Mail, Heart } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 import { Button } from "./ui/button";
@@ -11,14 +11,6 @@ export const Footer = () => {
   return (
     <footer className="bg-duolingo-green text-white py-16 relative overflow-hidden">
       
-      {/* Mascot Easter Egg */}
-      <div className="absolute -top-10 right-10 w-32 h-32 hidden lg:block animate-float">
-        <img 
-          src="/assets/features/raccoon_tutor.png" 
-          alt="Mascot Peeking" 
-          className="w-full h-full object-contain transform rotate-12"
-        />
-      </div>
 
       <div className="container mx-auto px-4 relative z-10">
         <div className="grid md:grid-cols-4 gap-12 mb-12">
@@ -83,8 +75,8 @@ export const Footer = () => {
         <div className="border-t border-white/20 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm font-medium text-white/60">
             <p>© 2025 Masterly. All rights reserved.</p>
-            <p className="text-center md:text-right">
-              Made with ❤️ for students everywhere.
+            <p className="text-center md:text-right flex items-center gap-1">
+              Made with <Heart className="w-4 h-4 text-red-500 fill-current" /> for students everywhere.
             </p>
           </div>
         </div>

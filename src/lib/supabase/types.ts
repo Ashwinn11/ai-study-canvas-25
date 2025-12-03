@@ -374,3 +374,4 @@ export type Exam = Database['public']['Tables']['exams']['Row'];
 export type ExamSeed = Database['public']['Tables']['exam_seeds']['Row'];
 export type LearningSession = Database['public']['Tables']['learning_sessions']['Row'];
 export type User = Database['public']['Tables']['users']['Row'];
+export type ContentType = Database['public']['Tables']['seeds']['Row']['content_type'];

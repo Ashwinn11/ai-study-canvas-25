@@ -22,7 +22,11 @@ export default function UploadPage() {
   const [title, setTitle] = useState('');
   const [textContent, setTextContent] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
-  const [uploadMode, setUploadMode] = useState<'file' | 'text'>('file');
+  const [uploadMode, setUploadMode] = useState<'file' | 'text' | 'youtube' | 'audio'>('file');
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();

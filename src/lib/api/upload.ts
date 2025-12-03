@@ -50,12 +50,12 @@ export interface UploadOptions {
 
 // Stage progress mapping (matches iOS app exactly)
 const STAGE_PROGRESS: Record<UploadStage, number> = {
-  validating: 0.02,
-  reading: 0.15,
-  extracting: 0.45,
-  generating: 0.82,
-  finalizing: 0.92,
-  completed: 1.0,
+  validating: 0.05,    // 5% (was 0.02)
+  reading: 0.18,       // 18% (was 0.15)
+  extracting: 0.45,    // 45%
+  generating: 0.82,    // 82%
+  finalizing: 0.95,    // 95% (was 0.92)
+  completed: 1.0,      // 100%
 };
 
 const STAGE_MESSAGES: Record<UploadStage, string> = {

@@ -1,6 +1,7 @@
 import { getSupabaseClient } from '../supabase/client';
 import { Flashcard } from '../supabase/types';
 import { calculateSM2, swipeToQuality, updateStreakAndLapses, formatDateString, getLocalDate } from '../algorithms/sm2';
+import { ServiceError } from '../utils/serviceError';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -269,84 +270,91 @@ export class FlashcardsService {
    * Review flashcard with swipe direction
    * Applies SM-2 algorithm and updates database
    * Prevents duplicate reviews on same day
+   * Uses distributed lock to prevent race conditions
    */
   async reviewFlashcard(
     flashcardId: string,
     direction: 'left' | 'right' | 'up'
   ): Promise<Flashcard> {
+    const { distributedLockService } = await import('../utils/distributedLock');
     const supabase = getSupabaseClient();
 
-    // Get current flashcard data
-    const { data: currentCard, error: fetchError } = await supabase
-      .from('flashcards')
-      .select('*')
-      .eq('id', flashcardId)
-      .single();
+    // Use distributed lock to prevent concurrent SM-2 updates
+    const lockKey = `flashcard:${flashcardId}`;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const card = currentCard as any;
+    return await distributedLockService.withLock(lockKey, async () => {
+      // Get current flashcard data
+      const { data: currentCard, error: fetchError } = await supabase
+        .from('flashcards')
+        .select('*')
+        .eq('id', flashcardId)
+        .single();
 
-    if (fetchError || !currentCard) {
-      throw new Error('Failed to find flashcard');
-    }
-
-    // Check if already reviewed today - prevent duplicate SM2 updates
-    const today = getLocalDate();
-    if (card.last_reviewed_date === today) {
-      console.log(`Flashcard ${flashcardId} already reviewed today, skipping SM2 update`);
-      return card as Flashcard;
-    }
-
-    // Convert swipe direction to quality rating
-    const quality = swipeToQuality(direction);
-
-    // Calculate new SM2 values
-    const sm2Result = calculateSM2({
-      quality,
-      repetitions: card.repetitions || 0,
-      interval: card.interval || 1,
-      easinessFactor: card.easiness_factor || 2.5,
-    });
-
-    // Update streak and lapses
-    const { streak, lapses } = updateStreakAndLapses(
-      quality,
-      card.streak || 0,
-      card.lapses || 0
-    );
-
-    // Update flashcard with new SM2 values
-    const updateData = {
-      interval: sm2Result.interval,
-      repetitions: sm2Result.repetitions,
-      easiness_factor: sm2Result.easinessFactor,
-      next_due_date: formatDateString(sm2Result.nextDueDate),
-      last_reviewed: new Date().toISOString(),
-      last_reviewed_date: today,
-      quality_rating: sm2Result.qualityRating,
-      streak,
-      lapses,
-    };
-
-    const { data, error } = await supabase
-      .from('flashcards')
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .update(updateData as any)
-      .eq('id', flashcardId)
-      .select()
-      .single();
+      const card = currentCard as any;
 
-    if (error) {
-      throw new Error(`Failed to update flashcard: ${error.message}`);
-    }
+      if (fetchError || !currentCard) {
+        throw new Error('Failed to find flashcard');
+      }
 
-    console.log(
-      `Updated flashcard ${flashcardId} with quality ${quality}, next due: ${updateData.next_due_date}`
-    );
+      // Check if already reviewed today - prevent duplicate SM2 updates
+      const today = getLocalDate();
+      if (card.last_reviewed_date === today) {
+        console.log(`Flashcard ${flashcardId} already reviewed today, skipping SM2 update`);
+        return card as Flashcard;
+      }
 
-    return data as Flashcard;
+      // Convert swipe direction to quality rating
+      const quality = swipeToQuality(direction);
+
+      // Calculate new SM2 values
+      const sm2Result = calculateSM2({
+        quality,
+        repetitions: card.repetitions || 0,
+        interval: card.interval || 1,
+        easinessFactor: card.easiness_factor || 2.5,
+      });
+
+      // Update streak and lapses
+      const { streak, lapses } = updateStreakAndLapses(
+        quality,
+        card.streak || 0,
+        card.lapses || 0
+      );
+
+      // Update flashcard with new SM2 values
+      const updateData = {
+        interval: sm2Result.interval,
+        repetitions: sm2Result.repetitions,
+        easiness_factor: sm2Result.easinessFactor,
+        next_due_date: formatDateString(sm2Result.nextDueDate),
+        last_reviewed: new Date().toISOString(),
+        last_reviewed_date: today,
+        quality_rating: sm2Result.qualityRating,
+        streak,
+        lapses,
+      };
+
+      const { data, error } = await supabase
+        .from('flashcards')
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .update(updateData as any)
+        .eq('id', flashcardId)
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(`Failed to update flashcard: ${error.message}`);
+      }
+
+      console.log(
+        `Updated flashcard ${flashcardId} with quality ${quality}, next due: ${updateData.next_due_date}`
+      );
+
+      return data as Flashcard;
+    });
   }
 
   /**

@@ -223,7 +223,7 @@ export type Database = {
           user_id?: string;
           question?: string;
           options?: string[];
-          correct_answer?: string;
+          correct_answer?: number;
           difficulty?: number;
           interval?: number;
           repetitions?: number;

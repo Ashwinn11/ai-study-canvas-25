@@ -77,7 +77,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                             'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold transition-colors',
                             isActive
                               ? 'bg-primary text-primary-foreground'
-                              : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                                 : 'text-muted-foreground hover:text-foreground hover:bg-accent/20'
                           )}
                         >
                           <link.icon className="h-6 w-6 shrink-0" />
@@ -91,15 +91,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
               {/* User info & Sign Out */}
               <li className="mt-auto">
-                <div className="p-3 rounded-lg bg-accent/50 border border-border">
-                  <div className="text-sm text-muted-foreground mb-2">Signed in as</div>
-                  <div className="text-sm font-medium truncate mb-3">
+                <div className="p-3 rounded-lg bg-accent border border-border">
+                  <div className="text-sm text-accent-foreground mb-2">Signed in as</div>
+                  <div className="text-sm font-medium truncate mb-3 text-accent-foreground">
                     {user?.email}
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
+                    className="w-full justify-start text-white bg-background hover:bg-background/90"
                     onClick={signOut}
                   >
                     <LogOut className="mr-2 h-4 w-4" />
@@ -144,7 +144,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                               'group flex gap-x-3 rounded-md p-3 text-sm leading-6 font-semibold transition-colors',
                               isActive
                                 ? 'bg-primary text-primary-foreground'
-                                : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                                : 'text-muted-foreground hover:text-foreground hover:bg-accent/20'
                             )}
                           >
                             <link.icon className="h-6 w-6 shrink-0" />
@@ -157,15 +157,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </nav>
 
                 {/* User info */}
-                <div className="p-3 rounded-lg bg-accent/50 border border-border mb-4">
-                  <div className="text-sm text-muted-foreground mb-2">Signed in as</div>
-                  <div className="text-sm font-medium truncate mb-3">
+                <div className="p-3 rounded-lg bg-accent border border-border mb-4">
+                  <div className="text-sm text-accent-foreground mb-2">Signed in as</div>
+                  <div className="text-sm font-medium truncate mb-3 text-accent-foreground">
                     {user?.email}
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
+                    className="w-full justify-start text-white bg-background hover:bg-background/90"
                     onClick={signOut}
                   >
                     <LogOut className="mr-2 h-4 w-4" />

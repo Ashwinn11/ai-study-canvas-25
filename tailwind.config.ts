@@ -50,12 +50,12 @@ export default {
           hover: "#e66a5a", // Darker shade
         },
         secondary: {
-          DEFAULT: "#1CB0F6", // Duolingo Macaw Blue
+          DEFAULT: "#1CB0F6", // Blue
           foreground: "#FFFFFF",
           hover: "#1899D6",
         },
         destructive: {
-          DEFAULT: "#FF4B4B", // Duolingo Red
+          DEFAULT: "#FF4B4B", // Red
           foreground: "#FFFFFF",
           hover: "#D33131",
         },
@@ -64,20 +64,15 @@ export default {
           foreground: "#94a3b8", // Slate-400
         },
         accent: {
-          DEFAULT: "#FFC800", // Duolingo Bee Yellow
-          foreground: "#4B4B4B",
-          hover: "#E5B400",
+          DEFAULT: "#ff7664", // Brand Primary (same as primary)
+          foreground: "#FFFFFF",
+          hover: "#e66a5a", // Darker shade
         },
         card: {
           DEFAULT: "#1e293b", // Slate-800 for cards in dark mode
           foreground: "#FFFFFF",
         },
-        "duolingo-green": "#ff7664", // Replaced with Brand Primary
-        "duolingo-feather": "#89E219",
-        "duolingo-bee": "#FFC800",
-        "duolingo-macaw": "#1CB0F6",
-        "duolingo-fox": "#FF9600",
-        "duolingo-card": "#1e293b", // Dark card
+
       },
       borderRadius: {
         lg: "var(--radius)",

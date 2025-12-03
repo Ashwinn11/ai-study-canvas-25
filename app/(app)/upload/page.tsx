@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import { uploadProcessor, UploadProgress } from '@/lib/api/upload';
-import { Upload, FileText, Image, Music, Video, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { Upload, FileText, Image, Music, Link, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -21,6 +21,7 @@ export default function UploadPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [title, setTitle] = useState('');
   const [textContent, setTextContent] = useState('');
+  const [youtubeUrl, setYoutubeUrl] = useState('');
   const [uploadMode, setUploadMode] = useState<'file' | 'text'>('file');
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -130,12 +131,60 @@ export default function UploadPage() {
     }
   };
 
+  const handleYoutubeUpload = async () => {
+    if (!user) {
+      setError('You must be logged in to upload content');
+      return;
+    }
+
+    if (!youtubeUrl.trim()) {
+      setError('Please provide a YouTube URL');
+      return;
+    }
+
+    setUploadState('uploading');
+    setError(null);
+    setProgress(null);
+
+    try {
+      // Get access token
+      const supabase = getSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        throw new Error('Not authenticated');
+      }
+
+      await uploadProcessor.processFile({
+        userId: user.id,
+        title: youtubeUrl,
+        youtubeUrl,
+        accessToken: session.access_token,
+        onProgress: (prog) => {
+          setProgress(prog);
+        },
+      });
+
+      setUploadState('success');
+
+      // Redirect to seeds page after 2 seconds
+      setTimeout(() => {
+        router.push('/seeds');
+      }, 2000);
+    } catch (err) {
+      console.error('Upload error:', err);
+      setError(err instanceof Error ? err.message : 'Upload failed');
+      setUploadState('error');
+    }
+  };
+
   const resetUpload = () => {
     setUploadState('idle');
     setProgress(null);
     setError(null);
     setTitle('');
     setTextContent('');
+    setYoutubeUrl('');
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -182,23 +231,17 @@ export default function UploadPage() {
           <FileText className="h-4 w-4 mr-2" />
           Paste Text
         </Button>
+        <Button
+          variant={uploadMode === "youtube" ? "default" : "outline"}
+          onClick={() => setUploadMode("youtube")}
+          disabled={uploadState === "uploading"}
+        >
+          <Link className="h-4 w-4 mr-2" />
+          YouTube Link
+        </Button>
       </div>
 
-      {/* Title Input */}
-      <div className="space-y-2">
-        <label htmlFor="title" className="text-sm font-medium text-white">
-          Title {uploadMode === 'text' && <span className="text-red-400">*</span>}
-        </label>
-        <Input
-          id="title"
-          type="text"
-          placeholder={uploadMode === 'file' ? 'Optional - will use filename if not provided' : 'Enter a title for your content'}
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          disabled={uploadState === 'uploading'}
-          className="bg-white/5 border-white/10 text-white"
-        />
-      </div>
+
 
       {/* File Upload Area */}
       {uploadMode === 'file' && (
@@ -219,7 +262,7 @@ export default function UploadPage() {
                 Drop your file here or click to browse
               </p>
               <p className="mt-1 text-sm text-gray-400">
-                Supports PDF, images, audio, video, and documents
+                Supports PDF, documents, images, and audio files
               </p>
             </div>
             <input
@@ -227,7 +270,7 @@ export default function UploadPage() {
               id="file-upload"
               className="hidden"
               onChange={handleFileSelect}
-              accept=".pdf,.jpg,.jpeg,.png,.gif,.bmp,.webp,.mp3,.wav,.m4a,.aac,.ogg,.flac,.mp4,.mov,.avi,.mkv,.webm,.doc,.docx,.txt"
+              accept=".pdf,.jpg,.jpeg,.png,.gif,.bmp,.webp,.mp3,.wav,.m4a,.aac,.ogg,.flac,.doc,.docx,.txt"
               disabled={uploadState === 'uploading'}
             />
             <Button
@@ -239,7 +282,7 @@ export default function UploadPage() {
           </div>
 
           {/* Supported File Types */}
-          <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="mt-8 grid grid-cols-3 md:grid-cols-3 gap-4">
             <div className="flex items-center gap-2 text-sm text-gray-400">
               <FileText className="h-4 w-4" />
               <span>PDF, DOC</span>
@@ -252,10 +295,7 @@ export default function UploadPage() {
               <Music className="h-4 w-4" />
               <span>Audio</span>
             </div>
-            <div className="flex items-center gap-2 text-sm text-gray-400">
-              <Video className="h-4 w-4" />
-              <span>Video</span>
-            </div>
+
           </div>
         </div>
       )}
@@ -278,7 +318,7 @@ export default function UploadPage() {
           </div>
           <Button
             onClick={handleTextUpload}
-            disabled={uploadState === 'uploading' || !title.trim() || !textContent.trim()}
+            disabled={uploadState === 'uploading' || !textContent.trim()}
             className="w-full"
           >
             {uploadState === 'uploading' ? (
@@ -290,6 +330,43 @@ export default function UploadPage() {
               <>
                 <Upload className="h-4 w-4 mr-2" />
                 Process Content
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+
+      {/* YouTube Link Input Area */}
+      {uploadMode === 'youtube' && (
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label htmlFor="youtube-url" className="text-sm font-medium text-white">
+              YouTube URL <span className="text-red-400">*</span>
+            </label>
+            <Input
+              id="youtube-url"
+              type="url"
+              placeholder="https://www.youtube.com/watch?v=..."
+              value={youtubeUrl}
+              onChange={(e) => setYoutubeUrl(e.target.value)}
+              disabled={uploadState === 'uploading'}
+              className="bg-white/5 border-white/10 text-white"
+            />
+          </div>
+          <Button
+            onClick={handleYoutubeUpload}
+            disabled={uploadState === 'uploading' || !youtubeUrl.trim()}
+            className="w-full"
+          >
+            {uploadState === 'uploading' ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <Upload className="h-4 w-4 mr-2" />
+                Process YouTube Video
               </>
             )}
           </Button>

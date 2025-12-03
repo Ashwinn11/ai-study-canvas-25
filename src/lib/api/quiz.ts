@@ -1,6 +1,7 @@
 import { getSupabaseClient } from '@/lib/supabase/client';
 import { QuizQuestion, type Database } from '@/lib/supabase/types';
 import { calculateSM2, quizToQuality, getLocalDate } from '@/lib/algorithms/sm2';
+import { ServiceError } from '@/lib/utils/serviceError';
 
 export interface CreateQuizRequest {
   seedId: string;
@@ -258,74 +259,80 @@ class QuizService {
     questionId: string,
     isCorrect: boolean
   ): Promise<QuizQuestion> {
+    const { distributedLockService } = await import('../utils/distributedLock');
     const supabase = getSupabaseClient();
 
-    // Get current question
-    const { data: currentQuestion, error: fetchError } = await supabase
-      .from('quiz_questions')
-      .select('*')
-      .eq('id', questionId)
-      .single();
+    // Use distributed lock to prevent concurrent SM-2 updates
+    const lockKey = `quiz:${questionId}`;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const question = currentQuestion as any;
+    return await distributedLockService.withLock(lockKey, async () => {
+      // Get current question
+      const { data: currentQuestion, error: fetchError } = await supabase
+        .from('quiz_questions')
+        .select('*')
+        .eq('id', questionId)
+        .single();
 
-    if (fetchError || !currentQuestion) {
-      throw new Error('Failed to load quiz question');
-    }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const question = currentQuestion as any;
 
-    // Check if already reviewed today
-    const today = getLocalDate();
+      if (fetchError || !currentQuestion) {
+        throw new Error('Failed to load quiz question');
+      }
 
-    if (question.last_reviewed_date === today) {
-      return question as QuizQuestion;
-    }
+      // Check if already reviewed today
+      const today = getLocalDate();
 
-    // Convert quiz result to quality rating
-    const quality = quizToQuality(isCorrect);
+      if (question.last_reviewed_date === today) {
+        return question as QuizQuestion;
+      }
 
-    // Calculate new SM2 values
-    const sm2Result = calculateSM2({
-      quality,
+      // Convert quiz result to quality rating
+      const quality = quizToQuality(isCorrect);
 
-      repetitions: question.repetitions || 0,
+      // Calculate new SM2 values
+      const sm2Result = calculateSM2({
+        quality,
 
-      interval: question.interval || 1,
+        repetitions: question.repetitions || 0,
 
-      easinessFactor: question.easiness_factor || 2.5,
+        interval: question.interval || 1,
+
+        easinessFactor: question.easiness_factor || 2.5,
+      });
+
+      // Update streak and lapses
+
+      const streak = isCorrect ? (question.streak || 0) + 1 : 0;
+
+      const lapses = !isCorrect ? (question.lapses || 0) + 1 : question.lapses || 0;
+
+      // Update quiz question in database
+      const updateData: Database['public']['Tables']['quiz_questions']['Update'] = {
+        interval: sm2Result.interval,
+        repetitions: sm2Result.repetitions,
+        easiness_factor: sm2Result.easinessFactor,
+        next_due_date: sm2Result.nextDueDate.toISOString().split('T')[0],
+        last_reviewed: new Date().toISOString(),
+        streak,
+        lapses,
+      };
+
+      // Type assertion workaround for Supabase client typing issue
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: updatedQuestion, error: updateError } = await (supabase as any)
+        .from('quiz_questions')
+        .update(updateData)
+        .eq('id', questionId)
+        .select()
+        .single();
+
+      if (updateError) {
+        throw new Error(`Failed to update quiz question: ${updateError.message}`);
+      }
+
+      return updatedQuestion as QuizQuestion;
     });
-
-    // Update streak and lapses
-
-    const streak = isCorrect ? (question.streak || 0) + 1 : 0;
-
-    const lapses = !isCorrect ? (question.lapses || 0) + 1 : question.lapses || 0;
-
-    // Update quiz question in database
-    const updateData: Database['public']['Tables']['quiz_questions']['Update'] = {
-      interval: sm2Result.interval,
-      repetitions: sm2Result.repetitions,
-      easiness_factor: sm2Result.easinessFactor,
-      next_due_date: sm2Result.nextDueDate.toISOString().split('T')[0],
-      last_reviewed: new Date().toISOString(),
-      streak,
-      lapses,
-    };
-
-    // Type assertion workaround for Supabase client typing issue
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: updatedQuestion, error: updateError } = await (supabase as any)
-      .from('quiz_questions')
-      .update(updateData)
-      .eq('id', questionId)
-      .select()
-      .single();
-
-    if (updateError) {
-      throw new Error(`Failed to update quiz question: ${updateError.message}`);
-    }
-
-    return updatedQuestion as QuizQuestion;
   }
 
   async createLearningSession(

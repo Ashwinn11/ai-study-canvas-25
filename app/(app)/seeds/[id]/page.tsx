@@ -27,6 +27,7 @@ const CONTENT_TYPE_ICONS = {
   image: Image,
   audio: Music,
   video: Video,
+  youtube: Video,
   text: FileText,
 };
 
@@ -35,6 +36,7 @@ const CONTENT_TYPE_COLORS = {
   image: 'text-blue-400',
   audio: 'text-purple-400',
   video: 'text-green-400',
+  youtube: 'text-red-500',
   text: 'text-gray-400',
 };
 

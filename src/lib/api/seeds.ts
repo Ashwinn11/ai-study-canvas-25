@@ -4,7 +4,7 @@ import { Seed } from '../supabase/types';
 export interface CreateSeedParams {
   userId: string;
   title: string;
-  contentType: 'pdf' | 'image' | 'audio' | 'video' | 'text';
+  contentType: 'pdf' | 'image' | 'audio' | 'text' | 'youtube';
   fileSize?: number;
 }
 

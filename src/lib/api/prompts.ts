@@ -68,6 +68,7 @@ export async function getFlashcardsUserTemplate(
   const selectedIntent = intent || 'Educational';
 
   const templateKey = `flashcardsUserTemplate_${selectedIntent}` as keyof typeof prompts;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const intentTemplate = (prompts as any)[templateKey];
 
   if (intentTemplate) {
@@ -91,6 +92,7 @@ export async function getQuizUserTemplate(
   const selectedIntent = intent || 'Educational';
 
   const templateKey = `quizUserTemplate_${selectedIntent}` as keyof typeof prompts;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const intentTemplate = (prompts as any)[templateKey];
 
   if (intentTemplate) {

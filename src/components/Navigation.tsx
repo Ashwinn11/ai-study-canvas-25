@@ -27,9 +27,6 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
 
   // Navigation links
   const navLinks = [
-    { name: "Features", href: "#features" },
-    { name: "Testimonials", href: "#testimonials" },
-    { name: "Pricing", href: "#pricing" },
     { name: "FAQ", href: "#faq" },
   ];
 
@@ -69,9 +66,9 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
   return (
     <>
       {/* Desktop Navigation */}
-      <header 
+      <header
         className={cn(
-          "sticky top-0 z-50 w-full transition-all duration-300 backdrop-blur-md bg-background/80 border-b border-border/40 shadow-sm",
+          "sticky top-0 z-50 w-full transition-all duration-300 backdrop-blur-md bg-background/95 border-b border-border shadow-sm",
           className
         )}
       >
@@ -143,7 +140,7 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
                    <Button
                      variant="ghost"
                      size="icon"
-                     className="transition-colors text-white hover:text-white"
+                     className="transition-colors text-foreground hover:text-primary"
                    >
                     <Menu className="h-6 w-6" />
                     <span className="sr-only">Open menu</span>

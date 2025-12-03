@@ -3,9 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { examsService } from '@/lib/api/exams';
+import { examsService, type ExamWithSeeds } from '@/lib/api/exams';
 import { spacedRepetitionService, type ExamReviewStats } from '@/lib/api/spacedRepetition';
-import { ExamWithSeeds } from '@/lib/supabase/types';
 import { ArrowLeft, Loader2, Pencil, Trash2, PlayCircle, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 

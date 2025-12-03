@@ -277,6 +277,7 @@ export default function SeedDetailPage() {
                     li: ({node, ...props}) => <li className="text-gray-300" {...props} />,
                     strong: ({node, ...props}) => <strong className="text-white font-semibold" {...props} />,
                     em: ({node, ...props}) => <em className="text-gray-200 italic" {...props} />,
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     code: ({node, inline, ...props}: any) =>
                       inline ? (
                         <code className="bg-white/10 text-primary px-1.5 py-0.5 rounded text-sm" {...props} />

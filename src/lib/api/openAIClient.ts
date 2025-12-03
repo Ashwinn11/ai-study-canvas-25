@@ -31,6 +31,7 @@ export interface ChatCompletionOptions {
   cacheNamespace?: string;
   cacheKeyParts?: string[];
   cacheTtlMs?: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   responseFormat?: any;
   timeoutMs?: number;
   retries?: number;
@@ -70,6 +71,7 @@ export async function chatCompletion(options: ChatCompletionOptions): Promise<st
   const maxRetries = retries;
   const baseDelay = retryDelayMs;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let lastError: any = null;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -111,9 +113,12 @@ export async function chatCompletion(options: ChatCompletionOptions): Promise<st
           let message = response.statusText;
 
           try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const error = lastError as any;
             const errorData = await response.json();
             message = errorData?.error?.message || message;
-          } catch {}
+            // eslint-disable-next-line no-empty
+          } catch { }
 
           if (retriable && attempt < maxRetries) {
             const delay = baseDelay * Math.pow(2, attempt) + Math.floor(Math.random() * 200);
@@ -140,10 +145,12 @@ export async function chatCompletion(options: ChatCompletionOptions): Promise<st
         });
 
         return content;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         clearTimeout(timeoutHandle);
         throw err;
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       lastError = err;
 

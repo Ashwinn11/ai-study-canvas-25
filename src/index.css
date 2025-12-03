@@ -9,8 +9,8 @@ All colors MUST be HSL.
 @layer base {
   :root {
     /* Masterly Design System Colors */
-    --background: 0 0% 100%;
-    --foreground: 0 0% 12%;
+    --background: 222 47% 11%; /* Dark Navy */
+    --foreground: 0 0% 100%; /* White */
 
     --card: 0 0% 100%;
     --card-foreground: 0 0% 12%;

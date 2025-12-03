@@ -428,3 +428,45 @@ function getContentLength(content: string, language?: string): number {
   }
   return content.split(/\s+/).filter(Boolean).length; // Word count for others
 }
+
+/**
+ * Extract YouTube captions from URL
+ */
+export async function extractYouTubeUrl(
+  url: string,
+  accessToken: string
+): Promise<{ text: string; metadata?: Record<string, unknown> }> {
+  if (!API_BASE_URL) {
+    throw new Error('Backend URL not configured');
+  }
+
+  const backendUrl = `${API_BASE_URL}/api/youtube/captions`;
+
+  const response = await fetch(backendUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      url,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    let errorMessage = 'Failed to extract YouTube captions';
+
+    try {
+      const errorJson = JSON.parse(errorText);
+      errorMessage = errorJson.message || errorMessage;
+    } catch {
+      // Use default error message
+    }
+
+    throw new Error(errorMessage);
+  }
+
+  const result = await response.json();
+  return result;
+}

@@ -65,6 +65,7 @@ class SpacedRepetitionService {
 
         if (!reviewError && todayReviews) {
           // Extract all card IDs from today's exam reviews
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           todayReviews.forEach((session: any) => {
             const metadata = session.metadata;
             if (metadata?.reviewed_card_ids && Array.isArray(metadata.reviewed_card_ids)) {
@@ -130,7 +131,9 @@ class SpacedRepetitionService {
       }
 
       // Filter out cards already reviewed today in any exam
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const filteredFlashcards = (flashcards || []).filter((fc: any) => !reviewedCardIds.has(fc.id));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const filteredQuizQuestions = (quizQuestions || []).filter((qq: any) => !reviewedCardIds.has(qq.id));
 
       return {
@@ -165,7 +168,8 @@ class SpacedRepetitionService {
         return null;
       }
 
-      const seedIds = examSeeds.map((es) => es.seed_id);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const seedIds = examSeeds.map((es: any) => es.seed_id);
 
       // Get all flashcards and quiz questions for these seeds (only studied items with interval set)
       const [flashcardResult, quizResult] = await Promise.all([
@@ -203,6 +207,7 @@ class SpacedRepetitionService {
       let overdue = 0;
       let nextDueDate: string | null = null;
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       allItems.forEach((item: any) => {
         const dueDateRaw = item.next_due_date;
         if (!dueDateRaw) return;
@@ -270,7 +275,8 @@ class SpacedRepetitionService {
         };
 
         const totalGradeValue = reports.reduce(
-          (sum, report) => sum + gradeToNumber(report.letter_grade),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (sum, report: any) => sum + gradeToNumber(report.letter_grade),
           0
         );
         const avgGradeValue = totalGradeValue / reports.length;

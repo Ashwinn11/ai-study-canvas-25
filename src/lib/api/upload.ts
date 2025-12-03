@@ -1,10 +1,11 @@
 /**
- * Upload Processor
+ * Upload Processor - Matches iOS app exactly
  *
+ * Supports: PDF, image, audio, text, YouTube
  * Orchestrates the file upload and processing pipeline:
- * 1. Validate file
+ * 1. Validate file or URL
  * 2. Create initial seed
- * 3. Extract content from file (via backend API)
+ * 3. Extract content from file/URL (via backend API)
  * 4. Validate content quality
  * 5. Generate Feynman explanation (via backend AI)
  * 6. Update seed with results
@@ -14,14 +15,14 @@ import { seedsService } from './seeds';
 import {
   processPdfOrImage,
   transcribeAudio,
-  transcribeVideo,
   extractDocument,
   generateFeynman,
+  extractYouTubeUrl,
   ExtractionResult,
 } from './documentProcessing';
 import { Seed } from '../supabase/types';
 
-export type ContentType = 'pdf' | 'image' | 'audio' | 'video' | 'text';
+export type ContentType = 'pdf' | 'image' | 'audio' | 'text' | 'youtube';
 
 export type UploadStage =
   | 'validating'
@@ -39,14 +40,15 @@ export interface UploadProgress {
 
 export interface UploadOptions {
   userId: string;
-  title: string;
+  title?: string;
   file?: File;
   textContent?: string;
+  youtubeUrl?: string;
   onProgress?: (progress: UploadProgress) => void;
   accessToken: string;
 }
 
-// Stage progress mapping (matches iOS app)
+// Stage progress mapping (matches iOS app exactly)
 const STAGE_PROGRESS: Record<UploadStage, number> = {
   validating: 0.02,
   reading: 0.15,
@@ -83,17 +85,27 @@ class UploadProcessor {
    * Process file upload
    */
   async processFile(options: UploadOptions): Promise<Seed> {
-    const { userId, title, file, textContent, onProgress, accessToken } = options;
+    const { userId, title, file, textContent, youtubeUrl, onProgress, accessToken } = options;
 
-    if (!file && !textContent) {
-      throw new Error('Either file or textContent must be provided');
+    if (!file && !textContent && !youtubeUrl) {
+      throw new Error('Either file, textContent, or youtubeUrl must be provided');
+    }
+
+    // If YouTube URL is provided
+    if (youtubeUrl) {
+      return this.processYoutubeUrl(youtubeUrl, {
+        userId,
+        title: title || 'YouTube Video',
+        onProgress,
+        accessToken,
+      });
     }
 
     // If text content is provided directly
     if (textContent) {
       return this.processTextContent(textContent, {
         userId,
-        title,
+        title: title || 'Text Content',
         onProgress,
         accessToken,
       });
@@ -110,8 +122,8 @@ class UploadProcessor {
     const contentType = this.getContentTypeFromFile(file);
     const fileSize = file.size;
 
-    // Validate file size (max 50MB for videos, 20MB for others)
-    const maxSize = contentType === 'video' ? 50 * 1024 * 1024 : 20 * 1024 * 1024;
+    // Validate file size (max 20MB for all files)
+    const maxSize = 20 * 1024 * 1024;
     if (fileSize > maxSize) {
       throw new Error(
         `File too large. Maximum size is ${Math.round(maxSize / 1024 / 1024)}MB`
@@ -126,91 +138,84 @@ class UploadProcessor {
     // Create initial seed
     const { id: seedId } = await seedsService.createInitialSeed({
       userId,
-      title,
+      title: title || file.name,
       contentType,
       fileSize,
     });
 
     try {
-        // Update status to extracting
-        await seedsService.updateSeed(seedId, {
-          processingStatus: 'extracting',
-        });
+      // Update status to extracting
+      await seedsService.updateSeed(seedId, {
+        processingStatus: 'extracting',
+      });
 
-        this.emitProgress(onProgress, 'extracting');
+      this.emitProgress(onProgress, 'extracting');
 
-        // Extract content based on file type
-        const extractionResult = await this.extractContent(
-          base64Data,
-          contentType,
-          file.type,
-          accessToken
-        );
+      // Extract content based on file type
+      const extractionResult = await this.extractContent(
+        base64Data,
+        contentType,
+        file.type,
+        accessToken
+      );
 
-        // Validate content quality
-        this.validateContentQuality(extractionResult, contentType);
+      // Validate content quality
+      await this.validateContentQuality(extractionResult, contentType);
 
-        // Update status to analyzing
-        await seedsService.updateSeed(seedId, {
-          processingStatus: 'analyzing',
-        });
+      // Update status to analyzing
+      await seedsService.updateSeed(seedId, {
+        processingStatus: 'analyzing',
+      });
 
-        // Generate Feynman explanation using chatCompletion (matching iOS)
-        this.emitProgress(onProgress, 'generating');
-        const feynmanResult = await generateFeynman(
-          extractionResult.content,
-          title,
-          extractionResult.metadata?.language,
-          accessToken,
-          onProgress
-        );
+      // Generate Feynman explanation
+      this.emitProgress(onProgress, 'generating');
+      const feynmanResult = await generateFeynman(
+        extractionResult.content,
+        title || file.name,
+        extractionResult.metadata?.language,
+        accessToken,
+        onProgress
+      );
 
-        this.emitProgress(onProgress, 'finalizing');
+      this.emitProgress(onProgress, 'finalizing');
 
-        // Update seed with final results (including Feynman explanation)
-        const completedSeed = await seedsService.updateSeed(seedId, {
-          contentText: extractionResult.content,
-          originalContent: extractionResult.content,
-          feynmanExplanation: feynmanResult.feynmanExplanation,
-          intent: feynmanResult.intent,
-          confidenceScore: feynmanResult.processingMetadata.confidence,
-          processingStatus: 'completed',
-          extractionMetadata: {
-            ...extractionResult.metadata,
-            materialsStatus: {
-              flashcards: 'pending',
-              quiz: 'pending',
-              notes: 'pending',
-              teachback: 'pending',
-            },
+      // Update seed with final results
+      const completedSeed = await seedsService.updateSeed(seedId, {
+        contentText: extractionResult.content,
+        originalContent: extractionResult.content,
+        feynmanExplanation: feynmanResult.feynmanExplanation,
+        intent: feynmanResult.intent,
+        confidenceScore: feynmanResult.processingMetadata.confidence,
+        processingStatus: 'completed',
+        extractionMetadata: {
+          ...extractionResult.metadata,
+          materialsStatus: {
+            flashcards: 'pending',
+            quiz: 'pending',
+            notes: 'pending',
+            teachback: 'pending',
           },
-          languageCode: extractionResult.metadata?.language || 'en',
-          isMixedLanguage: extractionResult.metadata?.isMixedLanguage || false,
-          languageMetadata: extractionResult.metadata?.languageMetadata || null,
-          processingError: null,
-        });
+        },
+        languageCode: extractionResult.metadata?.language || 'en',
+        isMixedLanguage: extractionResult.metadata?.isMixedLanguage || false,
+        languageMetadata: extractionResult.metadata?.languageMetadata || null,
+        processingError: null,
+      });
 
-        this.emitProgress(onProgress, 'completed');
+      this.emitProgress(onProgress, 'completed');
 
-        return completedSeed;
-      } catch (error) {
-        // Update seed with error status
-        await seedsService.updateSeed(seedId, {
-          processingStatus: 'failed',
-          processingError: error instanceof Error ? error.message : 'Unknown error',
-        });
-
-        // Delete the failed seed
-        await seedsService.deleteSeed(seedId);
-
-        throw error;
-      }
+      return completedSeed;
+    } catch (error) {
+      // Delete the failed seed
+      await seedsService.deleteSeed(seedId);
+      throw error;
+    }
   }
 
   /**
-   * Process text content directly (no file)
+   * Process text content directly
    */
-  async processTextContent(
+  private async processTextContent(
     text: string,
     options: {
       userId: string;
@@ -233,7 +238,7 @@ class UploadProcessor {
     };
 
     // Validate content quality
-    this.validateContentQuality(extractionResult, 'text');
+    await this.validateContentQuality(extractionResult, 'text');
 
     this.emitProgress(onProgress, 'extracting');
 
@@ -245,118 +250,179 @@ class UploadProcessor {
     });
 
     try {
-        // Generate Feynman explanation using chatCompletion (matching iOS)
-        this.emitProgress(onProgress, 'generating');
-        const feynmanResult = await generateFeynman(
-          extractionResult.content,
-          title,
-          extractionResult.metadata?.language,
-          accessToken,
-          onProgress
-        );
+      // Generate Feynman explanation
+      this.emitProgress(onProgress, 'generating');
+      const feynmanResult = await generateFeynman(
+        extractionResult.content,
+        title,
+        extractionResult.metadata?.language,
+        accessToken,
+        onProgress
+      );
 
-        this.emitProgress(onProgress, 'finalizing');
+      this.emitProgress(onProgress, 'finalizing');
 
-        // Update seed with results (including Feynman explanation)
-        const completedSeed = await seedsService.updateSeed(seedId, {
-          contentText: extractionResult.content,
-          originalContent: extractionResult.content,
-          feynmanExplanation: feynmanResult.feynmanExplanation,
-          intent: feynmanResult.intent,
-          confidenceScore: feynmanResult.processingMetadata.confidence,
-          processingStatus: 'completed',
-          extractionMetadata: {
-            ...extractionResult.metadata,
-            materialsStatus: {
-              flashcards: 'pending',
-              quiz: 'pending',
-              notes: 'pending',
-              teachback: 'pending',
-            },
+      // Update seed with results
+      const completedSeed = await seedsService.updateSeed(seedId, {
+        contentText: extractionResult.content,
+        originalContent: extractionResult.content,
+        feynmanExplanation: feynmanResult.feynmanExplanation,
+        intent: feynmanResult.intent,
+        confidenceScore: feynmanResult.processingMetadata.confidence,
+        processingStatus: 'completed',
+        extractionMetadata: {
+          ...extractionResult.metadata,
+          materialsStatus: {
+            flashcards: 'pending',
+            quiz: 'pending',
+            notes: 'pending',
+            teachback: 'pending',
           },
-          languageCode: extractionResult.metadata?.language || 'en',
-          processingError: null,
-        });
+        },
+        languageCode: extractionResult.metadata?.language || 'en',
+        isMixedLanguage: extractionResult.metadata?.isMixedLanguage || false,
+        languageMetadata: extractionResult.metadata?.languageMetadata || null,
+        processingError: null,
+      });
 
-        this.emitProgress(onProgress, 'completed');
+      this.emitProgress(onProgress, 'completed');
 
-        return completedSeed;
-      } catch (error) {
-        // Delete the failed seed
-        await seedsService.deleteSeed(seedId);
-        throw error;
-      }
+      return completedSeed;
+    } catch (error) {
+      // Delete the failed seed
+      await seedsService.deleteSeed(seedId);
+      throw error;
+    }
   }
 
   /**
-   * Extract content based on file type
+   * Process YouTube URL
    */
-  private async extractContent(
-    base64Data: string,
-    contentType: ContentType,
-    mimeType: string,
-    accessToken: string
-  ): Promise<ExtractionResult> {
-    let result: { text: string; metadata?: Record<string, unknown> };
-
-    switch (contentType) {
-      case 'pdf':
-      case 'image':
-        result = await processPdfOrImage(base64Data, mimeType, accessToken);
-        break;
-
-      case 'audio':
-        result = await transcribeAudio(base64Data, mimeType, accessToken);
-        break;
-
-      case 'video':
-        result = await transcribeVideo(base64Data, mimeType, accessToken);
-        break;
-
-      case 'text':
-        result = await extractDocument(base64Data, mimeType, accessToken);
-        break;
-
-      default:
-        throw new Error(`Unsupported content type: ${contentType}`);
+  private async processYoutubeUrl(
+    url: string,
+    options: {
+      userId: string;
+      title: string;
+      onProgress?: (progress: UploadProgress) => void;
+      accessToken: string;
     }
+  ): Promise<Seed> {
+    const { userId, title, onProgress, accessToken } = options;
 
-    return {
-      content: result.text,
-      metadata: result.metadata,
-    };
+    this.emitProgress(onProgress, 'validating');
+    this.emitProgress(onProgress, 'reading');
+
+    // Extract content from YouTube URL
+    const extractionResult = await extractYouTubeUrl(url, accessToken);
+
+    // Use video title if available
+    const finalTitle =
+      title === 'YouTube Video' && extractionResult.metadata?.videoTitle
+        ? extractionResult.metadata.videoTitle
+        : title;
+
+    // Validate content quality
+    await this.validateContentQuality(extractionResult, 'youtube');
+
+    this.emitProgress(onProgress, 'extracting');
+
+    // Create seed with YouTube content
+    const { id: seedId } = await seedsService.createInitialSeed({
+      userId,
+      title: finalTitle,
+      contentType: 'youtube',
+    });
+
+    try {
+      // Generate Feynman explanation
+      this.emitProgress(onProgress, 'generating');
+      const feynmanResult = await generateFeynman(
+        extractionResult.content,
+        finalTitle,
+        extractionResult.metadata?.language,
+        accessToken,
+        onProgress
+      );
+
+      this.emitProgress(onProgress, 'finalizing');
+
+      // Update seed with results
+      const completedSeed = await seedsService.updateSeed(seedId, {
+        contentText: extractionResult.content,
+        originalContent: extractionResult.content,
+        feynmanExplanation: feynmanResult.feynmanExplanation,
+        intent: feynmanResult.intent,
+        confidenceScore: feynmanResult.processingMetadata.confidence,
+        processingStatus: 'completed',
+        extractionMetadata: {
+          ...extractionResult.metadata,
+          materialsStatus: {
+            flashcards: 'pending',
+            quiz: 'pending',
+            notes: 'pending',
+            teachback: 'pending',
+          },
+        },
+        languageCode: extractionResult.metadata?.language || 'en',
+        isMixedLanguage: extractionResult.metadata?.isMixedLanguage || false,
+        languageMetadata: extractionResult.metadata?.languageMetadata || null,
+        processingError: null,
+      });
+
+      this.emitProgress(onProgress, 'completed');
+
+      return completedSeed;
+    } catch (error) {
+      // Delete the failed seed
+      await seedsService.deleteSeed(seedId);
+      throw error;
+    }
+  }
+
+  /**
+   * Language-aware content length measurement
+   * For CJK languages, use character count; for others, use word count
+   */
+  private getContentLength(content: string, language?: string): number {
+    const cjkLanguages = ['zh', 'ja', 'ko', 'th'];
+    if (language && cjkLanguages.includes(language)) {
+      return content.length;
+    }
+    return content.split(/\s+/).filter((w) => w.length > 0).length;
   }
 
   /**
    * Validate extracted content quality
    */
-  private validateContentQuality(
+  private async validateContentQuality(
     extractionResult: ExtractionResult,
     contentType: ContentType
-  ): void {
+  ): Promise<void> {
     const content = extractionResult.content?.trim() || '';
-    const MIN_WORDS = 20;
+    const language = extractionResult.metadata?.language;
 
-    // Count words
-    const wordCount = content.split(/\s+/).filter(Boolean).length;
+    // Use language-aware content length measurement
+    const contentLength = this.getContentLength(content, language);
+    const charCount = content.length;
+    const MIN_CONTENT_UNITS = 20;
 
-    if (!content || wordCount < MIN_WORDS) {
+    if (!content || contentLength < MIN_CONTENT_UNITS) {
       const errorMessages: Record<ContentType, string> = {
-        image: wordCount === 0
-          ? 'No text detected in image. Use a clearer photo with readable text.'
-          : `Too little text (${wordCount} words). Capture an image with at least ${MIN_WORDS} words.`,
-        audio: wordCount === 0
+        image: contentLength === 0
+          ? 'No text detected. Use a clearer photo with readable text.'
+          : `Too little text (${contentLength} words found). Capture an image with at least ${MIN_CONTENT_UNITS} words.`,
+        audio: contentLength === 0
           ? 'No speech detected. Check audio quality or use a different file.'
-          : `Too short (${wordCount} words). Use audio with at least ${MIN_WORDS} words of speech.`,
-        video: wordCount === 0
-          ? 'No speech detected. Ensure your video has clear, audible speech.'
-          : `Too short (${wordCount} words). Use a video with at least ${MIN_WORDS} words of speech.`,
-        pdf: wordCount === 0
+          : `Too short (${contentLength} words). Use audio with at least ${MIN_CONTENT_UNITS} words of speech.`,
+        pdf: contentLength === 0
           ? 'No text in this PDF. Try a text-based PDF or better quality scan.'
-          : `Too little text (${wordCount} words). Upload a PDF with at least ${MIN_WORDS} words.`,
-        text: wordCount === 0
-          ? `No content entered. Please add at least ${MIN_WORDS} words.`
-          : `Too short (${wordCount} words). Please add at least ${MIN_WORDS - wordCount} more words.`,
+          : `Too little text (${contentLength} words). Upload a PDF with at least ${MIN_CONTENT_UNITS} words.`,
+        text: contentLength === 0
+          ? `No content entered. Please add at least ${MIN_CONTENT_UNITS} words.`
+          : `Too short (${contentLength} words). Please add at least ${MIN_CONTENT_UNITS} more words.`,
+        youtube: contentLength === 0
+          ? 'No content found. Please ensure the source has at least ${MIN_CONTENT_UNITS} words.'
+          : `Too short (${contentLength} words). Please ensure the content has at least ${MIN_CONTENT_UNITS} words.`,
       };
 
       throw new Error(errorMessages[contentType]);
@@ -391,14 +457,6 @@ class UploadProcessor {
       return 'audio';
     }
 
-    // Video
-    if (
-      mimeType.startsWith('video/') ||
-      /\.(mp4|mov|avi|mkv|webm)$/.test(fileName)
-    ) {
-      return 'video';
-    }
-
     // Documents (text)
     if (
       mimeType.includes('document') ||
@@ -412,6 +470,31 @@ class UploadProcessor {
   }
 
   /**
+   * Extract content based on file type
+   */
+  private async extractContent(
+    base64Data: string,
+    contentType: ContentType,
+    mimeType: string,
+    accessToken: string
+  ): Promise<ExtractionResult> {
+    switch (contentType) {
+      case 'pdf':
+      case 'image':
+        return processPdfOrImage(base64Data, mimeType, accessToken);
+
+      case 'audio':
+        return transcribeAudio(base64Data, mimeType, accessToken);
+
+      case 'text':
+        return extractDocument(base64Data, mimeType, accessToken);
+
+      default:
+        throw new Error(`Unsupported content type: ${contentType}`);
+    }
+  }
+
+  /**
    * Convert file to base64
    */
   private fileToBase64(file: File): Promise<string> {
@@ -420,7 +503,7 @@ class UploadProcessor {
 
       reader.onload = () => {
         const result = reader.result as string;
-        // Remove data URL prefix (e.g., "data:application/pdf;base64,")
+        // Remove data URL prefix
         const base64 = result.split(',')[1];
         resolve(base64);
       };

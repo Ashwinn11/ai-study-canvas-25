@@ -91,7 +91,7 @@ export default function CreateExamPage() {
     const isProcessing =
       seed.processing_status !== 'completed' &&
       seed.processing_status !== 'failed';
-    const hasOtherExams = seed.exam_names && seed.exam_names.length > 0;
+    const hasOtherExams = !!(seed.exam_names && seed.exam_names.length > 0);
     return isProcessing || hasOtherExams;
   };
 

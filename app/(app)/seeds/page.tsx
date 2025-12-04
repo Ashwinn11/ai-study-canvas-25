@@ -96,12 +96,21 @@ export default function SeedsPage() {
   const confirmDelete = async () => {
     if (!deleteConfirm) return;
 
+    // Store the seed for potential revert
+    const seedToDelete = seeds.find(s => s.id === deleteConfirm.id);
+
+    // Optimistic update - remove from UI immediately
+    const previousSeeds = seeds;
+    setSeeds(seeds.filter(s => s.id !== deleteConfirm.id));
+    toast.success('Seed deleted successfully');
+
     try {
+      // Delete in background
       await seedsService.deleteSeed(deleteConfirm.id);
-      setSeeds(seeds.filter(s => s.id !== deleteConfirm.id));
-      toast.success('Seed deleted successfully');
     } catch (err) {
+      // Revert on error
       console.error('Error deleting seed:', err);
+      setSeeds(previousSeeds);
       toast.error('Failed to delete seed', {
         description: err instanceof Error ? err.message : 'An error occurred',
       });

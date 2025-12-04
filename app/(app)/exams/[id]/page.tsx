@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { examsService, type ExamWithSeeds } from '@/lib/api/examsService';
 import { spacedRepetitionService, type ReviewStats } from '@/lib/api/spacedRepetitionService';
-import { ArrowLeft, Loader2, Pencil, Trash2, PlayCircle, BookOpen } from 'lucide-react';
+import { ArrowLeft, Loader2, Pencil, Trash2, PlayCircle, BookOpen, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function ExamDetailPage() {
@@ -185,22 +185,20 @@ export default function ExamDetailPage() {
                   </span>
                 </div>
 
-                {/* Smart Review/Practice Button */}
+                {/* Smart Review Button - Only show when there are due items (matching iOS) */}
                 {hasDueItems ? (
                   <Button onClick={() => handleStartReview(false)} className="gap-2" size="lg">
                     <PlayCircle className="h-5 w-5" />
-                    Prep Now
+                    Review Due
                   </Button>
                 ) : (
-                  <Button
-                    onClick={() => handleStartReview(true)}
-                    variant="secondary"
-                    className="gap-2 bg-green-500 hover:bg-green-600"
-                    size="lg"
-                  >
-                    <BookOpen className="h-5 w-5" />
-                    Practice Test
-                  </Button>
+                  <div className="text-center py-4 px-6 rounded-lg bg-green-500/10 border border-green-500/20">
+                    <div className="flex items-center justify-center gap-2">
+                      <CheckCircle className="h-5 w-5 text-green-400" />
+                      <span className="text-sm font-semibold text-green-400">Caught up!</span>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-2">All review items completed for today</p>
+                  </div>
                 )}
               </div>
             </>

@@ -994,7 +994,7 @@ export class SpacedRepetitionService {
           return 'F';
         };
 
-        const avgNumeric = grades.reduce((sum, grade) => sum + gradeToNumber(grade), 0) / grades.length;
+        const avgNumeric = grades.reduce((sum: number, grade: string) => sum + gradeToNumber(grade), 0) / grades.length;
         averageGrade = numberToGrade(avgNumeric);
       }
 

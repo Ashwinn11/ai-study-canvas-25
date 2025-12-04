@@ -55,7 +55,7 @@ export default function ProfilePage() {
     screenName: user ? `profile-${user.id}` : 'profile',
     refreshFn: refreshStats,
     refreshOnMount: false,
-    refreshOnFocus: false,
+    refreshOnFocus: true,
   });
 
   useEffect(() => {

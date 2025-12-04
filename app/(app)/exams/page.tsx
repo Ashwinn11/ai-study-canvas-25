@@ -6,8 +6,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { examsService } from '@/lib/api/examsService';
 import { spacedRepetitionService } from '@/lib/api/spacedRepetitionService';
 import type { Exam, ReviewStats } from '@/types';
-import { Plus, BookOpen, Loader2, Trash2, Flame, Clock } from 'lucide-react';
+import { Plus, BookOpen, Loader2, Trash2, Flame, Clock, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 export default function ExamsPage() {
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function ExamsPage() {
   const [reviewStats, setReviewStats] = useState<Record<string, ReviewStats>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const loadExams = useCallback(async () => {
     if (!user) return;
@@ -132,6 +134,11 @@ export default function ExamsPage() {
     );
   }
 
+  // Filter exams based on search query
+  const filteredExams = exams.filter((exam) =>
+    exam.subject_name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -141,6 +148,25 @@ export default function ExamsPage() {
           <Plus className="h-4 w-4 mr-2" />
           Create Exam
         </Button>
+      </div>
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-3 h-5 w-5 text-gray-500" />
+        <Input
+          placeholder="Search exams..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10 pr-10"
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            className="absolute right-3 top-3 text-gray-500 hover:text-gray-400"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        )}
       </div>
 
       {/* Exams List */}
@@ -160,9 +186,16 @@ export default function ExamsPage() {
             Create Your First Exam
           </Button>
         </div>
+      ) : filteredExams.length === 0 ? (
+        <div className="text-center py-16">
+          <p className="text-gray-400 mb-6">No exams match your search</p>
+          <Button onClick={() => setSearchQuery('')} variant="outline">
+            Clear search
+          </Button>
+        </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {exams.map((exam) => {
+          {filteredExams.map((exam) => {
             const stats = reviewStats[exam.id];
             const hasDue = stats && stats.dueToday > 0;
             const hasOverdue = stats && stats.overdue > 0;
@@ -176,7 +209,7 @@ export default function ExamsPage() {
                 {/* Delete button */}
                 <button
                   onClick={(e) => handleDeleteExam(exam.id, exam.subject_name, e)}
-                  className="absolute top-4 right-4 p-2 rounded-lg bg-red-500/10 text-red-400 opacity-0 group-hover:opacity-100 hover:bg-red-500/20 transition-all"
+                  className="absolute top-4 right-4 p-2 rounded-lg bg-red-500/50 text-red-400 hover:bg-red-500 transition-all"
                   aria-label="Delete exam"
                 >
                   <Trash2 className="h-4 w-4" />

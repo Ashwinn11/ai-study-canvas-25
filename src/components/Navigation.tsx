@@ -27,6 +27,8 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
 
   // Navigation links
   const navLinks = [
+    { name: "Features", href: "#features" },
+    { name: "Testimonials", href: "#testimonials" },
     { name: "FAQ", href: "#faq" },
   ];
 

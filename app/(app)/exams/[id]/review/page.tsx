@@ -11,6 +11,7 @@ import { xpService } from '@/lib/api/xpService';
 import { streakService } from '@/lib/api/streakService';
 import { achievementEngine } from '@/lib/api/achievementEngine';
 import { reviewProgressService } from '@/lib/api/reviewProgressService';
+import { profileStatsService } from '@/lib/api/profileStatsService';
 import { useGlobalRefresh } from '@/hooks/useGlobalRefresh';
 import { scoreToGrade, getGradeMessage } from '@/lib/utils/gradeUtils';
 import { Flashcard, QuizQuestion } from '@/lib/supabase/types';
@@ -233,7 +234,9 @@ export default function ExamReviewPage() {
 
       if (!user) return;
 
-      // Daily goal celebration
+      // Daily goal celebration (only show once per session)
+      // Use local dailyGoal state for mid-session check
+      // Note: Final validation uses fresh DB value at session end to prevent mismatches
       if (dailyGoal > 0 && totalAttempts >= dailyGoal && !goalCelebratedRef.current) {
         goalCelebratedRef.current = true;
         setDailyGoalMet(true);
@@ -307,30 +310,9 @@ export default function ExamReviewPage() {
 
           const score = totalItems > 0 ? correctItems / totalItems : 0;
 
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          await supabase.from('learning_sessions').insert({
-            user_id: user.id,
-            exam_id: examId,
-            session_type: 'exam',
-            total_items: totalItems,
-            correct_items: correctItems,
-            score,
-            time_spent: timeSpentSeconds,
-            metadata: {
-              source: 'exam-review',
-              flashcard_count: stats.flashcardTotal,
-              flashcard_correct: stats.flashcardCorrect,
-              quiz_count: stats.quizTotal,
-              quiz_correct: stats.quizCorrect,
-               reviewed_card_ids: Array.from(resultsRef.current.keys()),
-
-            },
-            completed_at: new Date().toISOString(),
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          } as any);
-
           // Create exam report (matching iOS - this contributes to average grade)
+          // NOTE: A database trigger automatically creates a learning_sessions record from this exam_report
+          // This learning_sessions record is what's used to calculate cardsReviewedToday and daily goal progress
           // Only create report for actual review mode, not practice mode
           if (!isPracticeMode) {
             const scorePercentage = Math.round(score * 100);
@@ -357,8 +339,24 @@ export default function ExamReviewPage() {
 
             // NOTE: XP is now awarded per-card, so we don't award it here anymore.
 
-            // Update streak after session
-            const streakResult = await streakService.updateStreakAfterSession(user.id, dailyGoal);
+            // Fetch fresh daily goal from database (matching iOS implementation)
+            // This ensures we use the current value, not a potentially stale local state
+            console.log('[DailyGoal] Session complete - fetching fresh goal from database');
+            console.log('[DailyGoal] Local state dailyGoal:', dailyGoal);
+            console.log('[DailyGoal] Cards reviewed this session:', totalItems);
+
+            const { data: userStats } = await profileStatsService.getUserStats(user.id);
+            const dbDailyGoal = (userStats as any)?.dailyCardsGoal || (userStats as any)?.preferences?.dailyCardsGoal;
+            const finalDailyGoal = dbDailyGoal || dailyGoal || 20;
+
+            console.log('[DailyGoal] Database dailyCardsGoal:', dbDailyGoal);
+            console.log('[DailyGoal] Final goal to use:', finalDailyGoal);
+            console.log('[DailyGoal] Goal met?', totalItems >= finalDailyGoal);
+
+            // Update streak after session with fresh goal value
+            console.log('[DailyGoal] Calling updateStreakAfterSession with goal:', finalDailyGoal);
+            const streakResult = await streakService.updateStreakAfterSession(user.id, finalDailyGoal);
+            console.log('[DailyGoal] Streak update result:', streakResult);
             setCompletionStreak(streakResult.currentStreak);
 
             // Check for achievement unlocks
@@ -368,17 +366,27 @@ export default function ExamReviewPage() {
             const surprise = await achievementEngine.maybeSurpriseAchievement(user.id);
             if (surprise) newAchievements.push(surprise);
 
-            // Mark daily goal as celebrated (if met)
+            // Mark daily goal as celebrated (if met) - use the fresh goal value
             let showGoalToast = false;
-            if (dailyGoal > 0 && totalItems >= dailyGoal && !goalCelebratedRef.current) {
+            console.log('[DailyGoal] Checking if goal should be celebrated:');
+            console.log('[DailyGoal]   finalDailyGoal > 0?', finalDailyGoal > 0);
+            console.log('[DailyGoal]   totalItems >= finalDailyGoal?', totalItems >= finalDailyGoal);
+            console.log('[DailyGoal]   goalCelebratedRef.current?', goalCelebratedRef.current);
+
+            if (finalDailyGoal > 0 && totalItems >= finalDailyGoal && !goalCelebratedRef.current) {
               try {
+                console.log('[DailyGoal] Marking goal as celebrated');
                 await dailyGoalTrackerService.markGoalCelebratedToday(user.id);
+                console.log('[DailyGoal] Goal marked as celebrated successfully');
               } catch (err) {
                 console.error('Error marking daily goal at completion:', err);
               }
               goalCelebratedRef.current = true;
               setDailyGoalMet(true);
               showGoalToast = true;
+              console.log('[DailyGoal] Daily goal will be shown in toast');
+            } else {
+              console.log('[DailyGoal] Goal not celebrated (conditions not met)');
             }
 
             // Filter newly unlocked achievements (avoid duplicates)
@@ -419,7 +427,12 @@ export default function ExamReviewPage() {
                 });
               }, delay + index * 1500);
             });
+
+            // Small delay to ensure learning_sessions is fully committed before refreshing stats
+            await new Promise(resolve => setTimeout(resolve, 500));
+            console.log('[DailyGoal] Calling refreshGlobal after session save');
             await refreshGlobal({ refreshAll: true, force: true });
+            console.log('[DailyGoal] refreshGlobal completed');
           }
         } catch (error) {
           console.error('Error saving exam review session:', error);

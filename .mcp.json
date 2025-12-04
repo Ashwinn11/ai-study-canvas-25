@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "supabase": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp",
+      "args": ["--access-token", "sbp_0bc714d449c1543f01fcd06958274ba86d436bc0"]
+    }
+  }
+}

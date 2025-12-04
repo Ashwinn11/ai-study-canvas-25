@@ -239,14 +239,25 @@ export class ProfileStatsService {
   private async getTodayActivity(userId: string) {
     try {
       const startOfToday = getLocalMidnight();
+      const startOfTodayISO = startOfToday.toISOString();
+
+      console.log('[ProfileStats] getTodayActivity:');
+      console.log('[ProfileStats]   Local midnight:', startOfToday);
+      console.log('[ProfileStats]   ISO string:', startOfTodayISO);
+      console.log('[ProfileStats]   Current time:', new Date().toISOString());
 
       const { data: sessions, error } = await this.supabase
         .from("learning_sessions")
-        .select("total_items, time_spent, metadata")
+        .select("total_items, time_spent, metadata, completed_at")
         .eq("user_id", userId)
         .eq("metadata->>source", "exam-review")
-        .gte("completed_at", startOfToday.toISOString())
+        .gte("completed_at", startOfTodayISO)
         .not("completed_at", "is", null);
+
+      console.log('[ProfileStats]   Found sessions:', sessions?.length || 0);
+      if (sessions && sessions.length > 0) {
+        console.log('[ProfileStats]   Sessions:', sessions.map((s: any) => ({ total_items: s.total_items, completed_at: s.completed_at })));
+      }
 
       if (error) throw error;
 

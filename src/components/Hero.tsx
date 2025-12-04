@@ -31,7 +31,7 @@ export const Hero = () => {
                 size="lg" 
                 className={cn(
                   "h-14 px-10 rounded-2xl-custom text-lg font-bold uppercase tracking-wide transition-all",
-                  "bg-duolingo-green text-white shadow-3d hover:bg-duolingo-green/90 active:translate-y-[4px] active:shadow-none"
+                  "bg-primary text-white shadow-3d hover:bg-primary/90 active:translate-y-[4px] active:shadow-none"
                 )}
                 asChild
               >

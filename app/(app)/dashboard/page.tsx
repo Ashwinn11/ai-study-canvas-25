@@ -31,15 +31,22 @@ interface DashboardStats {
   goalMet: boolean;
 }
 
-interface ExamCard extends ExamWithSeeds {
+interface ExamCard {
+  id: string;
+  user_id: string;
+  subject_name: string;
+  created_at: string;
+  updated_at: string;
   seedCount: number;
-  reviewStats?: ReviewStats;
+  seeds: any[];
+  reviewStats?: ReviewStats | null;
   averageGrade?: string;
 }
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<any>(null);
   const [stats, setStats] = useState<DashboardStats>({
     currentStreak: 0,
     cardsReviewedToday: 0,
@@ -78,6 +85,13 @@ export default function DashboardPage() {
     if (!user) return;
 
     try {
+      // Load profile from user metadata or fetch from service
+      const userMetadata = (user as any)?.user_metadata || {};
+      setProfile({
+        full_name: userMetadata.full_name || user.email?.split('@')[0] || 'User',
+        avatar_url: userMetadata.avatar_url,
+      });
+
       const userStats = await profileStatsService.getUserStats(user.id);
       const data = (userStats as any)?.data;
 
@@ -101,7 +115,7 @@ export default function DashboardPage() {
 
     setExamsLoading(true);
     try {
-      const { exams: loadedExams, error } = await examsService.getExamsWithStats(user.id);
+      const { exams: loadedExams, error } = await examsService.getExamsWithSeedCounts();
 
       if (error || !loadedExams) {
         console.error('Error loading exams:', error);
@@ -112,9 +126,13 @@ export default function DashboardPage() {
       // Load review stats and average grades for each exam
       const examsWithStats = await Promise.all(
         loadedExams.map(async (exam) => {
+          // Get full exam data with seeds
+          const { examWithSeeds } = await examsService.getExamWithSeeds(exam.id);
           const reviewStats = await spacedRepetitionService.getReviewStatsForExam(user.id, exam.id);
+
           return {
             ...exam,
+            seeds: examWithSeeds?.seeds || [],
             reviewStats,
             averageGrade: reviewStats?.averageGrade,
           };

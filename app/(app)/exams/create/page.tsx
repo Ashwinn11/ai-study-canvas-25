@@ -16,6 +16,7 @@ interface Seed {
   content_type: string;
   created_at: string;
   processing_status: string;
+  exam_names?: string[]; // Names of exams this seed is already associated with
 }
 
 export default function CreateExamPage() {
@@ -33,7 +34,18 @@ export default function CreateExamPage() {
       const supabase = getSupabaseClient();
       const { data, error } = await supabase
         .from('seeds')
-        .select('*')
+        .select(`
+          id,
+          title,
+          content_type,
+          created_at,
+          processing_status,
+          exam_seeds (
+            exams (
+              subject_name
+            )
+          )
+        `)
         .eq('user_id', user?.id || '')
         .eq('processing_status', 'completed')
         .order('created_at', { ascending: false });
@@ -44,7 +56,22 @@ export default function CreateExamPage() {
         return;
       }
 
-      setAvailableSeeds((data || []) as Seed[]);
+      // Transform data to include exam_names
+      const seedsWithExamNames = (data || []).map((seed: any) => {
+        const examNames = seed.exam_seeds
+          ?.map((es: any) => es.exams?.subject_name)
+          .filter(Boolean) || [];
+        return {
+          id: seed.id,
+          title: seed.title,
+          content_type: seed.content_type,
+          created_at: seed.created_at,
+          processing_status: seed.processing_status,
+          exam_names: examNames,
+        };
+      });
+
+      setAvailableSeeds(seedsWithExamNames);
     } catch (err) {
       console.error('Error loading seeds:', err);
       setError('Failed to load study materials');
@@ -59,7 +86,19 @@ export default function CreateExamPage() {
     }
   }, [user, loadSeeds]);
 
+  const isSeedDisabled = (seed: Seed): boolean => {
+    // Seed is disabled if it's processing or already associated with another exam
+    const isProcessing =
+      seed.processing_status !== 'completed' &&
+      seed.processing_status !== 'failed';
+    const hasOtherExams = seed.exam_names && seed.exam_names.length > 0;
+    return isProcessing || hasOtherExams;
+  };
+
   const handleToggleSeed = (seedId: string) => {
+    const seed = availableSeeds.find(s => s.id === seedId);
+    if (!seed || isSeedDisabled(seed)) return;
+
     const newSelected = new Set(selectedSeedIds);
     if (newSelected.has(seedId)) {
       newSelected.delete(seedId);
@@ -176,36 +215,55 @@ export default function CreateExamPage() {
             </div>
           ) : (
             <div className="space-y-2 max-h-[400px] overflow-y-auto">
-              {availableSeeds.map((seed) => (
-                <button
-                  key={seed.id}
-                  onClick={() => handleToggleSeed(seed.id)}
-                  disabled={creating}
-                  className={`w-full flex items-center gap-3 p-4 rounded-lg border transition-all ${
-                    selectedSeedIds.has(seed.id)
-                      ? 'border-primary bg-primary/10'
-                      : 'border-white/10 bg-white/5 hover:bg-white/10'
-                  } disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
-                  <div
-                    className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+              {availableSeeds.map((seed) => {
+                const disabled = isSeedDisabled(seed);
+                const isProcessing =
+                  seed.processing_status !== 'completed' &&
+                  seed.processing_status !== 'failed';
+                const hasOtherExams = seed.exam_names && seed.exam_names.length > 0;
+
+                return (
+                  <button
+                    key={seed.id}
+                    onClick={() => handleToggleSeed(seed.id)}
+                    disabled={creating || disabled}
+                    className={`w-full flex items-center gap-3 p-4 rounded-lg border transition-all ${
                       selectedSeedIds.has(seed.id)
-                        ? 'border-primary bg-primary'
-                        : 'border-gray-600'
-                    }`}
+                        ? 'border-primary bg-primary/10'
+                        : disabled
+                        ? 'border-white/10 bg-white/5 opacity-50'
+                        : 'border-white/10 bg-white/5 hover:bg-white/10 cursor-pointer'
+                    } disabled:cursor-not-allowed`}
+                    title={
+                      isProcessing
+                        ? 'This material is still being processed'
+                        : hasOtherExams
+                        ? `Already associated with: ${seed.exam_names?.join(', ')}`
+                        : ''
+                    }
                   >
-                    {selectedSeedIds.has(seed.id) && (
-                      <Check className="h-3 w-3 text-white" />
-                    )}
-                  </div>
-                  <div className="flex-1 text-left">
-                    <p className="text-white font-medium">{seed.title}</p>
-                    <p className="text-sm text-gray-400">
-                      {seed.content_type} • {new Date(seed.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                </button>
-              ))}
+                    <div
+                      className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
+                        selectedSeedIds.has(seed.id)
+                          ? 'border-primary bg-primary'
+                          : 'border-gray-600'
+                      }`}
+                    >
+                      {selectedSeedIds.has(seed.id) && (
+                        <Check className="h-3 w-3 text-white" />
+                      )}
+                    </div>
+                    <div className="flex-1 text-left min-w-0">
+                      <p className="text-white font-medium truncate">{seed.title}</p>
+                      <p className="text-sm text-gray-400">
+                        {seed.content_type} • {new Date(seed.created_at).toLocaleDateString()}
+                        {isProcessing && ' • Processing...'}
+                        {hasOtherExams && ` • In ${seed.exam_names?.join(', ')}`}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>

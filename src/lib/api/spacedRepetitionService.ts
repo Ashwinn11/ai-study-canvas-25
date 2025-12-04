@@ -952,6 +952,52 @@ export class SpacedRepetitionService {
 
       const today = getLocalDate();
 
+      // Fetch average grade from exam_reports for this exam (matching iOS)
+      const { data: reports, error: reportsError } = await this.supabase
+        .from('exam_reports')
+        .select('letter_grade')
+        .eq('user_id', userId)
+        .eq('exam_id', examId)
+        .not('letter_grade', 'is', null);
+
+      let averageGrade: string | undefined;
+      if (!reportsError && reports && reports.length > 0) {
+        // Calculate numeric average of grades (matching iOS implementation)
+        // iOS uses 1-9 scale: A+=9, A=8, B+=7, B=6, C+=5, C=4, D+=3, D=2, F=1
+        const grades = reports.map((r: any) => r.letter_grade);
+        const gradeToNumber = (grade: string): number => {
+          // Convert letter grades to numeric values (matching iOS gradeToNumber)
+          switch (grade?.toUpperCase()) {
+            case 'A+': return 9;
+            case 'A': return 8;
+            case 'B+': return 7;
+            case 'B': return 6;
+            case 'C+': return 5;
+            case 'C': return 4;
+            case 'D+': return 3;
+            case 'D': return 2;
+            case 'F': return 1;
+            default: return 0;
+          }
+        };
+
+        const numberToGrade = (avg: number): string => {
+          // Convert numeric average back to letter grade (matching iOS numberToGrade)
+          if (avg >= 8.5) return 'A+';
+          if (avg >= 7.5) return 'A';
+          if (avg >= 6.5) return 'B+';
+          if (avg >= 5.5) return 'B';
+          if (avg >= 4.5) return 'C+';
+          if (avg >= 3.5) return 'C';
+          if (avg >= 2.5) return 'D+';
+          if (avg >= 1.5) return 'D';
+          return 'F';
+        };
+
+        const avgNumeric = grades.reduce((sum, grade) => sum + gradeToNumber(grade), 0) / grades.length;
+        averageGrade = numberToGrade(avgNumeric);
+      }
+
       return {
         examId,
         totalItems: contentStatus.totalItems,
@@ -959,7 +1005,8 @@ export class SpacedRepetitionService {
         overdue: contentStatus.overdueItems,
         upcoming: contentStatus.availableItems,
         nextReviewDate: contentStatus.nextDueDate,
-        averageScore: undefined, // Can be calculated from quality_rating if needed
+        averageScore: undefined,
+        averageGrade, // Add grade from exam_reports (matching iOS)
       };
     } catch (err) {
       logger.error(

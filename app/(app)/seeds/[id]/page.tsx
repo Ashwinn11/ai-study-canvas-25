@@ -29,6 +29,7 @@ import {
 import { useChat, ExplanationMode } from '@/hooks/useChat';
 import { brainBotService } from '@/lib/api/brainBotService';
 import { Button } from '@/components/ui/button';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 
 const CONTENT_TYPE_ICONS = {
   pdf: FileText,
@@ -96,6 +97,7 @@ export default function SeedDetailPage() {
   const [showVibeCheck, setShowVibeCheck] = useState(false);
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [isBrainBotOpen, setIsBrainBotOpen] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const suggestedQuestions = useMemo(() => SUGGESTED_QUESTIONS_BY_MODE[explanationMode], [explanationMode]);
   const messageCount = messages.length;
@@ -180,17 +182,15 @@ export default function SeedDetailPage() {
   }, [user, seedId, loadSeed]);
 
   const handleDeleteSeed = useCallback(async () => {
+    setShowDeleteDialog(true);
+  }, []);
+
+  const confirmDeleteSeed = useCallback(async () => {
     if (!seed) return;
-
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${seed.title}"? This will remove all associated study materials.`,
-    );
-
-    if (!confirmed) return;
 
     const { error } = await seedsService.deleteSeed(seed.id);
     if (error) {
-      alert(error);
+      console.error(error);
       return;
     }
 
@@ -696,6 +696,18 @@ export default function SeedDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        onConfirm={confirmDeleteSeed}
+        title="Delete Material"
+        description={`Are you sure you want to delete "${seed?.title}"? This will remove all associated study materials.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+      />
     </div>
   );
 }

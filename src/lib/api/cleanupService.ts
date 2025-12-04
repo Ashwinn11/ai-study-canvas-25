@@ -36,6 +36,14 @@ class CleanupService {
 
   setSupabase(client: SupabaseClient) {
     this.supabase = client;
+    
+    // Also try to initialize QueryClient from global if not already set
+    if (!this.queryClient && typeof window !== 'undefined') {
+      const globalQueryClient = (window as any).__QUERY_CLIENT__;
+      if (globalQueryClient) {
+        this.queryClient = globalQueryClient;
+      }
+    }
   }
 
   setQueryClient(client: QueryClient) {
@@ -56,9 +64,34 @@ class CleanupService {
 
   private getQueryClient(): QueryClient {
     if (!this.queryClient) {
-      throw new Error(
-        "QueryClient not initialized. Call setQueryClient() first.",
-      );
+      // Try to get the QueryClient from the window or create a default one
+      try {
+        // Check if we're in a browser environment
+        if (typeof window !== 'undefined') {
+          // Try to access the global QueryClient if it exists
+          const globalQueryClient = (window as any).__QUERY_CLIENT__;
+          if (globalQueryClient) {
+            this.queryClient = globalQueryClient;
+          }
+        }
+        
+        // Create a default QueryClient for server-side operations
+        if (!this.queryClient) {
+          this.queryClient = new QueryClient({
+            defaultOptions: {
+              queries: {
+                staleTime: 1000 * 60 * 5, // 5 minutes
+                retry: 1,
+              },
+            },
+          });
+        }
+        return this.queryClient;
+      } catch (error) {
+        throw new Error(
+          "QueryClient not initialized. Call setQueryClient() first.",
+        );
+      }
     }
     return this.queryClient;
   }
@@ -421,10 +454,15 @@ class CleanupService {
           },
         );
 
-        // Invalidate the seeds query to force a refetch
-        this.getQueryClient().invalidateQueries({
-          queryKey: ["seeds", userId],
-        });
+        // Invalidate the seeds query to force a refetch (if QueryClient is available)
+        try {
+          this.getQueryClient().invalidateQueries({
+            queryKey: ["seeds", userId],
+          });
+        } catch (error) {
+          // QueryClient not initialized - this is expected in some contexts
+          logger.debug("[CleanupService] QueryClient not available for query invalidation");
+        }
       }
 
       return result;
@@ -496,9 +534,14 @@ class CleanupService {
         deletedCounts: { examSeeds: examSeedsCount, exams: examCount },
       });
 
-      // Invalidate both exams and seeds queries
-      this.getQueryClient().invalidateQueries({ queryKey: ["exams", userId] });
-      this.getQueryClient().invalidateQueries({ queryKey: ["seeds", userId] });
+      // Invalidate both exams and seeds queries (if QueryClient is available)
+      try {
+        this.getQueryClient().invalidateQueries({ queryKey: ["exams", userId] });
+        this.getQueryClient().invalidateQueries({ queryKey: ["seeds", userId] });
+      } catch (error) {
+        // QueryClient not initialized - this is expected in some contexts
+        logger.debug("[CleanupService] QueryClient not available for query invalidation");
+      }
 
       return {
         success: true,

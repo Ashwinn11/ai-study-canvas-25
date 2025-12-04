@@ -13,10 +13,10 @@ export default function PrivacyPage() {
       <BlobBackground position="top" color="#ff7664" animate={true} />
       <div className="container mx-auto px-4 max-w-4xl relative z-10">
         <div className="bg-white rounded-2xl shadow-elevated p-8 md:p-12">
-          <h1 className="text-4xl font-bold mb-4 text-foreground">Privacy Policy</h1>
-          <p className="text-sm text-foreground/70 mb-8">Last updated: November 1, 2025</p>
+          <h1 className="text-4xl font-bold mb-4 text-gray-800">Privacy Policy</h1>
+          <p className="text-sm text-gray-800/70 mb-8">Last updated: November 1, 2025</p>
           
-          <div className="prose prose-lg max-w-none text-foreground/80 space-y-6">
+          <div className="prose prose-lg max-w-none text-gray-800/80 space-y-6">
             <p>
               Masterly ("we", "us", "our") is committed to protecting your privacy. This Privacy Policy explains what information we collect, how we use it, and the choices you have.
             </p>
@@ -27,7 +27,7 @@ export default function PrivacyPage() {
               </p>
             </div>
 
-            <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">1. Information We Collect</h2>
+            <h2 className="text-2xl font-semibold text-gray-800 mt-8 mb-4">1. Information We Collect</h2>
             <ul className="list-disc pl-6 space-y-2">
               <li><strong>Account Information:</strong> Name, email address, grade level, study goals, and other onboarding details you provide.</li>
               <li><strong>Content Uploads:</strong> Documents, images, audio, video, and text you submit for study material generation.</li>
@@ -37,7 +37,7 @@ export default function PrivacyPage() {
               <li><strong>Error & Crash Reports:</strong> When the app encounters errors, we collect diagnostic data (device model, OS version, stack traces) via Sentry to improve stability. No personally identifying information is included in crash reports.</li>
             </ul>
 
-            <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">2. How We Use Information</h2>
+            <h2 className="text-2xl font-semibold text-gray-800 mt-8 mb-4">2. How We Use Information</h2>
             <ul className="list-disc pl-6 space-y-2">
               <li>Deliver core learning features, including AI-generated study guides and spaced repetition reminders.</li>
               <li>Personalize content recommendations and track study progress.</li>
@@ -45,8 +45,8 @@ export default function PrivacyPage() {
               <li>Communicate product updates and important changes to our Terms or policies.</li>
             </ul>
 
-            <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">3. Data Sharing & Processors</h2>
-            <p className="font-medium text-foreground mb-3">We share data with the following processors to deliver app functionality:</p>
+            <h2 className="text-2xl font-semibold text-gray-800 mt-8 mb-4">3. Data Sharing & Processors</h2>
+            <p className="font-medium text-gray-800 mb-3">We share data with the following processors to deliver app functionality:</p>
             <ul className="list-disc pl-6 space-y-2">
               <li><strong>Supabase:</strong> Hosts authentication, database, and file storage. All data is encrypted in transit.</li>
               <li><strong>OpenAI:</strong> Processes content (documents, images, audio) you upload to generate AI-powered explanations, study guides, and practice questions.</li>
@@ -64,13 +64,13 @@ export default function PrivacyPage() {
               <li>We do not sell your personal information. We only share data with these processors under strict data processing agreements that limit their use to providing services to Masterly.</li>
             </ul>
 
-            <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">4. Data Retention</h2>
+            <h2 className="text-2xl font-semibold text-gray-800 mt-8 mb-4">4. Data Retention</h2>
             <ul className="list-disc pl-6 space-y-2">
               <li>We retain your personal data while your account is active. If you request deletion or close your account, we remove or anonymize personal data within 30 days except where retention is required by law.</li>
               <li>Aggregated, de-identified data may be retained for analytics and product improvement.</li>
             </ul>
 
-            <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">5. Your Choices & Rights</h2>
+            <h2 className="text-2xl font-semibold text-gray-800 mt-8 mb-4">5. Your Choices & Rights</h2>
             <ul className="list-disc pl-6 space-y-2">
               <li><strong>Access & Update:</strong> Review and update profile details in the Profile → Settings tab.</li>
               <li><strong>Analytics Opt-Out:</strong> Disable analytics collection from the Profile settings. Push notifications are opt-in and can be disabled in system settings.</li>
@@ -80,22 +80,22 @@ export default function PrivacyPage() {
               <li><strong>European Residents (GDPR):</strong> You have rights to data access, rectification, erasure, and portability under GDPR. Contact support@masterlyapp.in for requests.</li>
             </ul>
 
-            <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">6. Security</h2>
+            <h2 className="text-2xl font-semibold text-gray-800 mt-8 mb-4">6. Security</h2>
             <p>
               We implement industry-standard safeguards, including encryption in transit (TLS), secure credential storage, and role-based access controls. Despite these measures, no system is completely secure; please use strong passwords and keep your device protected.
             </p>
 
-            <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">7. International Transfers</h2>
+            <h2 className="text-2xl font-semibold text-gray-800 mt-8 mb-4">7. International Transfers</h2>
             <p>
               If you access Masterly from outside the United States, your information may be transferred to and processed in the U.S. or other countries where our service providers operate. We ensure appropriate protections are in place for such transfers.
             </p>
 
-            <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">8. Policy Updates</h2>
+            <h2 className="text-2xl font-semibold text-gray-800 mt-8 mb-4">8. Policy Updates</h2>
             <p>
               We may update this Privacy Policy to reflect changes in technology, law, or our services. We will notify you of material changes via email or in-app messaging. Continued use of the App after such changes indicates acceptance of the revised Policy.
             </p>
 
-            <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">9. Contact Us</h2>
+            <h2 className="text-2xl font-semibold text-gray-800 mt-8 mb-4">9. Contact Us</h2>
             <p>
               For privacy questions or requests, contact <strong>support@masterlyapp.in</strong>
             </p>

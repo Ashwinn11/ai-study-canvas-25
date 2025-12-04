@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { Providers } from './providers'
 import { metadata } from './metadata'
+import { GlobalConfirmationDialog } from '@/components/GlobalConfirmationDialog'
 
 export default function RootLayout({
   children,
@@ -23,6 +24,7 @@ export default function RootLayout({
       <body className="font-sans">
         <Providers>
           {children}
+          <GlobalConfirmationDialog />
         </Providers>
       </body>
     </html>

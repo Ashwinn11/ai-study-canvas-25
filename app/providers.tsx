@@ -9,7 +9,14 @@ import { useState } from "react";
 import { ThemeProvider } from "next-themes";
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(() => {
+    const client = new QueryClient();
+    // Make QueryClient globally available for services that need it
+    if (typeof window !== 'undefined') {
+      (window as any).__QUERY_CLIENT__ = client;
+    }
+    return client;
+  });
 
   return (
     <QueryClientProvider client={queryClient}>

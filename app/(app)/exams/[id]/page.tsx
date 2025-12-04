@@ -7,6 +7,7 @@ import { examsService, type ExamWithSeeds } from '@/lib/api/examsService';
 import { spacedRepetitionService, type ReviewStats } from '@/lib/api/spacedRepetitionService';
 import { ArrowLeft, Loader2, Pencil, Trash2, PlayCircle, BookOpen, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { showDeleteConfirm } from '@/lib/utils/confirmationUtils';
 
 export default function ExamDetailPage() {
   const router = useRouter();
@@ -60,7 +61,7 @@ export default function ExamDetailPage() {
   };
 
   const handleDeleteExam = async () => {
-    if (!confirm(`Are you sure you want to delete "${exam?.subject_name}"? This will remove the exam but keep all study materials.`)) {
+    if (!await showDeleteConfirm(`Are you sure you want to delete "${exam?.subject_name}"? This will remove the exam but keep all study materials.`)) {
       return;
     }
 

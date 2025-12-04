@@ -9,6 +9,7 @@ import { Flame, Book, CheckCircle, Sparkles, Trophy, Star, Target, LogOut, Loade
 import { Button } from '@/components/ui/button';
 import { QuickStats } from '@/components/profile/QuickStats';
 import { BadgesGrid } from '@/components/profile/BadgesGrid';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useScreenRefresh } from '@/hooks/useScreenRefresh';
 
 export default function ProfilePage() {
@@ -18,6 +19,7 @@ export default function ProfilePage() {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [badges, setBadges] = useState<BadgeState[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showSignOutDialog, setShowSignOutDialog] = useState(false);
 
   const loadStats = useCallback(async () => {
     if (!user) return;
@@ -65,10 +67,8 @@ export default function ProfilePage() {
   }, [user, loadStats]);
 
   const handleSignOut = async () => {
-    if (confirm('Are you sure you want to sign out?')) {
-      await signOut();
-      router.push('/login');
-    }
+    await signOut();
+    router.push('/login');
   };
 
   const getIconForBadge = (iconName: string) => {
@@ -156,7 +156,7 @@ export default function ProfilePage() {
           </button>
 
           <button
-            onClick={() => router.push('/help')}
+            onClick={() => window.open('/help', '_blank')}
             className="w-full rounded-xl border border-white/10 bg-white/5 p-4 text-left hover:bg-white/10 transition-all"
           >
             <div className="flex items-center gap-3 justify-between">
@@ -171,7 +171,7 @@ export default function ProfilePage() {
           </button>
 
           <button
-            onClick={() => router.push('/terms')}
+            onClick={() => window.open('/terms', '_blank')}
             className="w-full rounded-xl border border-white/10 bg-white/5 p-4 text-left hover:bg-white/10 transition-all"
           >
             <div className="flex items-center gap-3 justify-between">
@@ -186,7 +186,7 @@ export default function ProfilePage() {
           </button>
 
           <button
-            onClick={() => router.push('/privacy')}
+            onClick={() => window.open('/privacy', '_blank')}
             className="w-full rounded-xl border border-white/10 bg-white/5 p-4 text-left hover:bg-white/10 transition-all"
           >
             <div className="flex items-center gap-3 justify-between">
@@ -202,7 +202,7 @@ export default function ProfilePage() {
 
           <div className="pt-6 flex justify-center">
             <Button
-              onClick={handleSignOut}
+              onClick={() => setShowSignOutDialog(true)}
               variant="destructive"
               className="gap-2 min-w-[200px]"
             >
@@ -292,6 +292,17 @@ export default function ProfilePage() {
         </div>
       )}
 
+      {/* Sign Out Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={showSignOutDialog}
+        onClose={() => setShowSignOutDialog(false)}
+        onConfirm={handleSignOut}
+        title="Sign Out"
+        description="Are you sure you want to sign out? You'll need to sign in again to access your account."
+        confirmText="Sign Out"
+        cancelText="Cancel"
+        variant="danger"
+      />
     </div>
   );
 }

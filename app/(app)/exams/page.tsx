@@ -9,6 +9,7 @@ import type { Exam, ReviewStats } from '@/types';
 import { Plus, BookOpen, Loader2, Trash2, Flame, Clock, Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { showDeleteConfirm } from '@/lib/utils/confirmationUtils';
 
 export default function ExamsPage() {
   const router = useRouter();
@@ -82,7 +83,7 @@ export default function ExamsPage() {
   const handleDeleteExam = async (examId: string, examName: string, e: React.MouseEvent) => {
     e.stopPropagation();
 
-    if (!confirm(`Are you sure you want to delete "${examName}"? This will remove the exam but keep all study materials.`)) {
+    if (!await showDeleteConfirm(`Are you sure you want to delete "${examName}"? This will remove the exam but keep all study materials.`)) {
       return;
     }
 

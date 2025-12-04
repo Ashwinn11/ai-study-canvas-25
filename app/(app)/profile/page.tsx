@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { profileStatsService, type UserStats } from '@/lib/api/profileStatsService';
 import { evaluateBadges, type BadgeState } from '@/lib/api/badges';
-import { Flame, Book, CheckCircle, Sparkles, Trophy, Star, Target, LogOut, Loader2, Edit2, Shield, FileText, Trash2, Bell, BarChart3, HelpCircle, CreditCard, User } from 'lucide-react';
+import { Flame, Book, CheckCircle, Sparkles, Trophy, Star, Target, LogOut, Loader2, Edit2, Shield, FileText, HelpCircle, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { QuickStats } from '@/components/profile/QuickStats';
 import { BadgesGrid } from '@/components/profile/BadgesGrid';
@@ -68,43 +68,6 @@ export default function ProfilePage() {
     if (confirm('Are you sure you want to sign out?')) {
       await signOut();
       router.push('/login');
-    }
-  };
-
-  const handleDeleteAccount = async () => {
-    if (!user) return;
-
-    const confirmed = confirm(
-      'Are you sure you want to delete your account? This action cannot be undone. All your data will be permanently deleted.'
-    );
-
-    if (!confirmed) return;
-
-    const doubleConfirm = confirm('This is your final warning. Delete account?');
-    if (!doubleConfirm) return;
-
-    try {
-      setIsLoading(true);
-      const response = await fetch('/api/account/delete', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId: user.id }),
-      });
-
-      if (!response.ok) {
-        alert('Failed to delete account. Please try again.');
-        return;
-      }
-
-      await signOut();
-      router.push('/');
-    } catch (error) {
-      console.error('Error deleting account:', error);
-      alert('An error occurred while deleting your account.');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -193,22 +156,7 @@ export default function ProfilePage() {
           </button>
 
           <button
-            onClick={() => alert('Subscription management coming soon')}
-            className="w-full rounded-xl border border-white/10 bg-white/5 p-4 text-left hover:bg-white/10 transition-all"
-          >
-            <div className="flex items-center gap-3 justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-                  <CreditCard className="h-5 w-5" />
-                </div>
-                <span className="text-white font-medium">Subscription</span>
-              </div>
-              <span className="text-gray-400">→</span>
-            </div>
-          </button>
-
-          <button
-            onClick={() => window.open('https://help.masterly.app', '_blank')}
+            onClick={() => router.push('/help')}
             className="w-full rounded-xl border border-white/10 bg-white/5 p-4 text-left hover:bg-white/10 transition-all"
           >
             <div className="flex items-center gap-3 justify-between">
@@ -223,37 +171,7 @@ export default function ProfilePage() {
           </button>
 
           <button
-            onClick={() => alert('Notification settings coming soon')}
-            className="w-full rounded-xl border border-white/10 bg-white/5 p-4 text-left hover:bg-white/10 transition-all"
-          >
-            <div className="flex items-center gap-3 justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-purple-500 flex items-center justify-center">
-                  <Bell className="h-5 w-5" />
-                </div>
-                <span className="text-white font-medium">Notifications</span>
-              </div>
-              <span className="text-gray-400">→</span>
-            </div>
-          </button>
-
-          <button
-            onClick={() => alert('Data & privacy settings coming soon')}
-            className="w-full rounded-xl border border-white/10 bg-white/5 p-4 text-left hover:bg-white/10 transition-all"
-          >
-            <div className="flex items-center gap-3 justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
-                  <BarChart3 className="h-5 w-5" />
-                </div>
-                <span className="text-white font-medium">Data & Privacy</span>
-              </div>
-              <span className="text-gray-400">→</span>
-            </div>
-          </button>
-
-          <button
-            onClick={() => window.open('/terms', '_blank')}
+            onClick={() => router.push('/terms')}
             className="w-full rounded-xl border border-white/10 bg-white/5 p-4 text-left hover:bg-white/10 transition-all"
           >
             <div className="flex items-center gap-3 justify-between">
@@ -268,7 +186,7 @@ export default function ProfilePage() {
           </button>
 
           <button
-            onClick={() => window.open('/privacy', '_blank')}
+            onClick={() => router.push('/privacy')}
             className="w-full rounded-xl border border-white/10 bg-white/5 p-4 text-left hover:bg-white/10 transition-all"
           >
             <div className="flex items-center gap-3 justify-between">
@@ -277,22 +195,6 @@ export default function ProfilePage() {
                   <Shield className="h-5 w-5" />
                 </div>
                 <span className="text-white font-medium">Privacy Policy</span>
-              </div>
-              <span className="text-gray-400">→</span>
-            </div>
-          </button>
-
-          <button
-            onClick={handleDeleteAccount}
-            disabled={isLoading}
-            className="w-full rounded-xl border border-white/10 bg-white/5 p-4 text-left hover:bg-red-500/10 transition-all disabled:opacity-50"
-          >
-            <div className="flex items-center gap-3 justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center">
-                  <Trash2 className="h-5 w-5" />
-                </div>
-                <span className="text-white font-medium">Delete Account</span>
               </div>
               <span className="text-gray-400">→</span>
             </div>

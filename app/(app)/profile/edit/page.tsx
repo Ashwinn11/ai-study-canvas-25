@@ -16,22 +16,17 @@ const DAILY_GOALS = [
   { value: 45, label: '45+ cards daily (30+ min)' },
 ];
 
-const FOCUS_AREAS = [
-  { value: 'exam', label: 'Exam Preparation' },
-  { value: 'classes', label: 'Class Support' },
-  { value: 'general', label: 'General Learning' },
-  { value: 'professional', label: 'Professional Development' },
+const CURRENT_GRADES = [
+  { value: 'A', label: 'A+ or A' },
+  { value: 'B', label: 'B+ or B' },
+  { value: 'C', label: 'C+ or C' },
+  { value: 'D', label: 'D or below' },
 ];
-
-const GRADES = ['A+', 'A', 'B+', 'B', 'C+', 'C', 'D+', 'D', 'F'];
 
 interface ProfileFormData {
   fullName: string;
   dailyCardsGoal: number;
   currentGrade: string;
-  targetGrade: string;
-  targetExamDate: string;
-  focusArea: 'exam' | 'classes' | 'general' | 'professional';
 }
 
 export default function EditProfilePage() {
@@ -43,9 +38,6 @@ export default function EditProfilePage() {
     fullName: '',
     dailyCardsGoal: 20,
     currentGrade: '',
-    targetGrade: '',
-    targetExamDate: '',
-    focusArea: 'exam',
   });
 
   const [isLoading, setIsLoading] = useState(true);
@@ -58,9 +50,7 @@ export default function EditProfilePage() {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select(
-          'full_name, daily_cards_goal, current_grade, target_grade, target_exam_date, focus_area'
-        )
+        .select('full_name, daily_cards_goal, current_grade')
         .eq('id', user.id)
         .maybeSingle();
 
@@ -76,17 +66,14 @@ export default function EditProfilePage() {
           fullName: (dataRecord.full_name as string) || '',
           dailyCardsGoal: (dataRecord.daily_cards_goal as number) || 20,
           currentGrade: (dataRecord.current_grade as string) || '',
-          targetGrade: (dataRecord.target_grade as string) || '',
-          targetExamDate: (dataRecord.target_exam_date as string) || '',
-          focusArea: (dataRecord.focus_area as 'exam' | 'classes' | 'general' | 'professional') || 'exam',
         });
       }
 
-       setIsLoading(false);
-     } catch (error) {
-       console.error('Error loading profile data:', error);
-       setIsLoading(false);
-     }
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error loading profile data:', error);
+      setIsLoading(false);
+    }
   }, [user, supabase]);
 
   useEffect(() => {
@@ -117,14 +104,11 @@ export default function EditProfilePage() {
 
     setIsSaving(true);
     try {
-      // Update profile with all onboarding fields
+      // Update profile with onboarding fields
       const { error: profileError } = await profileUpdateService.updateProfile(user.id, {
         full_name: formData.fullName.trim(),
         daily_cards_goal: formData.dailyCardsGoal,
         current_grade: formData.currentGrade || null,
-        target_grade: formData.targetGrade || null,
-        target_exam_date: formData.targetExamDate || null,
-        focus_area: formData.focusArea,
       });
 
       if (profileError) {
@@ -136,10 +120,7 @@ export default function EditProfilePage() {
       const onboardingData: OnboardingData = {
         completed: true,
         currentGrade: formData.currentGrade,
-        targetGrade: formData.targetGrade,
-        targetExamDate: formData.targetExamDate,
         dailyCardsGoal: formData.dailyCardsGoal,
-        focusArea: formData.focusArea,
       };
 
       await onboardingStorageService.saveOnboardingData(user.id, onboardingData);
@@ -234,7 +215,7 @@ export default function EditProfilePage() {
         {/* Current Grade */}
         <div>
           <label className="block text-sm font-medium text-white mb-2">
-            Current Grade (Optional)
+            Current Grade
           </label>
           <select
             value={formData.currentGrade}
@@ -243,67 +224,9 @@ export default function EditProfilePage() {
             disabled={isSaving}
           >
             <option value="">Select current grade</option>
-            {GRADES.map((grade) => (
-              <option key={grade} value={grade}>
-                {grade}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Target Grade */}
-        <div>
-          <label className="block text-sm font-medium text-white mb-2">
-            Target Grade (Optional)
-          </label>
-          <select
-            value={formData.targetGrade}
-            onChange={(e) => setFormData({ ...formData, targetGrade: e.target.value })}
-            className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
-            disabled={isSaving}
-          >
-            <option value="">Select target grade</option>
-            {GRADES.map((grade) => (
-              <option key={grade} value={grade}>
-                {grade}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Target Exam Date */}
-        <div>
-          <label className="block text-sm font-medium text-white mb-2">
-            Target Exam Date (Optional)
-          </label>
-          <input
-            type="date"
-            value={formData.targetExamDate}
-            onChange={(e) => setFormData({ ...formData, targetExamDate: e.target.value })}
-            className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
-            disabled={isSaving}
-          />
-        </div>
-
-        {/* Focus Area */}
-        <div>
-          <label className="block text-sm font-medium text-white mb-2">
-            Focus Area
-          </label>
-          <select
-            value={formData.focusArea}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                focusArea: e.target.value as 'exam' | 'classes' | 'general' | 'professional',
-              })
-            }
-            className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-primary/50"
-            disabled={isSaving}
-          >
-            {FOCUS_AREAS.map((area) => (
-              <option key={area.value} value={area.value}>
-                {area.label}
+            {CURRENT_GRADES.map((grade) => (
+              <option key={grade.value} value={grade.value}>
+                {grade.label}
               </option>
             ))}
           </select>

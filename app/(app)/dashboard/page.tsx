@@ -227,8 +227,12 @@ export default function DashboardPage() {
           {/* Streak & Goal Status */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="text-4xl">
-                {stats.goalMet ? '🔥' : '⚡'}
+              <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                {stats.goalMet ? (
+                  <Flame className="w-6 h-6 text-orange-400" />
+                ) : (
+                  <Zap className="w-6 h-6 text-yellow-400" />
+                )}
               </div>
               <div>
                 <p className="text-sm text-gray-400">Current Streak</p>

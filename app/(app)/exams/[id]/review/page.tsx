@@ -16,17 +16,17 @@ import { useGlobalRefresh } from '@/hooks/useGlobalRefresh';
 import { scoreToGrade, getGradeMessage } from '@/lib/utils/gradeUtils';
 import { Flashcard, QuizQuestion } from '@/lib/supabase/types';
 import { getSupabaseClient } from '@/lib/supabase/client';
-import { ArrowLeft, Loader2, RotateCw, Check, X, Target, Flame, Award } from 'lucide-react';
+import { ArrowLeft, Loader2, RotateCw, Check, X, Target, Flame, Award, Rocket, Zap, Brain, Crosshair } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { toast } from 'sonner';
 
-const MOMENTUM_MESSAGES: Array<{ text: string; emoji: string }> = [
-  { text: 'You’re building momentum!', emoji: '🚀' },
-  { text: 'Great flow—keep going!', emoji: '🔥' },
-  { text: 'Nice streak, stay sharp!', emoji: '⚡️' },
-  { text: 'Learning mode: engaged!', emoji: '🎯' },
-  { text: 'Brains are warming up!', emoji: '🧠' },
+const MOMENTUM_MESSAGES: Array<{ text: string; icon: typeof Rocket }> = [
+  { text: "You're building momentum!", icon: Rocket },
+  { text: 'Great flow—keep going!', icon: Flame },
+  { text: 'Nice streak, stay sharp!', icon: Zap },
+  { text: 'Learning mode: engaged!', icon: Crosshair },
+  { text: 'Brains are warming up!', icon: Brain },
 ];
 
 export default function ExamReviewPage() {
@@ -87,7 +87,7 @@ export default function ExamReviewPage() {
 
   // Momentum + motivation cues
   const [showMomentumBadge, setShowMomentumBadge] = useState(false);
-  const [momentumMessage, setMomentumMessage] = useState<{ text: string; emoji: string }>({ text: '', emoji: '' });
+  const [momentumMessage, setMomentumMessage] = useState<{ text: string; icon: typeof Rocket }>({ text: '', icon: Rocket });
 
   // Achievement celebration modal state
   const [unlockedAchievement, setUnlockedAchievement] = useState<{ name: string; description?: string } | null>(null);
@@ -210,7 +210,7 @@ export default function ExamReviewPage() {
 
   useEffect(() => {
     if (!showMomentumBadge) {
-      setMomentumMessage({ text: '', emoji: '' });
+      setMomentumMessage({ text: '', icon: Rocket });
       return;
     }
     const timer = setTimeout(() => setShowMomentumBadge(false), 2200);
@@ -860,7 +860,7 @@ export default function ExamReviewPage() {
                 setSessionXP(0);
                 setXpFeedback(null);
                 setShowMomentumBadge(false);
-                setMomentumMessage({ text: '', emoji: '' });
+                setMomentumMessage({ text: '', icon: Rocket });
                 cardsSinceBadgeRef.current = 0;
                 nextBadgeThresholdRef.current = 3 + Math.floor(Math.random() * 3);
                 resultsRef.current.clear();
@@ -1193,7 +1193,7 @@ export default function ExamReviewPage() {
       {showMomentumBadge && momentumMessage.text && (
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 animate-in fade-in slide-in-from-bottom-2 duration-300">
           <div className="flex items-center gap-2 rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white shadow-lg">
-            <span>{momentumMessage.emoji}</span>
+            {momentumMessage.icon && <momentumMessage.icon className="w-4 h-4" />}
             <span>{momentumMessage.text}</span>
           </div>
         </div>
@@ -1202,8 +1202,8 @@ export default function ExamReviewPage() {
       {unlockedAchievement && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="w-full max-w-sm rounded-3xl bg-white px-8 py-10 text-center shadow-2xl">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-2xl">
-              🏅
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-purple-100">
+              <Award className="w-6 h-6 text-purple-600" />
             </div>
             <h3 className="text-xl font-bold text-slate-900">{unlockedAchievement.name}</h3>
             <p className="mt-2 text-sm text-slate-600">

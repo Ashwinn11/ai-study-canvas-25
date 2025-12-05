@@ -16,7 +16,7 @@ declare global {
 }
 
 interface UseOnboardingReturn {
-  isOnboardingCompleted: boolean;
+  isOnboardingCompleted: boolean | null;
   onboardingData: OnboardingData | null;
   isLoading: boolean;
   saveOnboarding: (data: Partial<OnboardingData>) => Promise<boolean>;
@@ -36,7 +36,11 @@ interface UseOnboardingReturn {
  * Uses profile data already loaded by useAuth to avoid redundant queries.
  */
 export const useOnboarding = (userId?: string): UseOnboardingReturn => {
-  const [isOnboardingCompleted, setIsOnboardingCompleted] = useState(false);
+  // CRITICAL: Initial value is null (not false) to distinguish between:
+  // - null: "loading/unknown" - don't redirect yet
+  // - false: "definitely not completed" - redirect to onboarding
+  // - true: "definitely completed" - allow access to dashboard
+  const [isOnboardingCompleted, setIsOnboardingCompleted] = useState<boolean | null>(null);
   const [onboardingData, setOnboardingData] = useState<OnboardingData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -110,7 +114,7 @@ export const useOnboarding = (userId?: string): UseOnboardingReturn => {
       setOnboardingData(updatedData);
 
       // Save to storage + DB
-      const { success } = await onboardingStorageService.saveOnboardingData(userId, updatedData);
+      const success = await onboardingStorageService.saveOnboardingData(userId, updatedData);
 
       if (success) {
         analytics.trackEvent('onboarding_step_saved', {
@@ -143,7 +147,7 @@ export const useOnboarding = (userId?: string): UseOnboardingReturn => {
       };
 
       // Save to storage + DB first (no optimistic update)
-      const { success } = await onboardingStorageService.saveOnboardingData(userId, completedData);
+      const success = await onboardingStorageService.saveOnboardingData(userId, completedData);
 
       if (success) {
         // Only update state after DB confirms success

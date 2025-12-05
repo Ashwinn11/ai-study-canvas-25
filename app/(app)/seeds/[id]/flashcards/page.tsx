@@ -131,7 +131,8 @@ export default function FlashcardsPracticePage() {
         }
       }
 
-      setSessionComplete(true);
+      // Auto-redirect to seed material when all flashcards are reviewed
+      router.push(`/seeds/${seedId}`);
     }
   };
 
@@ -179,27 +180,7 @@ export default function FlashcardsPracticePage() {
   }
 
   if (sessionComplete) {
-    return (
-      <div className="space-y-6 p-4">
-        <Button variant="ghost" onClick={() => router.push(`/seeds/${seedId}`)}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Material
-        </Button>
-
-        <div className="rounded-lg border-2 border-purple-300 bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 shadow-lg p-8">
-          <div className="text-center space-y-4">
-            <h2 className="text-2xl font-bold text-white">Practice Complete</h2>
-            <p className="text-gray-400">
-              You reviewed {sessionStats.reviewed} out of {sessionStats.total} flashcards
-            </p>
-            <Button onClick={() => window.location.reload()}>
-              <RotateCw className="h-4 w-4 mr-2" />
-              Review Again
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
+    return null; // Auto-redirect happens above, render nothing while redirecting
   }
 
   if (!currentCard) {

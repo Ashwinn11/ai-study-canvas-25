@@ -96,7 +96,7 @@ export const onboardingStorageService = {
   async saveOnboardingData(
     userId: string,
     data: OnboardingData
-  ): Promise<{ success: boolean; error?: string }> {
+  ): Promise<boolean> {
     try {
       const completedAt = data.completed
         ? data.completedAt ?? new Date().toISOString()
@@ -111,47 +111,34 @@ export const onboardingStorageService = {
       // 1. Save to local storage immediately (optimistic)
       await this.saveToLocalStorage(userId, normalizedData);
 
-      // 2. Sync to database (update only the onboarding fields)
+      // 2. Sync to database
       const supabase = getSupabaseClient();
 
-      try {
-        // Build the update object
-        const updateData = {
-          onboarding_completed: data.completed,
-          onboarding_completed_at: completedAt,
-          current_grade: data.currentGrade ?? null,
-          target_grade: data.targetGrade ?? null,
-          target_exam_date: data.targetExamDate ?? null,
-          daily_cards_goal: data.dailyCardsGoal ?? 20,
-          focus_area: data.focusArea ?? null,
-        };
+      const payload = {
+        id: userId,
+        onboarding_completed: data.completed,
+        onboarding_completed_at: completedAt,
+        current_grade: data.currentGrade ?? null,
+        target_grade: data.targetGrade ?? null,
+        target_exam_date: data.targetExamDate ?? null,
+        daily_cards_goal: data.dailyCardsGoal ?? 20,
+        focus_area: data.focusArea ?? null,
+      };
 
-        const result = await (supabase
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .from('profiles') as any)
-          .update(updateData)
-          .eq('id', userId);
-        const error = result.error;
+      const { error } = await (supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .from('profiles') as any)
+        .upsert(payload, { onConflict: 'id' });
 
-        if (error) {
-          console.error('[OnboardingStorage] Error saving to DB:', error);
-          return { success: false, error: error.message };
-        }
-
-        return { success: true };
-      } catch (err) {
-        console.error('[OnboardingStorage] Unexpected error:', err);
-        return {
-          success: false,
-          error: err instanceof Error ? err.message : 'Unknown error',
-        };
+      if (error) {
+        console.error('[OnboardingStorage] Error saving to DB:', error);
+        return false;
       }
+
+      return true;
     } catch (error) {
       console.error('[OnboardingStorage] Error in saveOnboardingData:', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to save onboarding data',
-      };
+      return false;
     }
   },
 

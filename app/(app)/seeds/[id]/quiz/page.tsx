@@ -295,45 +295,10 @@ export default function QuizPage() {
 
   const scoreColor = getScoreColor(scorePercentage);
 
-  // Completion modal - Matching iOS quiz variant
+  // Auto-redirect to seed material when quiz is completed
   if (sessionStats.completed) {
-    return (
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-white/10 p-8 max-w-md w-full space-y-6 shadow-2xl">
-          {/* Score Circle */}
-          <div className="flex flex-col items-center space-y-4">
-            <div
-              className={`w-36 h-36 rounded-full ${scoreColor} flex items-center justify-center`}
-            >
-              <span className="text-5xl font-bold text-white">{scorePercentage}%</span>
-            </div>
-
-            {/* Title - Emotional (matching iOS) */}
-            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-              <Star className="w-6 h-6 text-yellow-500" />
-              Solid performance!
-            </h2>
-
-            {/* Combined summary - No redundancy (matching iOS) */}
-            <p className="text-lg text-gray-300">
-              {sessionStats.correct} nailed, {sessionStats.incorrect} to master
-            </p>
-          </div>
-
-          {/* Action Button (matching iOS) */}
-          <div className="flex justify-center">
-            <Button
-              onClick={restartQuiz}
-              className="px-8"
-              size="lg"
-            >
-              Try Again & Ace It
-              <Rocket className="w-4 h-4 ml-2" />
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
+    router.push(`/seeds/${seedId}`);
+    return null; // Render nothing while redirecting
   }
 
   if (!currentQuestion) return null;

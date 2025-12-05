@@ -24,6 +24,8 @@ dist-ssr
 *.sw?
 .next/*
 .next/.mcp.json
+.env.local
+.env*
 
 # iOS reference codebase
 /tmp/masterly-ios

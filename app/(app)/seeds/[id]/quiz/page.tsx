@@ -50,10 +50,11 @@ export default function QuizPage() {
   const [attempts, setAttempts] = useState<QuizAttempt[]>([]);
   const [showFeedback, setShowFeedback] = useState(false);
 
-  // Fix for build error: missing state variables
+  // Background generation polling
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationMessage, setGenerationMessage] = useState('');
   const [generationProgress, setGenerationProgress] = useState(0);
+  const [pollIntervalId, setPollIntervalId] = useState<NodeJS.Timeout | null>(null);
 
   const currentQuestion = questions[currentIndex] ?? null;
 
@@ -77,8 +78,11 @@ export default function QuizPage() {
           showResult: false,
         }));
         setQuestions(questionStates);
+        setIsGenerating(false);
       } else {
-        throw new Error('No quiz questions available. They are being generated in the background. Please try again in a moment.');
+        // No questions available - they might be generating in the background
+        setIsGenerating(true);
+        setGenerationMessage('Quiz questions are being generated in the background. Please wait...');
       }
     } catch (err) {
       console.error('Error loading quiz questions:', err);
@@ -93,6 +97,51 @@ export default function QuizPage() {
       loadQuizQuestions();
     }
   }, [user, seedId, loadQuizQuestions]);
+
+  // Handle background generation polling
+  useEffect(() => {
+    if (!isGenerating) {
+      // Clear any existing poll interval
+      if (pollIntervalId) {
+        clearInterval(pollIntervalId);
+        setPollIntervalId(null);
+      }
+      return;
+    }
+
+    // Poll every 2 seconds while generating
+    const intervalId = setInterval(async () => {
+      if (!user || !seedId) return;
+
+      try {
+        const { data: questions } = await quizService.getQuizQuestionsBySeed(seedId, user.id);
+
+        if (questions && questions.length > 0) {
+          // Questions are ready!
+          const questionStates: QuizQuestionState[] = questions.map((question) => ({
+            ...question,
+            isAnswered: false,
+            showResult: false,
+          }));
+          setQuestions(questionStates);
+          setIsGenerating(false);
+          setGenerationMessage('');
+          clearInterval(intervalId);
+          setPollIntervalId(null);
+        }
+      } catch (err) {
+        console.error('Error polling quiz questions:', err);
+      }
+    }, 2000);
+
+    setPollIntervalId(intervalId);
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [isGenerating, user, seedId]);
 
   const handleSelectAnswer = useCallback(
     async (answerIndex: number) => {
@@ -214,11 +263,22 @@ export default function QuizPage() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[600px]">
-        <div className="flex items-center gap-3 text-gray-400">
-          <Loader2 className="h-6 w-6 animate-spin" />
-          <span>Loading quiz questions...</span>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-screen gap-8 p-4">
+        <Button
+          variant="ghost"
+          onClick={() => router.back()}
+          className="absolute top-4 left-4"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
+
+        <img
+          src="/brand-assets/icon.png"
+          alt="Masterly"
+          className="h-20 w-20 animate-bounce"
+        />
+        <p className="text-gray-400 text-center">Loading quiz questions...</p>
       </div>
     );
   }
@@ -226,32 +286,27 @@ export default function QuizPage() {
   // Generating state
   if (isGenerating) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-white">Generating Quiz</h1>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-screen gap-8 p-4">
+        <Button
+          variant="ghost"
+          onClick={() => router.push(`/seeds/${seedId}`)}
+          className="absolute top-4 left-4"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
 
-        <div className="rounded-lg border-2 border-blue-300 bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 shadow-lg p-8">
-          <div className="space-y-4">
-            <div className="flex items-center justify-center">
-              <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            </div>
-            <div>
-              <div className="w-full bg-white/10 rounded-full h-2 mb-2">
-                <div
-                  className="bg-primary h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${generationProgress}%` }}
-                />
-              </div>
-              <p className="text-center text-gray-300">{generationMessage}</p>
-              <p className="text-center text-sm text-gray-400 mt-2">
-                {generationProgress}%
-              </p>
-            </div>
-            <p className="text-center text-sm text-gray-500">
-              Please keep this page open while we generate your quiz questions
-            </p>
-          </div>
+        <img
+          src="/brand-assets/icon.png"
+          alt="Masterly"
+          className="h-20 w-20 animate-bounce"
+        />
+        <p className="text-gray-400 text-center">{generationMessage}</p>
+        <div className="w-64 h-1 bg-gray-700 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-blue-400 to-purple-400 transition-all"
+            style={{ width: `${generationProgress}%` }}
+          />
         </div>
       </div>
     );

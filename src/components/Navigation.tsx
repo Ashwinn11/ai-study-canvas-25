@@ -121,7 +121,7 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={signOut} className="cursor-pointer text-red-500">
+                      <DropdownMenuItem onClick={signOut} className="cursor-pointer text-primary">
                         <LogOut className="mr-2 h-4 w-4" />
                         Sign Out
                       </DropdownMenuItem>
@@ -198,7 +198,7 @@ const Navigation: React.FC<NavigationProps> = ({ className }) => {
                           <Button
                             variant="ghost"
                             size="lg"
-                            className="w-full text-red-500 hover:text-red-600"
+                            className="w-full text-primary hover:text-primary/90"
                             onClick={signOut}
                           >
                             <LogOut className="h-4 w-4 mr-2" />

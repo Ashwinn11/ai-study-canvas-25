@@ -22,6 +22,7 @@ import {
 } from './documentProcessing';
 import { Seed } from '@/types';
 import { configService } from './configService';
+import { logger } from '@/utils/logger';
 
 export type ContentType = 'pdf' | 'image' | 'audio' | 'text' | 'youtube';
 
@@ -239,6 +240,21 @@ class UploadProcessor {
 
       this.emitProgress(onProgress, 'completed');
 
+      // Trigger background generation for flashcards and quiz
+      try {
+        const { backgroundProcessor } = require('./backgroundProcessor');
+        const userId = options.userId;
+
+        // Queue background generation tasks
+        await backgroundProcessor.generateFlashcardsInBackground(seedId, userId);
+        await backgroundProcessor.generateQuizInBackground(seedId, userId);
+
+        logger.info(`[Upload] Queued background generation for seed ${seedId}`);
+      } catch (error) {
+        logger.warn(`[Upload] Failed to queue background generation:`, error);
+        // Don't throw - generation not being queued shouldn't fail the upload
+      }
+
       return completedSeed;
     } catch (error) {
       // Delete the failed seed
@@ -334,6 +350,21 @@ class UploadProcessor {
 
       this.emitProgress(onProgress, 'completed');
 
+      // Trigger background generation for flashcards and quiz
+      try {
+        const { backgroundProcessor } = require('./backgroundProcessor');
+        const userId = options.userId;
+
+        // Queue background generation tasks
+        await backgroundProcessor.generateFlashcardsInBackground(seedId, userId);
+        await backgroundProcessor.generateQuizInBackground(seedId, userId);
+
+        logger.info(`[Upload] Queued background generation for seed ${seedId}`);
+      } catch (error) {
+        logger.warn(`[Upload] Failed to queue background generation:`, error);
+        // Don't throw - generation not being queued shouldn't fail the upload
+      }
+
       return completedSeed;
     } catch (error) {
       // Delete the failed seed
@@ -423,6 +454,21 @@ class UploadProcessor {
       }
 
       this.emitProgress(onProgress, 'completed');
+
+      // Trigger background generation for flashcards and quiz
+      try {
+        const { backgroundProcessor } = require('./backgroundProcessor');
+        const userId = options.userId;
+
+        // Queue background generation tasks
+        await backgroundProcessor.generateFlashcardsInBackground(seedId, userId);
+        await backgroundProcessor.generateQuizInBackground(seedId, userId);
+
+        logger.info(`[Upload] Queued background generation for seed ${seedId}`);
+      } catch (error) {
+        logger.warn(`[Upload] Failed to queue background generation:`, error);
+        // Don't throw - generation not being queued shouldn't fail the upload
+      }
 
       return completedSeed;
     } catch (error) {
@@ -519,6 +565,21 @@ class UploadProcessor {
       }
 
       this.emitProgress(onProgress, 'completed');
+
+      // Trigger background generation for flashcards and quiz
+      try {
+        const { backgroundProcessor } = require('./backgroundProcessor');
+        const userId = options.userId;
+
+        // Queue background generation tasks
+        await backgroundProcessor.generateFlashcardsInBackground(seedId, userId);
+        await backgroundProcessor.generateQuizInBackground(seedId, userId);
+
+        logger.info(`[Upload] Queued background generation for seed ${seedId}`);
+      } catch (error) {
+        logger.warn(`[Upload] Failed to queue background generation:`, error);
+        // Don't throw - generation not being queued shouldn't fail the upload
+      }
 
       return completedSeed;
     } catch (error) {

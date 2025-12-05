@@ -32,8 +32,8 @@ export function ConfirmationDialog({
   };
 
   const variantStyles = {
-    danger: 'bg-red-500 hover:bg-red-600',
-    warning: 'bg-orange-500 hover:bg-orange-600',
+    danger: 'bg-primary hover:bg-primary/90',
+    warning: 'bg-primary hover:bg-primary/90',
     default: 'bg-primary hover:bg-primary/90',
   };
 
@@ -44,8 +44,8 @@ export function ConfirmationDialog({
         <div className="flex items-center justify-between p-6 border-b border-border">
           <div className="flex items-center gap-3">
             {variant !== 'default' && (
-              <div className={`p-2 rounded-full ${variant === 'danger' ? 'bg-red-500/10' : 'bg-orange-500/10'}`}>
-                <AlertTriangle className={`h-5 w-5 ${variant === 'danger' ? 'text-red-500' : 'text-orange-500'}`} />
+              <div className={`p-2 rounded-full bg-primary/10`}>
+                <AlertTriangle className={`h-5 w-5 text-primary`} />
               </div>
             )}
             <h2 className="text-lg font-semibold text-white">{title}</h2>

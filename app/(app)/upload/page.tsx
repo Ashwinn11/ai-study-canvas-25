@@ -5,17 +5,20 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import { uploadProcessor, UploadProgress } from '@/lib/api/upload';
-import { Upload, FileText, Image, Music, Link, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { Upload, FileText, Image, Music, Link, CheckCircle2, XCircle, Loader2, Mic } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { useUploadLimit } from '@/hooks/useUploadLimit';
+import { UploadLimitModal } from '@/components/UploadLimitModal';
 
 type UploadState = 'idle' | 'uploading' | 'success' | 'error';
 
 export default function UploadPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { uploadsUsed, uploadsRemaining, canUpload, needsPaywall, incrementCount } = useUploadLimit();
   const [uploadState, setUploadState] = useState<UploadState>('idle');
   const [progress, setProgress] = useState<UploadProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -28,6 +31,7 @@ export default function UploadPage() {
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
+  const [showLimitModal, setShowLimitModal] = useState(false);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -73,6 +77,9 @@ export default function UploadPage() {
         },
       });
 
+      // Increment upload count after successful upload
+      await incrementCount();
+
       setUploadState('success');
 
       // Redirect to seeds page after 2 seconds
@@ -91,6 +98,12 @@ export default function UploadPage() {
       toast.error('Authentication required', {
         description: 'You must be logged in to upload content',
       });
+      return;
+    }
+
+    // Check upload limit
+    if (!canUpload) {
+      setShowLimitModal(true);
       return;
     }
 
@@ -130,6 +143,9 @@ export default function UploadPage() {
         },
       });
 
+      // Increment upload count after successful upload
+      await incrementCount();
+
       setUploadState('success');
 
       // Redirect to seeds page after 2 seconds
@@ -148,6 +164,12 @@ export default function UploadPage() {
       toast.error('Authentication required', {
         description: 'You must be logged in to upload content',
       });
+      return;
+    }
+
+    // Check upload limit
+    if (!canUpload) {
+      setShowLimitModal(true);
       return;
     }
 
@@ -179,6 +201,9 @@ export default function UploadPage() {
           setProgress(prog);
         },
       });
+
+      // Increment upload count after successful upload
+      await incrementCount();
 
       setUploadState('success');
 
@@ -322,6 +347,9 @@ export default function UploadPage() {
               },
             });
 
+            // Increment upload count after successful upload
+            await incrementCount();
+
             setUploadState('success');
             setIsRecording(false);
 
@@ -406,10 +434,21 @@ export default function UploadPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-white">Upload Study Material</h1>
-        <p className="mt-2 text-gray-400">
-          Upload PDFs, images, audio, video, or paste text content
-        </p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-white">Upload Study Material</h1>
+            <p className="mt-2 text-gray-400">
+              Upload PDFs, images, audio, video, or paste text content
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-sm font-medium text-gray-300">Free uploads</p>
+            <p className="text-2xl font-bold text-primary">{uploadsUsed}/3</p>
+            {uploadsRemaining > 0 && (
+              <p className="text-xs text-gray-400 mt-1">{uploadsRemaining} remaining</p>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Upload Mode Toggle */}
@@ -481,7 +520,13 @@ export default function UploadPage() {
               disabled={uploadState === 'uploading'}
             />
             <Button
-              onClick={() => document.getElementById('file-upload')?.click()}
+              onClick={() => {
+                if (!canUpload) {
+                  setShowLimitModal(true);
+                  return;
+                }
+                document.getElementById('file-upload')?.click();
+              }}
               disabled={uploadState === 'uploading'}
             >
               Browse Files
@@ -523,22 +568,24 @@ export default function UploadPage() {
               className="min-h-[300px] bg-white/5 border-white/10 text-white"
             />
           </div>
-          <Button
-            onClick={handleTextUpload}
-            disabled={uploadState === 'uploading' || !textContent.trim()}
-          >
-            {uploadState === 'uploading' ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              <>
-                <Upload className="h-4 w-4 mr-2" />
-                Process Content
-              </>
-            )}
-          </Button>
+          <div className="flex justify-center">
+            <Button
+              onClick={handleTextUpload}
+              disabled={uploadState === 'uploading' || !textContent.trim()}
+            >
+              {uploadState === 'uploading' ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Process Content
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       )}
 
@@ -559,62 +606,70 @@ export default function UploadPage() {
               className="bg-white/5 border-white/10 text-white"
             />
           </div>
-          <Button
-            onClick={handleYoutubeUpload}
-            disabled={uploadState === 'uploading' || !youtubeUrl.trim()}
-          >
-            {uploadState === 'uploading' ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              <>
-                <Upload className="h-4 w-4 mr-2" />
-                Process YouTube Video
-              </>
-            )}
-          </Button>
+          <div className="flex justify-center">
+            <Button
+              onClick={handleYoutubeUpload}
+              disabled={uploadState === 'uploading' || !youtubeUrl.trim()}
+            >
+              {uploadState === 'uploading' ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Process YouTube Video
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       )}
 
       {/* Audio Recording */}
       {uploadMode === 'audio' && (
-        <div className="space-y-4">
+        <div className="flex flex-col items-center justify-center gap-8 py-12">
           {!isRecording ? (
-            <Button
-              onClick={startAudioRecording}
-              disabled={uploadState === 'uploading'}
-              size="lg"
-            >
-              <Music className="h-4 w-4 mr-2" />
-              Start Recording
-            </Button>
+            <>
+              <Mic className="h-32 w-32 text-orange-500" />
+              <Button
+                onClick={() => {
+                  if (!canUpload) {
+                    setShowLimitModal(true);
+                    return;
+                  }
+                  startAudioRecording();
+                }}
+                disabled={uploadState === 'uploading'}
+                size="lg"
+              >
+                Start Recording
+              </Button>
+            </>
           ) : (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between p-4 rounded-lg bg-white/5 border border-white/10">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                  <span className="text-white font-medium">
-                    {mediaRecorder ? 'Recording...' : 'Requesting microphone access...'}
-                  </span>
-                </div>
+            <div className="flex flex-col items-center gap-8">
+              <Mic className={`h-32 w-32 text-orange-500 ${mediaRecorder ? 'animate-pulse' : ''}`} />
+
+              <div className="text-center space-y-2">
+                <p className="text-white font-medium">
+                  {mediaRecorder ? 'Recording...' : 'Requesting microphone access...'}
+                </p>
                 {mediaRecorder && (
-                  <span className="text-sm text-gray-400">{formatTime(recordingDuration)}</span>
+                  <p className="text-3xl font-bold text-orange-500">{formatTime(recordingDuration)}</p>
                 )}
               </div>
+
               {mediaRecorder && (
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                   <Button
                     onClick={stopAudioRecording}
-                    className="flex-1"
                     variant="default"
                   >
                     Stop & Upload
                   </Button>
                   <Button
                     onClick={cancelAudioRecording}
-                    className="flex-1"
                     variant="outline"
                   >
                     Cancel
@@ -667,6 +722,12 @@ export default function UploadPage() {
           </div>
         </div>
       )}
+
+      {/* Upload Limit Modal */}
+      <UploadLimitModal
+        isOpen={showLimitModal}
+        onClose={() => setShowLimitModal(false)}
+      />
     </div>
   );
 }

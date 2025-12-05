@@ -1,88 +1,114 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from '@/lib/api/supabaseWithTimeout';
-import { useSubscription } from "@/hooks/useSubscription";
 import { logger } from "@/utils/logger";
+
+const FREE_UPLOAD_LIMIT = 3;
 
 interface UseUploadLimitReturn {
   uploadsUsed: number;
   uploadsRemaining: number;
-  freeTrialExpired: boolean;
-  isLoading: boolean;
-  error: string | null;
-  refreshLimits: () => Promise<void>;
+  canUpload: boolean;
+  needsPaywall: boolean;
+  loading: boolean;
+  incrementCount: () => Promise<void>;
+  refetch: () => Promise<void>;
 }
 
 export const useUploadLimit = (): UseUploadLimitReturn => {
   const { user } = useAuth();
-  const { subscription } = useSubscription();
   const [uploadsUsed, setUploadsUsed] = useState(0);
-  const [uploadsRemaining, setUploadsRemaining] = useState(0);
-  const [freeTrialExpired, setFreeTrialExpired] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const fetchUploadLimits = useCallback(async () => {
-    if (!user) {
-      setIsLoading(false);
+  // Fetch count from database
+  const fetchCount = useCallback(async () => {
+    if (!user?.id) {
+      setLoading(false);
       return;
     }
 
     try {
-      setIsLoading(true);
-      setError(null);
-
-      // Get user's upload count from profiles table
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('uploads_count, created_at')
-        .eq('id', user.id)
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("free_uploads_used")
+        .eq("id", user.id)
         .single();
 
-      if (profileError) {
-        throw profileError;
+      if (error) {
+        logger.error("[UploadLimit] Fetch error:", error);
+        setUploadsUsed(0);
+      } else {
+        setUploadsUsed(data?.free_uploads_used || 0);
       }
-
-      const uploadsCount = profile?.uploads_count || 0;
-      setUploadsUsed(uploadsCount);
-
-      // Check if free trial has expired (30 days from account creation)
-      const createdAt = new Date(profile?.created_at || user.created_at);
-      const trialEndDate = new Date(createdAt.getTime() + 30 * 24 * 60 * 60 * 1000);
-      const isTrialExpired = new Date() > trialEndDate;
-      setFreeTrialExpired(isTrialExpired);
-
-      // Calculate remaining uploads based on subscription
-      let maxUploads = 5; // Free tier limit
-      if (subscription?.isActive) {
-        // Premium tier gets unlimited uploads
-        maxUploads = Infinity;
-      } else if (!isTrialExpired) {
-        // Free trial gets 10 uploads
-        maxUploads = 10;
-      }
-
-      const remaining = Math.max(0, maxUploads - uploadsCount);
-      setUploadsRemaining(remaining);
-
-    } catch (err) {
-      logger.error('Error fetching upload limits:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch upload limits');
+    } catch (error) {
+      logger.error("[UploadLimit] Exception:", error);
+      setUploadsUsed(0);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, [user, subscription]);
+  }, [user?.id]);
 
+  // Fetch count on mount
   useEffect(() => {
-    fetchUploadLimits();
-  }, [fetchUploadLimits]);
+    fetchCount();
+  }, [fetchCount]);
+
+  // Manual refetch - useful for refreshing count after external updates
+  const refetch = useCallback(async () => {
+    logger.info("[UploadLimit] Manual refetch triggered");
+    await fetchCount();
+  }, [fetchCount]);
+
+  // Increment - fetch fresh count from DB first to avoid stale state
+  const incrementCount = useCallback(async () => {
+    if (!user?.id) {
+      logger.warn("[UploadLimit] No user ID");
+      return;
+    }
+
+    try {
+      // Fetch current value from DB first (avoid stale state from React closure)
+      const { data: currentData } = await supabase
+        .from("profiles")
+        .select("free_uploads_used")
+        .eq("id", user.id)
+        .single();
+
+      const currentCount = currentData?.free_uploads_used || 0;
+      const newCount = currentCount + 1;
+
+      logger.info(`[UploadLimit] Incrementing upload count: ${currentCount} → ${newCount}`);
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({ free_uploads_used: newCount })
+        .eq("id", user.id);
+
+      if (error) {
+        logger.error("[UploadLimit] Database update error:", error);
+        throw new Error(`Failed to update upload count: ${error.message}`);
+      }
+
+      // Update local state after successful DB update
+      setUploadsUsed(newCount);
+      logger.info(`[UploadLimit] Upload count incremented successfully to ${newCount}`);
+    } catch (error) {
+      logger.error("[UploadLimit] Increment failed:", error);
+      throw error;
+    }
+  }, [user?.id]);
+
+  const uploadsRemaining = Math.max(0, FREE_UPLOAD_LIMIT - uploadsUsed);
+  const canUpload = uploadsUsed < FREE_UPLOAD_LIMIT;
+  const needsPaywall = uploadsUsed >= FREE_UPLOAD_LIMIT;
 
   return {
     uploadsUsed,
     uploadsRemaining,
-    freeTrialExpired,
-    isLoading,
-    error,
-    refreshLimits: fetchUploadLimits,
+    canUpload,
+    needsPaywall,
+    loading,
+    incrementCount,
+    refetch,
   };
 };

@@ -34,11 +34,12 @@ export default function FlashcardsPracticePage() {
   const [sessionStartTime] = useState<number>(Date.now());
   const [sessionComplete, setSessionComplete] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
-  
-  // Fix for build error: missing state variables
+
+  // Background generation polling
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationMessage, setGenerationMessage] = useState('');
   const [generationProgress, setGenerationProgress] = useState(0);
+  const [pollIntervalId, setPollIntervalId] = useState<NodeJS.Timeout | null>(null);
 
   const currentCard = flashcards[currentIndex] ?? null;
 
@@ -62,8 +63,11 @@ export default function FlashcardsPracticePage() {
         }));
         setFlashcards(flashcardStates);
         setSessionStats({ reviewed: 0, total: cards.length });
+        setIsGenerating(false);
       } else {
-        throw new Error('No flashcards available. They are being generated in the background. Please try again in a moment.');
+        // No flashcards available - they might be generating in the background
+        setIsGenerating(true);
+        setGenerationMessage('Flashcards are being generated in the background. Please wait...');
       }
     } catch (err) {
       console.error('Error loading flashcards:', err);
@@ -78,6 +82,51 @@ export default function FlashcardsPracticePage() {
       loadFlashcards();
     }
   }, [user, seedId, loadFlashcards]);
+
+  // Handle background generation polling
+  useEffect(() => {
+    if (!isGenerating) {
+      // Clear any existing poll interval
+      if (pollIntervalId) {
+        clearInterval(pollIntervalId);
+        setPollIntervalId(null);
+      }
+      return;
+    }
+
+    // Poll every 2 seconds while generating
+    const intervalId = setInterval(async () => {
+      if (!user || !seedId) return;
+
+      try {
+        const { data: cards } = await flashcardsService.getFlashcardsBySeed(seedId, user.id);
+
+        if (cards && cards.length > 0) {
+          // Flashcards are ready!
+          const flashcardStates: FlashcardState[] = cards.map((card) => ({
+            ...card,
+            isFlipped: false,
+          }));
+          setFlashcards(flashcardStates);
+          setSessionStats({ reviewed: 0, total: cards.length });
+          setIsGenerating(false);
+          setGenerationMessage('');
+          clearInterval(intervalId);
+          setPollIntervalId(null);
+        }
+      } catch (err) {
+        console.error('Error polling flashcards:', err);
+      }
+    }, 2000);
+
+    setPollIntervalId(intervalId);
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [isGenerating, user, seedId]);
 
   const flipCard = () => {
     if (!currentCard) return;
@@ -146,8 +195,22 @@ export default function FlashcardsPracticePage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+      <div className="flex flex-col items-center justify-center min-h-screen gap-8 p-4">
+        <Button
+          variant="ghost"
+          onClick={() => router.back()}
+          className="absolute top-4 left-4"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
+
+        <img
+          src="/brand-assets/icon.png"
+          alt="Masterly"
+          className="h-20 w-20 animate-bounce"
+        />
+        <p className="text-gray-400 text-center">Loading flashcards...</p>
       </div>
     );
   }
@@ -166,9 +229,22 @@ export default function FlashcardsPracticePage() {
 
   if (isGenerating) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
-        <p className="text-gray-400">{generationMessage}</p>
+      <div className="flex flex-col items-center justify-center min-h-screen gap-8 p-4">
+        <Button
+          variant="ghost"
+          onClick={() => router.push(`/seeds/${seedId}`)}
+          className="absolute top-4 left-4"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
+
+        <img
+          src="/brand-assets/icon.png"
+          alt="Masterly"
+          className="h-20 w-20 animate-bounce"
+        />
+        <p className="text-gray-400 text-center">{generationMessage}</p>
         <div className="w-64 h-1 bg-gray-700 rounded-full overflow-hidden">
           <div
             className="h-full bg-gradient-to-r from-purple-400 to-pink-400 transition-all"

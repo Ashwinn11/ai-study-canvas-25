@@ -11,6 +11,13 @@ import { QuickStats } from '@/components/profile/QuickStats';
 import { BadgesGrid } from '@/components/profile/BadgesGrid';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useScreenRefresh } from '@/hooks/useScreenRefresh';
+import { getSupabaseClient } from '@/lib/supabase/client';
+
+interface Profile {
+  full_name: string;
+  email: string;
+  avatar_url: string;
+}
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -18,14 +25,39 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<'settings' | 'stats'>('stats');
   const [stats, setStats] = useState<UserStats | null>(null);
   const [badges, setBadges] = useState<BadgeState[]>([]);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
+
+  const loadProfile = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const supabase = getSupabaseClient();
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name, email, avatar_url')
+        .eq('id', user.id)
+        .single<Profile>();
+
+      if (data && !error) {
+        setProfile({
+          full_name: data.full_name || user.email?.split('@')[0] || 'User',
+          email: data.email || user.email || '',
+          avatar_url: data.avatar_url || '',
+        });
+      }
+    } catch (err) {
+      console.error('Error loading profile:', err);
+    }
+  }, [user]);
 
   const loadStats = useCallback(async () => {
     if (!user) return;
 
     setIsLoading(true);
     try {
+      await loadProfile();
       const { data: statsData, error } = await profileStatsService.getUserStats(user.id);
       if (statsData && !error) {
         setStats(statsData);
@@ -37,11 +69,12 @@ export default function ProfilePage() {
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [user, loadProfile]);
 
   const refreshStats = useCallback(async () => {
     if (!user) return;
     try {
+      await loadProfile();
       const { data: statsData, error } = await profileStatsService.getUserStats(user.id);
       if (statsData && !error) {
         setStats(statsData);
@@ -51,7 +84,7 @@ export default function ProfilePage() {
     } catch (err) {
       console.error('Error refreshing stats:', err);
     }
-  }, [user]);
+  }, [user, loadProfile]);
 
   useScreenRefresh({
     screenName: user ? `profile-${user.id}` : 'profile',
@@ -96,8 +129,16 @@ export default function ProfilePage() {
       {/* Header with Avatar and XP Badge */}
       <div className="flex flex-col items-center space-y-4 pt-6">
         <div className="relative inline-block">
-          <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center border-2 border-primary">
-            <User className="w-12 h-12 text-primary" />
+          <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center border-2 border-primary overflow-hidden">
+            {profile?.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt={profile.full_name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <User className="w-12 h-12 text-primary" />
+            )}
           </div>
           {/* XP Badge Overlay */}
           {stats && (
@@ -110,8 +151,8 @@ export default function ProfilePage() {
           )}
         </div>
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-white">{user?.email?.split('@')[0] || 'User'}</h1>
-          <p className="text-gray-400 text-sm">{user?.email}</p>
+          <h1 className="text-2xl font-bold text-white">{profile?.full_name || 'User'}</h1>
+          <p className="text-gray-400 text-sm">{profile?.email}</p>
         </div>
       </div>
 

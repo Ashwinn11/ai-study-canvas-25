@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://masterlyapp.in'),
   title: 'Masterly - Your AI Study Coach for Smarter Learning',
   description: 'Transform your study materials into AI-powered flashcards, quizzes, and summaries. Master any exam with spaced repetition, adaptive learning, and intelligent study analytics.',
   keywords: 'AI study coach, smart flashcards, spaced repetition, exam prep, upload study materials, adaptive quizzes, Feynman technique, study analytics',
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
     title: 'Masterly - Your AI Study Coach',
     description: 'Transform your study materials into AI-powered flashcards, quizzes, and summaries. Master any exam with spaced repetition and adaptive learning.',
     type: 'website',
-    url: 'https://masterly.ai',
+    url: 'https://masterlyapp.in',
     images: [
       {
         url: '/hero-study-ai.jpg',

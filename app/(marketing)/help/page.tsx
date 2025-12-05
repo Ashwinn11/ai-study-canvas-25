@@ -1,9 +1,14 @@
+
 'use client';
 
 import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
 import { BlobBackground } from '@/components/ui/BlobBackground';
 
 export default function HelpPage() {
+  const router = useRouter();
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -13,6 +18,13 @@ export default function HelpPage() {
       <BlobBackground position="top" color="#ff7664" animate={true} />
       <div className="container mx-auto px-4 max-w-4xl relative z-10">
         <div className="bg-white rounded-2xl shadow-elevated p-8 md:p-12">
+          <button
+            onClick={() => router.back()}
+            className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-medium transition-colors mb-6"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </button>
           <h1 className="text-4xl font-bold mb-4 text-gray-800">Help & Support</h1>
           <p className="text-sm text-gray-600 mb-8">Get answers to common questions about Masterly</p>
 
@@ -216,14 +228,6 @@ export default function HelpPage() {
 
           </div>
 
-          <div className="mt-12 pt-8 border-t border-border">
-            <a
-              href="/"
-              className="inline-flex items-center text-primary hover:text-primary/80 font-medium transition-colors"
-            >
-              ← Back to Home
-            </a>
-          </div>
         </div>
       </div>
     </div>

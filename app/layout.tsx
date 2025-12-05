@@ -5,6 +5,8 @@ import { metadata } from './metadata'
 import { GlobalConfirmationDialog } from '@/components/GlobalConfirmationDialog'
 import { OnboardingRedirect } from '@/components/OnboardingRedirect'
 
+export { metadata }
+
 export default function RootLayout({
   children,
 }: {

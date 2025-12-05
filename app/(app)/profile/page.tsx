@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -197,7 +198,7 @@ export default function ProfilePage() {
           </button>
 
           <button
-            onClick={() => window.open('/help', '_blank')}
+            onClick={() => router.push('/help')}
             className="w-full rounded-xl border border-white/10 bg-white/5 p-4 text-left hover:bg-white/10 transition-all"
           >
             <div className="flex items-center gap-3 justify-between">
@@ -212,7 +213,7 @@ export default function ProfilePage() {
           </button>
 
           <button
-            onClick={() => window.open('/terms', '_blank')}
+            onClick={() => router.push('/terms')}
             className="w-full rounded-xl border border-white/10 bg-white/5 p-4 text-left hover:bg-white/10 transition-all"
           >
             <div className="flex items-center gap-3 justify-between">
@@ -227,7 +228,7 @@ export default function ProfilePage() {
           </button>
 
           <button
-            onClick={() => window.open('/privacy', '_blank')}
+            onClick={() => router.push('/privacy')}
             className="w-full rounded-xl border border-white/10 bg-white/5 p-4 text-left hover:bg-white/10 transition-all"
           >
             <div className="flex items-center gap-3 justify-between">

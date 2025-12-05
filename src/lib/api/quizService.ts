@@ -4,7 +4,6 @@ import {
   contentGeneratorService,
   QuizGenerationBundle,
 } from "./contentGenerator";
-import { DistributedLockService } from "./distributedLock";
 import { logger } from "@/utils/logger";
 import { safeJSONParse } from "@/utils/safeJson";
 import { spacedRepetitionService } from "./spacedRepetitionService";
@@ -176,111 +175,16 @@ export class QuizService {
       }
 
 
-      // DISTRIBUTED LOCK CHECK: Works across all devices/sessions
-      const lockService = new DistributedLockService(this.getSupabase());
-      const existingLock = await lockService.hasActiveLock(request.seedId, request.userId);
-
-      if (existingLock.hasLock) {
-        // Check if it's a quiz lock or both
-        if (existingLock.lockType === 'quiz' || existingLock.lockType === 'both') {
-          logger.warn(
-            `[QuizService] Quiz generation already ${existingLock.status} (lock type: ${existingLock.lockType})`,
-          );
-
-          // If we're being called from background processor with skip check, release old lock and continue
-          if (request._skipDuplicateCheck) {
-            const lock = await lockService.getLock(request.seedId, request.userId, 'quiz') ||
-              await lockService.getLock(request.seedId, request.userId, 'both');
-            // Only proceed if we own the lock or it's expired
-            if (!lock) {
-              logger.info(`[QuizService] No existing lock found for seed ${request.seedId}, proceeding with generation`);
-            }
-          } else {
-            // Manual generation - block if another process is working
-            return {
-              error: existingLock.status === 'running'
-                ? 'Quiz is already being generated. Please wait for completion.'
-                : 'Quiz generation is queued. Please wait...',
-            };
-          }
-        }
-      }
-
-      // Only check in-memory state if NOT called from background processor
-      if (!request._skipDuplicateCheck) {
-        // AUTO-CANCEL: Cancel queued task if exists (manual generation takes priority)
-        const { backgroundProcessor } = require('./backgroundProcessor');
-        const canceledQueued = backgroundProcessor.cancelRedundantTask(
-          request.seedId,
-          request.userId,
-          'quiz',
-        );
-
-        if (canceledQueued) {
-          logger.info(`[QuizService] Canceled redundant queued task for seed ${request.seedId}`);
-        }
-
-        // CHECK RUNNING OR QUEUED: Prevent concurrent manual + background generation in same runtime
-        const taskState = backgroundProcessor.getTaskState(
-          request.seedId,
-          request.userId,
-          'quiz',
-        );
-
-        if (taskState.status === 'running' || taskState.status === 'queued') {
-          logger.warn(
-            `[QuizService] Quiz already ${taskState.status} in this runtime for ${request.seedId}`,
-          );
-          return {
-            error:
-              taskState.status === 'running'
-                ? 'Quiz is already being generated in the background. Please wait for completion.'
-                : 'Quiz is queued for generation. Please wait for the background task to start.',
-          };
-        }
-      }
-
-      // Check if quiz questions already exist for this seed – no regeneration logic
+      // Check if quiz questions already exist for this seed
       const existingResult = await this.getQuizQuestionsBySeed(
         request.seedId,
         request.userId,
       );
       if (existingResult.data && existingResult.data.length > 0) {
-        try {
-          const { backgroundProcessor } = require("./backgroundProcessor");
-          backgroundProcessor.clearSeedFailures(
-            request.seedId,
-            request.userId,
-            "quiz",
-          );
-        } catch (clearError) {
-          logger.warn(
-            "[QuizService] Warning: Failed to clear background failures:",
-            clearError,
-          );
-        }
         return existingResult;
       }
 
-      // ACQUIRE DISTRIBUTED LOCK before starting generation
-      let lock = null;
-      if (!request._skipDuplicateCheck) {
-        // Manual generation - acquire lock to prevent cross-device races
-        lock = await lockService.acquireLock(request.seedId, request.userId, 'quiz');
-        if (!lock) {
-          logger.warn('[QuizService] Failed to acquire distributed lock - another device is generating');
-          return {
-            error: 'Another device is currently generating this quiz. Please wait and refresh...',
-          };
-        }
-      }
-
       try {
-        // Update lock status to running
-        if (lock) {
-          await lockService.updateLockStatus(lock.id, 'running');
-        }
-
         // Report progress - starting generation
         request.onProgress?.(0.1, 'Preparing content...');
 
@@ -294,9 +198,6 @@ export class QuizService {
 
         if (seedError || !seedData) {
           logger.error("[QuizService] Error getting seed:", seedError);
-          if (lock) {
-            await lockService.releaseLock(lock.id, false, "Failed to find seed data");
-          }
           return {
             error: "Failed to find the source content for quiz generation",
           };
@@ -439,22 +340,10 @@ export class QuizService {
           );
         }
 
-        // SUCCESS - Release lock
-        if (lock) {
-          await lockService.releaseLock(lock.id, true);
-        }
-
         return { data: data || [] };
 
       } catch (generationError) {
-        // FAILURE - Release lock with error
         logger.error("[QuizService] Error during quiz generation:", generationError);
-
-        if (lock) {
-          const errorMsg = generationError instanceof Error ? generationError.message : 'Unknown error';
-          await lockService.releaseLock(lock.id, false, errorMsg);
-        }
-
         throw generationError; // Re-throw to outer catch
       }
     } catch (err) {

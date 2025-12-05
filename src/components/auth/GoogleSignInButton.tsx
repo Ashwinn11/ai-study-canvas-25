@@ -25,7 +25,7 @@ export function GoogleSignInButton() {
       onClick={handleGoogleSignIn}
       disabled={isLoading}
       variant="outline"
-      className="w-full"
+      className="w-full h-12 text-base font-medium bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 hover:scale-[1.02] transition-all duration-200 shadow-lg"
       type="button"
     >
       <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">

@@ -214,31 +214,9 @@ class ExamsService {
         return { error: "Failed to add seed to exam" };
       }
 
-      // Auto-generate flashcards and quiz for newly added seed
-      try {
-        // Trigger background generation (non-blocking)
-        const generationResult =
-          await backgroundProcessor.generateBothInBackground(
-            seedId,
-            session.user.id,
-            examId,
-          );
-
-        if (!generationResult.success && !generationResult.skipped) {
-          logger.warn(
-            "[ExamsService] Auto-generation request reported failure:",
-            generationResult.error || "Unknown error",
-          );
-        } else {
-          logger.info(`[ExamsService] Auto-generation queued successfully for seed ${seedId}`);
-        }
-      } catch (autoGenError) {
-        logger.warn(
-          "[ExamsService] Warning: Auto-generation queuing failed:",
-          autoGenError,
-        );
-        // Don't fail the main operation if auto-generation fails to queue
-      }
+      // Note: Flashcards and quiz are now auto-generated on upload,
+      // so no need to auto-generate them again when adding to exam.
+      // Just initialize SM2 fields for the existing content.
 
       // Initialize SM2 fields for flashcards and quiz questions of this seed
       try {

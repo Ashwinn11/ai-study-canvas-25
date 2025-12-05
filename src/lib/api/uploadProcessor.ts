@@ -9,9 +9,10 @@
  * 4. Validate content quality with language-aware checks
  * 5. Generate Feynman explanation (via backend AI)
  * 6. Update seed with results
+ * 7. Queue flashcards and quiz generation in background (non-blocking)
  *
- * Materials (flashcards, quiz, notes, teachback) are generated ON-DEMAND
- * when user accesses them, not during upload.
+ * Flashcards and quiz are auto-generated in background after upload completes.
+ * User sees them when they tap the flashcards/quiz buttons.
  */
 
 import { getSupabaseClient } from '@/lib/supabase/client';
@@ -28,6 +29,7 @@ import {
 import { configService } from './configService';
 import { flashcardsService } from './flashcardsService';
 import { quizService } from './quizService';
+import { backgroundProcessor } from './backgroundProcessor';
 import type { ContentType } from '@/lib/supabase/types';
 
 export type UploadStageId =
@@ -177,6 +179,14 @@ class UploadProcessor {
         feynmanResult,
       });
 
+      // Auto-generate flashcards and quiz in background (non-blocking, matching iOS)
+      try {
+        backgroundProcessor.generateBothInBackground(seedId, userId, "");
+      } catch (genError) {
+        console.warn('[UploadProcessor] Warning: Failed to queue background generation:', genError);
+        // Don't fail the upload if background generation fails to queue
+      }
+
       const finalSeed = await this.fetchProcessedSeed(seedId, userId);
       this.emitStageProgress(onProgress, 'completed');
       return finalSeed ?? seed;
@@ -265,6 +275,14 @@ class UploadProcessor {
         feynmanResult,
       });
 
+      // Auto-generate flashcards and quiz in background (non-blocking, matching iOS)
+      try {
+        backgroundProcessor.generateBothInBackground(seed.id, userId, "");
+      } catch (genError) {
+        console.warn('[UploadProcessor] Warning: Failed to queue background generation:', genError);
+        // Don't fail the upload if background generation fails to queue
+      }
+
       const finalSeed = await this.fetchProcessedSeed(seed.id, userId);
       this.emitStageProgress(onProgress, 'completed');
       return finalSeed ?? seed;
@@ -334,6 +352,14 @@ class UploadProcessor {
         extractionResult,
         feynmanResult,
       });
+
+      // Auto-generate flashcards and quiz in background (non-blocking, matching iOS)
+      try {
+        backgroundProcessor.generateBothInBackground(seed.id, userId, "");
+      } catch (genError) {
+        console.warn('[UploadProcessor] Warning: Failed to queue background generation:', genError);
+        // Don't fail the upload if background generation fails to queue
+      }
 
       const finalSeed = await this.fetchProcessedSeed(seed.id, userId);
       this.emitStageProgress(onProgress, 'completed');

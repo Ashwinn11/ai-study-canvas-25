@@ -17,7 +17,6 @@ import {
   XCircle,
   Trophy,
   RotateCw,
-  Sparkles,
   Star,
   Rocket,
 } from 'lucide-react';
@@ -40,9 +39,6 @@ export default function QuizPage() {
   const [questions, setQuestions] = useState<QuizQuestionState[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generationProgress, setGenerationProgress] = useState(0);
-  const [generationMessage, setGenerationMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [sessionStats, setSessionStats] = useState({
     correct: 0,
@@ -54,6 +50,11 @@ export default function QuizPage() {
   const [attempts, setAttempts] = useState<QuizAttempt[]>([]);
   const [showFeedback, setShowFeedback] = useState(false);
 
+  // Fix for build error: missing state variables
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationMessage, setGenerationMessage] = useState('');
+  const [generationProgress, setGenerationProgress] = useState(0);
+
   const currentQuestion = questions[currentIndex] ?? null;
 
   const loadQuizQuestions = useCallback(async () => {
@@ -63,60 +64,28 @@ export default function QuizPage() {
     setError(null);
 
     try {
-      // Try to load existing quiz questions
-      const { data: existingQuestions, error: fetchError } = await quizService.getQuizQuestionsBySeed(seedId, user.id);
+      const { data: questions, error: fetchError } = await quizService.getQuizQuestionsBySeed(seedId, user.id);
 
       if (fetchError) {
         throw new Error(fetchError);
       }
 
-      if (existingQuestions && existingQuestions.length > 0) {
-        const questionStates: QuizQuestionState[] = existingQuestions.map((question) => ({
+      if (questions && questions.length > 0) {
+        const questionStates: QuizQuestionState[] = questions.map((question) => ({
           ...question,
           isAnswered: false,
           showResult: false,
         }));
         setQuestions(questionStates);
-        setIsLoading(false);
-        return;
+      } else {
+        throw new Error('No quiz questions available. They are being generated in the background. Please try again in a moment.');
       }
-
-      // No existing quiz questions - need to generate
-      setIsGenerating(true);
-      setIsLoading(false);
-
-      const { data: createdQuestions, error: createError } = await quizService.createQuizQuestions({
-        seedId,
-        userId: user.id,
-        quantity: 10,
-        onProgress: (progress, message) => {
-          setGenerationProgress(progress);
-          setGenerationMessage(message);
-        },
-      });
-
-      if (createError) {
-        throw new Error(createError);
-      }
-
-      if (!createdQuestions || createdQuestions.length === 0) {
-        throw new Error('No quiz questions could be generated from this content');
-      }
-
-      const questionStates: QuizQuestionState[] = createdQuestions.map((question) => ({
-        ...question,
-        isAnswered: false,
-        showResult: false,
-      }));
-
-      setQuestions(questionStates);
-      setIsGenerating(false);
     } catch (err) {
       console.error('Error loading quiz questions:', err);
       setError(err instanceof Error ? err.message : 'Failed to load quiz questions');
-       setIsLoading(false);
-       setIsGenerating(false);
-     }
+    } finally {
+      setIsLoading(false);
+    }
   }, [user, seedId]);
 
   useEffect(() => {

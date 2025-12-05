@@ -5,7 +5,7 @@ import booksAnimation from "@/assets/animations/Books-stack.json";
 import finishingStudiesAnimation from "@/assets/animations/finish_study.json";
 import quizAnimation from "@/assets/animations/quiz.json";
 import thinkingAnimation from "@/assets/animations/thinking.json";
-import examAnimation from "@/assets/animations/certificaciones.json";
+import examAnimation from "@/assets/animations/exam.json";
 
 const FeatureRow = ({ 
   title, 

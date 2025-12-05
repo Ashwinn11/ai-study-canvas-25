@@ -9,7 +9,7 @@ import { streakService } from '@/lib/api/streakService';
 import { achievementEngine } from '@/lib/api/achievementEngine';
 import { dailyGoalTrackerService } from '@/lib/api/dailyGoalTracker';
 import { Flashcard } from '@/types';
-import { ArrowLeft, Loader2, RotateCw, Sparkles } from 'lucide-react';
+import { ArrowLeft, Loader2, RotateCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 
@@ -26,9 +26,6 @@ export default function FlashcardsPracticePage() {
   const [flashcards, setFlashcards] = useState<FlashcardState[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generationProgress, setGenerationProgress] = useState(0);
-  const [generationMessage, setGenerationMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [sessionStats, setSessionStats] = useState({
     reviewed: 0,
@@ -37,6 +34,11 @@ export default function FlashcardsPracticePage() {
   const [sessionStartTime] = useState<number>(Date.now());
   const [sessionComplete, setSessionComplete] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  
+  // Fix for build error: missing state variables
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationMessage, setGenerationMessage] = useState('');
+  const [generationProgress, setGenerationProgress] = useState(0);
 
   const currentCard = flashcards[currentIndex] ?? null;
 
@@ -47,58 +49,28 @@ export default function FlashcardsPracticePage() {
     setError(null);
 
     try {
-      const { data: existingCards, error: fetchError } = await flashcardsService.getFlashcardsBySeed(seedId, user.id);
+      const { data: cards, error: fetchError } = await flashcardsService.getFlashcardsBySeed(seedId, user.id);
 
       if (fetchError) {
         throw new Error(fetchError);
       }
 
-      if (existingCards && existingCards.length > 0) {
-        const flashcardStates: FlashcardState[] = existingCards.map((card) => ({
+      if (cards && cards.length > 0) {
+        const flashcardStates: FlashcardState[] = cards.map((card) => ({
           ...card,
           isFlipped: false,
         }));
         setFlashcards(flashcardStates);
-        setSessionStats({ reviewed: 0, total: existingCards.length });
-        setIsLoading(false);
-        return;
+        setSessionStats({ reviewed: 0, total: cards.length });
+      } else {
+        throw new Error('No flashcards available. They are being generated in the background. Please try again in a moment.');
       }
-
-      // No existing flashcards - need to generate
-      setIsGenerating(true);
-      setIsLoading(false);
-
-      const { data: createdCards, error: createError } = await flashcardsService.createFlashcards({
-        seedId,
-        userId: user.id,
-        onProgress: (progress, message) => {
-          setGenerationProgress(progress);
-          setGenerationMessage(message);
-        },
-      });
-
-      if (createError) {
-        throw new Error(createError);
-      }
-
-      if (!createdCards || createdCards.length === 0) {
-        throw new Error('No flashcards could be generated from this content');
-      }
-
-      const flashcardStates: FlashcardState[] = createdCards.map((card) => ({
-        ...card,
-        isFlipped: false,
-      }));
-
-      setFlashcards(flashcardStates);
-      setSessionStats({ reviewed: 0, total: createdCards.length });
-      setIsGenerating(false);
     } catch (err) {
       console.error('Error loading flashcards:', err);
       setError(err instanceof Error ? err.message : 'Failed to load flashcards');
-       setIsLoading(false);
-       setIsGenerating(false);
-     }
+    } finally {
+      setIsLoading(false);
+    }
   }, [user, seedId]);
 
   useEffect(() => {

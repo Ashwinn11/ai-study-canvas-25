@@ -35,12 +35,63 @@ class ReviewProgressService {
   }
 
   async logChunk(payload: ReviewChunkPayload): Promise<{ success: boolean; error?: string }> {
-    // Note: Individual card review progress is now captured at the END of the session
-    // when the full learning_sessions record is created. Per-card logging is not needed
-    // since we track all cards in the metadata of the final session record.
-    // This method is kept for backwards compatibility but does nothing.
-    logger.info("[ReviewProgressService] Chunk logging skipped - will be captured at session end");
-    return { success: true };
+    try {
+      const supabase = this.getSupabase();
+
+      const metadata = {
+        exam_id: payload.examId,
+        source: "exam-review",
+        chunk_start_index: payload.chunkStartIndex,
+        chunk_end_index: payload.chunkEndIndex,
+        total_review_items: payload.totalReviewItems,
+        chunk_sequence: payload.chunkSequence,
+        is_final_chunk: payload.isFinalChunk,
+        reviewed_card_ids: payload.reviewedCardIds || [],
+        accuracy: payload.totalItems > 0
+          ? Math.round(
+              Math.max(
+                0,
+                Math.min(1, payload.correctItems / payload.totalItems),
+              ) * 10000,
+            ) / 10000
+          : null,
+      };
+
+      const timeSpent =
+        typeof payload.timeSpentSeconds === "number" && payload.timeSpentSeconds >= 0
+          ? payload.timeSpentSeconds
+          : null;
+
+      const { error } = await supabase
+        .from("learning_sessions")
+        .insert({
+          user_id: payload.userId,
+          seed_id: payload.seedId,
+          session_type: payload.sessionType,
+          total_items: payload.totalItems,
+          correct_items: payload.correctItems,
+          score: null,
+          time_spent: timeSpent,
+          metadata,
+          completed_at: new Date().toISOString(),
+        });
+
+      if (error) {
+        logger.error("[ReviewProgressService] Error logging review chunk:", error);
+        return {
+          success: false,
+          error: error.message || "Failed to log review progress",
+        };
+      }
+
+      return { success: true };
+    } catch (err) {
+      logger.error("[ReviewProgressService] Exception logging chunk:", err);
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : "Unknown error",
+      };
+    }
   }
 }
 

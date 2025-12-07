@@ -49,18 +49,21 @@ class ReviewProgressService {
         reviewed_card_ids: payload.reviewedCardIds || [],
         accuracy: payload.totalItems > 0
           ? Math.round(
-              Math.max(
-                0,
-                Math.min(1, payload.correctItems / payload.totalItems),
-              ) * 10000,
-            ) / 10000
+            Math.max(
+              0,
+              Math.min(1, payload.correctItems / payload.totalItems),
+            ) * 10000,
+          ) / 10000
           : null,
       };
 
+      // CRITICAL FIX: time_spent must never be null
+      // Database trigger updates user_stats_historical.total_study_minutes
+      // which has a NOT NULL constraint. Setting to 0 instead of null prevents constraint violation.
       const timeSpent =
         typeof payload.timeSpentSeconds === "number" && payload.timeSpentSeconds >= 0
           ? payload.timeSpentSeconds
-          : null;
+          : 0; // Default to 0, not null
 
       const { error } = await supabase
         .from("learning_sessions")
@@ -78,11 +81,24 @@ class ReviewProgressService {
 
       if (error) {
         logger.error("[ReviewProgressService] Error logging review chunk:", error);
+        logger.error("[ReviewProgressService] Failed payload:", {
+          userId: payload.userId,
+          seedId: payload.seedId,
+          totalItems: payload.totalItems,
+          metadata,
+        });
         return {
           success: false,
           error: error.message || "Failed to log review progress",
         };
       }
+
+      logger.info("[ReviewProgressService] Successfully logged chunk:", {
+        userId: payload.userId,
+        totalItems: payload.totalItems,
+        source: metadata.source,
+        isFinalChunk: payload.isFinalChunk,
+      });
 
       return { success: true };
     } catch (err) {

@@ -30,6 +30,7 @@ interface DashboardStats {
   xp: number;
   loading: boolean;
   goalMet: boolean;
+  streakFreezes: number;
 }
 
 interface ExamCard {
@@ -56,6 +57,7 @@ export default function DashboardPage() {
     xp: 0,
     loading: true,
     goalMet: false,
+    streakFreezes: 0,
   });
 
   const [exams, setExams] = useState<ExamCard[]>([]);
@@ -69,16 +71,16 @@ export default function DashboardPage() {
     if (hour < 12)
       return {
         title: `Good morning, ${firstName}!`,
-        subtitle: 'Ready to master something new?',
+        subtitle: 'ready to lock in? 💪',
       };
     if (hour < 17)
       return {
         title: `Good afternoon, ${firstName}!`,
-        subtitle: 'Keep the momentum going',
+        subtitle: 'keep that energy up ✨',
       };
     return {
       title: `Good evening, ${firstName}!`,
-      subtitle: 'Finish your day strong',
+      subtitle: 'end the day on a high note 🎯',
     };
   }, [profile?.full_name]);
 
@@ -96,6 +98,15 @@ export default function DashboardPage() {
       const userStats = await profileStatsService.getUserStats(user.id);
       const data = (userStats as any)?.data;
 
+      // Fetch streak freezes from user_stats_historical
+      const { getSupabaseClient } = await import('@/lib/supabase/client');
+      const supabase = getSupabaseClient();
+      const { data: freezeData } = await supabase
+        .from('user_stats_historical')
+        .select('streak_freezes')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
       setStats({
         currentStreak: data?.current?.currentStreak || 0,
         cardsReviewedToday: data?.today?.cardsReviewedToday || 0,
@@ -104,6 +115,7 @@ export default function DashboardPage() {
         xp: data?.current?.xp || 0,
         goalMet: (data?.today?.goalProgress || 0) >= 1,
         loading: false,
+        streakFreezes: (freezeData as any)?.streak_freezes || 0,
       });
     } catch (error) {
       console.error('Failed to load dashboard stats:', error);
@@ -238,12 +250,17 @@ export default function DashboardPage() {
               <div>
                 <p className="text-sm text-gray-400">Current Streak</p>
                 <p className="text-2xl font-bold text-white">{stats.currentStreak} Days</p>
+                {stats.streakFreezes > 0 && (
+                  <p className="text-xs text-blue-400 mt-1">
+                    {stats.streakFreezes} freeze{stats.streakFreezes !== 1 ? 's' : ''} 🧊
+                  </p>
+                )}
               </div>
             </div>
             {stats.goalMet ? (
               <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/20">
                 <CheckCircle className="w-4 h-4 text-green-400" />
-                <span className="text-sm font-semibold text-green-400">Goal Crushed!</span>
+                <span className="text-sm font-semibold text-green-400">no cap, you're on fire 🔥</span>
               </div>
             ) : (
               <div className="text-right">

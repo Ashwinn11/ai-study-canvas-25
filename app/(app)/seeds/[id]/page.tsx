@@ -25,7 +25,9 @@ import {
   Gamepad2,
   BookOpenCheck,
   Trash2,
-  X
+  X,
+  MessageCircle,
+  Mic
 } from 'lucide-react';
 import { useChat, ExplanationMode } from '@/hooks/useChat';
 import { brainBotService } from '@/lib/api/brainBotService';
@@ -88,68 +90,9 @@ export default function SeedDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'summary' | 'content'>('summary');
-  const [explanationMode, setExplanationMode] = useState<ExplanationMode>('simple');
-  const { messages, isLoading: chatLoading, error: chatError, sendMessage } = useChat({
-    seedTitle: seed?.title,
-    seedContent: seed?.feynman_explanation || seed?.content_text || undefined,
-    explanationMode,
-  });
-  const [chatInput, setChatInput] = useState('');
-  const [showVibeCheck, setShowVibeCheck] = useState(false);
-  const [showQuickActions, setShowQuickActions] = useState(false);
-  const [isBrainBotOpen, setIsBrainBotOpen] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  const suggestedQuestions = useMemo(() => SUGGESTED_QUESTIONS_BY_MODE[explanationMode], [explanationMode]);
-  const messageCount = messages.length;
 
-  useEffect(() => {
-    if (!showQuickActions && messageCount >= 4) {
-      setShowQuickActions(true);
-    }
-  }, [messageCount, showQuickActions]);
-
-  useEffect(() => {
-    if (messageCount === 0) {
-      setShowVibeCheck(false);
-      setShowQuickActions(false);
-    }
-  }, [messageCount]);
-
-  const formatTimestamp = (timestamp: number) => {
-    return new Date(timestamp).toLocaleTimeString([], {
-      hour: 'numeric',
-      minute: '2-digit',
-    });
-  };
-
-  const handleSuggestedQuestion = (question: string) => {
-    setChatInput(question);
-  };
-
-  const handleExplanationModeChange = (mode: ExplanationMode) => {
-    setExplanationMode(mode);
-    setShowVibeCheck(false);
-  };
-
-  const handleSend = async () => {
-    if (!chatInput.trim() || chatLoading) {
-      return;
-    }
-
-    const trimmed = chatInput.trim();
-
-    if (brainBotService.detectStress(trimmed)) {
-      setShowVibeCheck(true);
-    }
-
-    setChatInput('');
-    await sendMessage(trimmed);
-  };
-
-  const handleCloseBrainBot = () => {
-    setIsBrainBotOpen(false);
-  };
 
   const seedId = params.id as string;
 
@@ -332,7 +275,7 @@ export default function SeedDetailPage() {
 
           <div className="flex justify-center">
             <button
-              onClick={() => setIsBrainBotOpen(true)}
+              onClick={() => router.push(`/brainbot/${seed.id}`)}
               disabled={!seed.feynman_explanation}
               className="flex items-center gap-4 p-6 rounded-xl border-2 border-pink-300 bg-gradient-to-r from-pink-100 via-purple-100 to-blue-100 transition-colors shadow-lg hover:border-pink-400 hover:from-pink-200 hover:via-purple-200 hover:to-blue-200 disabled:opacity-60 disabled:cursor-not-allowed w-full max-w-md"
             >
@@ -340,9 +283,9 @@ export default function SeedDetailPage() {
                 <Sparkles className="h-6 w-6 text-white" />
               </div>
               <div className="text-left">
-                <h3 className="font-semibold text-gray-800 mb-1">Ask BrainBot</h3>
+                <h3 className="font-semibold text-gray-800 mb-1">BrainBot Podcast</h3>
                 <p className="text-sm text-gray-600">
-                  Chat about this material in real time
+                  Listen to Alex & Jordan discuss this material
                 </p>
               </div>
             </button>
@@ -437,266 +380,7 @@ export default function SeedDetailPage() {
         </>
       )}
 
-      {isBrainBotOpen && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur flex items-center justify-center p-4">
-          <div className="relative w-full max-w-5xl h-[85vh] rounded-3xl border border-white/10 bg-[rgba(15,15,25,0.95)] shadow-2xl overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/5">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-primary">BrainBot</p>
-                <h3 className="text-xl font-semibold text-white">Study assistant for {seed.title}</h3>
-              </div>
-              <button
-                onClick={handleCloseBrainBot}
-                className="p-2 rounded-lg hover:bg-white/10 text-gray-300"
-                aria-label="Close BrainBot"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
 
-            <div className="flex-1 overflow-hidden p-6 flex flex-col">
-              <div className="flex items-center gap-3 border border-white/10 rounded-2xl px-3 py-2 mb-4">
-                <span className="text-xs font-semibold bg-primary/20 text-primary px-2 py-1 rounded-full">Mode</span>
-                {EXPLANATION_MODES.map(({ mode, label }) => (
-                  <button
-                    key={mode}
-                    onClick={() => handleExplanationModeChange(mode)}
-                    className={`rounded-full px-3 py-1 text-sm transition-colors ${
-                      explanationMode === mode
-                        ? 'bg-white text-slate-900 font-semibold'
-                        : 'bg-white/5 text-gray-300 hover:bg-white/10'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex-1 overflow-y-auto space-y-4 pr-2">
-                {messages.length === 0 && (
-                  <div className="flex flex-col items-center justify-center text-center gap-5 py-12">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/20">
-                      <Sparkles className="h-8 w-8 text-primary" />
-                    </div>
-                    <div className="max-w-xl space-y-2">
-                      <h3 className="text-xl font-semibold text-white">Hi! I'm BrainBot</h3>
-                      <p className="text-gray-400">
-                        Ask me anything about this study material and I'll tailor the explanation style to what you need.
-                      </p>
-                    </div>
-                    <div className="w-full max-w-xl space-y-2 text-left">
-                      <p className="text-sm text-gray-400">Suggested questions:</p>
-                      {suggestedQuestions.map((question) => (
-                        <button
-                          key={question}
-                          onClick={() => handleSuggestedQuestion(question)}
-                          className="flex w-full items-center justify-between gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-left text-sm text-gray-200 transition-colors hover:border-primary/60 hover:text-white"
-                        >
-                          <span className="flex-1">{question}</span>
-                          <ArrowUpRight className="h-4 w-4 text-primary" />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {messages.length > 0 && (
-                  <div className="space-y-4">
-                    {messages.map((msg) => {
-                      const isUser = msg.role === 'user';
-                      return (
-                        <div
-                          key={msg.id}
-                          className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}
-                        >
-                          <div
-                            className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                              isUser
-                                ? 'bg-gradient-to-r from-primary/80 to-primary text-white shadow-lg shadow-primary/20'
-                                : 'border border-white/10 bg-white/10 text-gray-100'
-                            }`}
-                          >
-                            <div className="prose prose-invert prose-sm max-w-none">
-                              {isUser ? (
-                                <p className="whitespace-pre-wrap leading-relaxed text-white">{msg.content}</p>
-                              ) : (
-                                <ReactMarkdown
-                                  remarkPlugins={[remarkGfm]}
-                                  components={{
-                                    p: (props) => (
-                                      <p className="leading-relaxed text-gray-200" {...props} />
-                                    ),
-                                    strong: (props) => (
-                                      <strong className="text-white" {...props} />
-                                    ),
-                                    em: (props) => (
-                                      <em className="text-gray-300" {...props} />
-                                    ),
-                                    ul: (props) => (
-                                      <ul className="list-disc list-inside space-y-1 text-gray-200" {...props} />
-                                    ),
-                                    ol: (props) => (
-                                      <ol className="list-decimal list-inside space-y-1 text-gray-200" {...props} />
-                                    ),
-                                    li: (props) => <li className="leading-relaxed" {...props} />,
-                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                    code: ({ inline, ...props }: any) =>
-                                      inline ? (
-                                        <code className="rounded bg-white/20 px-1.5 py-0.5 text-xs" {...props} />
-                                      ) : (
-                                        <code className="block whitespace-pre-wrap rounded-lg bg-black/40 p-3 text-xs" {...props} />
-                                      ),
-                                  }}
-                                >
-                                  {msg.content}
-                                </ReactMarkdown>
-                              )}
-                            </div>
-                            <span
-                              className={`mt-2 block text-[11px] ${
-                                isUser ? 'text-white/80' : 'text-gray-400'
-                              }`}
-                            >
-                              {formatTimestamp(msg.timestamp)}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {chatLoading && (
-                  <div className="flex justify-start">
-                    <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-gray-200">
-                      <span className="h-2 w-2 animate-pulse rounded-full bg-primary/80" />
-                      <span className="h-2 w-2 animate-pulse rounded-full bg-primary/60" style={{ animationDelay: '150ms' }} />
-                      <span className="h-2 w-2 animate-pulse rounded-full bg-primary/40" style={{ animationDelay: '300ms' }} />
-                    </div>
-                  </div>
-                )}
-
-                {chatError && (
-                  <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-                    {chatError}
-                  </div>
-                )}
-
-                {showVibeCheck && (
-                  <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-4 text-sm text-amber-100">
-                    <div className="flex items-center gap-2 font-semibold text-amber-200">
-                      <Lightbulb className="h-4 w-4" />
-                      <span>Feeling stuck? Let's make this easier.</span>
-                    </div>
-                    <p className="mt-2 text-amber-100/90">
-                      Switch to a simpler explanation or try another activity to reinforce the material.
-                    </p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <button
-                        onClick={() => {
-                          handleExplanationModeChange('simple');
-                          setChatInput('Can you explain this more simply?');
-                        }}
-                        className="inline-flex items-center gap-2 rounded-lg border border-amber-300/60 bg-white/5 px-3 py-2 text-sm text-amber-100 transition-colors hover:bg-amber-500/20"
-                      >
-                        <Lightbulb className="h-4 w-4" />
-                        Simplify it
-                      </button>
-                      <button
-                        onClick={() => {
-                          setIsBrainBotOpen(false);
-                          router.push(`/seeds/${seed?.id}/quiz`);
-                        }}
-                        className="inline-flex items-center gap-2 rounded-lg border border-primary/40 bg-primary/20 px-3 py-2 text-sm text-white transition-colors hover:bg-primary/30"
-                      >
-                        <Gamepad2 className="h-4 w-4" />
-                        Try a quiz
-                      </button>
-                      <button
-                        onClick={() => {
-                          setIsBrainBotOpen(false);
-                          router.push(`/seeds/${seed?.id}/flashcards`);
-                        }}
-                        className="inline-flex items-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-sm text-white transition-colors hover:bg-primary/20"
-                      >
-                        <BookOpenCheck className="h-4 w-4" />
-                        Review flashcards
-                      </button>
-                      <button
-                        onClick={() => setShowVibeCheck(false)}
-                        className="ml-auto text-sm text-amber-200/80 transition-colors hover:text-amber-100"
-                      >
-                        Dismiss
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {showQuickActions && (
-                  <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-4 text-sm text-emerald-50">
-                    <div className="flex items-center justify-between gap-4">
-                      <span className="font-semibold">Ready to test yourself?</span>
-                      <button
-                        onClick={() => setShowQuickActions(false)}
-                        className="text-xs text-emerald-200/80 transition-colors hover:text-emerald-100"
-                      >
-                        Dismiss
-                      </button>
-                    </div>
-                    <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <button
-                        onClick={() => {
-                          setIsBrainBotOpen(false);
-                          router.push(`/seeds/${seed?.id}/quiz`);
-                        }}
-                        className="flex items-center justify-center gap-2 rounded-lg bg-emerald-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-500/90"
-                      >
-                        <Gamepad2 className="h-4 w-4" />
-                        Quick Quiz
-                      </button>
-                      <button
-                        onClick={() => {
-                          setIsBrainBotOpen(false);
-                          router.push(`/seeds/${seed?.id}/flashcards`);
-                        }}
-                        className="flex items-center justify-center gap-2 rounded-lg border border-emerald-300 bg-emerald-500/20 px-4 py-3 text-sm font-semibold text-emerald-50 transition-colors hover:bg-emerald-500/30"
-                      >
-                        <BookOpenCheck className="h-4 w-4" />
-                        Practice Cards
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-4 border-t border-white/10 pt-4">
-                <div className="flex items-end gap-3">
-                  <textarea
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSend();
-                      }
-                    }}
-                    placeholder="Ask BrainBot a question..."
-                    rows={1}
-                    className="flex-1 resize-none rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                  <button
-                    onClick={handleSend}
-                    disabled={chatLoading || !chatInput.trim()}
-                    className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white transition-colors hover:bg-primary/90 disabled:bg-primary/40"
-                  >
-                    {chatLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Delete Confirmation Dialog */}
       <ConfirmationDialog

@@ -25,6 +25,11 @@ export interface GenerationConfig extends AIConfig {
   maxQuantity: number;
 }
 
+export interface BrainBotConfig extends AIConfig {
+  bufferSegments: number;  // Number of segments to buffer before playing
+  cacheTtlMs: number;      // Cache TTL for podcast scripts
+}
+
 export interface PromptsConfig {
   version: string;
   timestamp: string;
@@ -66,6 +71,7 @@ export interface AppConfig {
     feynman: FeynmanConfig;
     flashcards: GenerationConfig;
     quiz: GenerationConfig;
+    brainbot?: BrainBotConfig;  // BrainBot podcast configuration
     defaultCacheTtlMs?: number;
   };
   network: {
@@ -139,14 +145,27 @@ class ConfigService {
    * Matching iOS lines 278-290
    */
   async getAIConfig(type: 'feynman'): Promise<FeynmanConfig>;
+  async getAIConfig(type: 'brainbot'): Promise<BrainBotConfig>;
   async getAIConfig(type: 'flashcards' | 'quiz'): Promise<GenerationConfig>;
   async getAIConfig(
-    type: 'feynman' | 'flashcards' | 'quiz'
-  ): Promise<FeynmanConfig | GenerationConfig> {
+    type: 'feynman' | 'flashcards' | 'quiz' | 'brainbot'
+  ): Promise<FeynmanConfig | GenerationConfig | BrainBotConfig> {
     const config = await this.getConfig();
 
     if (type === 'feynman') {
       return config.ai.feynman;
+    }
+
+    if (type === 'brainbot') {
+      return config.ai.brainbot || {
+        // Fallback if missing in backend
+        model: 'gpt-4o-mini',
+        temperature: 0.8,
+        maxTokens: 1000,
+        timeoutMs: 90000,
+        bufferSegments: 4,
+        cacheTtlMs: 3600000,  // 1 hour
+      };
     }
 
     return config.ai[type];

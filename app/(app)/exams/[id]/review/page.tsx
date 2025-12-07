@@ -21,6 +21,7 @@ import { ArrowLeft, Loader2, RotateCw, Check, X, Target, Flame, Award, Rocket, Z
 import { Button } from '@/components/ui/button';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { toast } from 'sonner';
+import { ComparisonBadge } from '@/components/review/ComparisonBadge';
 
 const MOMENTUM_MESSAGES: Array<{ text: string; icon: typeof Rocket }> = [
   { text: "You're building momentum!", icon: Rocket },
@@ -86,6 +87,11 @@ export default function ExamReviewPage() {
   const [dailyGoal, setDailyGoal] = useState<number>(20);
   const [dailyGoalMet, setDailyGoalMet] = useState<boolean>(false);
 
+  // Enhanced celebrations: Combo counter
+  const [comboCount, setComboCount] = useState<number>(0);
+  const [cardsReviewed, setCardsReviewed] = useState<number>(0);
+  const [halfwayToastShown, setHalfwayToastShown] = useState<boolean>(false);
+
   // Momentum + motivation cues
   const [showMomentumBadge, setShowMomentumBadge] = useState(false);
   const [momentumMessage, setMomentumMessage] = useState<{ text: string; icon: typeof Rocket }>({ text: '', icon: Rocket });
@@ -102,6 +108,9 @@ export default function ExamReviewPage() {
   const nextBadgeThresholdRef = useRef(3 + Math.floor(Math.random() * 3));
   const goalCelebratedRef = useRef(false);
 
+  // Previous score for comparison badge
+  const [previousScore, setPreviousScore] = useState<number | undefined>(undefined);
+
   useEffect(() => {
     goalCelebratedRef.current = false;
     cardsSinceBadgeRef.current = 0;
@@ -116,6 +125,19 @@ export default function ExamReviewPage() {
     setError(null);
 
     try {
+      // Fetch previous exam report score for comparison badge
+      const { data: previousReports } = await supabaseRef.current
+        .from('exam_reports')
+        .select('score_percentage')
+        .eq('user_id', user.id)
+        .eq('exam_id', examId)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (previousReports && previousReports.length > 0) {
+        setPreviousScore((previousReports[0] as any).score_percentage);
+      }
+
       const { flashcards, quizQuestions, error: fetchError } =
         await spacedRepetitionService.getExamReviewItems(user.id, examId, 50);
 
@@ -249,8 +271,8 @@ export default function ExamReviewPage() {
             setDailyGoalMet(false);
           });
 
-        toast.success('Daily Goal Crushed!', {
-          description: `You reviewed ${totalAttempts} cards today!`,
+        toast.success('daily goal crushed! 🎯', {
+          description: `${totalAttempts} cards crushed today! 💪`,
           duration: 4000,
           icon: <Target className="w-5 h-5 text-green-500" />,
         });
@@ -419,6 +441,28 @@ export default function ExamReviewPage() {
               delay += 1500;
             }
 
+            // Check if user earned a freeze from streak milestone (every 7 days)
+            if (streakResult.currentStreak > 0 && streakResult.currentStreak % 7 === 0) {
+              setTimeout(() => {
+                toast.success('Freeze Earned! 🧊', {
+                  description: 'Your streak is now protected',
+                  duration: 4000,
+                });
+              }, delay);
+              delay += 1500;
+            }
+
+            // Show freeze used toast if applicable
+            if ((streakResult as any).freezeUsed) {
+              setTimeout(() => {
+                toast.success('Streak Saved! 🧊', {
+                  description: '1 freeze used to protect your streak',
+                  duration: 4000,
+                });
+              }, delay);
+              delay += 1500;
+            }
+
             freshAchievements.forEach((achievement, index) => {
               setTimeout(() => {
                 toast.success(achievement.name ?? 'Achievement Unlocked', {
@@ -477,6 +521,57 @@ export default function ExamReviewPage() {
       return updated;
     });
 
+    // Enhanced celebrations: Combo counter
+    if (isCorrect) {
+      const newCombo = comboCount + 1;
+      setComboCount(newCombo);
+
+      // Show combo toast at milestones
+      if (newCombo === 5) {
+        toast.success('5x COMBO! 🔥', {
+          description: "you're on fire!",
+          duration: 2000,
+        });
+      } else if (newCombo === 10) {
+        toast.success('10x COMBO! 🔥', {
+          description: 'no cap, you\'re cooking!',
+          duration: 2000,
+        });
+      } else if (newCombo === 15) {
+        toast.success('15x COMBO! 🔥', {
+          description: 'absolute legend!',
+          duration: 2000,
+        });
+      }
+    } else {
+      // Reset combo on incorrect answer
+      setComboCount(0);
+    }
+
+    // Track cards reviewed for mid-session encouragement
+    const newCardsReviewed = cardsReviewed + 1;
+    setCardsReviewed(newCardsReviewed);
+
+    // Mid-session encouragement (every 10 cards)
+    if (newCardsReviewed % 10 === 0 && newCardsReviewed > 0) {
+      const encouragementMessages = [
+        "you're cooking! 🔥",
+        'big brain energy 🧠',
+        'locked in fr 💪',
+        'no cap, you\'re crushing it 🎯',
+        'keep going bestie! ✨',
+      ];
+      const randomMessage = encouragementMessages[Math.floor(Math.random() * encouragementMessages.length)];
+      toast(randomMessage, { duration: 2000 });
+    }
+
+    // Progress milestone (50% completion)
+    const progress = newCardsReviewed / reviewItems.length;
+    if (progress >= 0.5 && progress < 0.55 && !halfwayToastShown) {
+      setHalfwayToastShown(true);
+      toast.success('Halfway there! 💪', { duration: 3000 });
+    }
+
     // Update SM2 in background (non-blocking) - Skip in practice mode
     if (!isPracticeMode) {
       quizService
@@ -519,6 +614,37 @@ export default function ExamReviewPage() {
       recordProgress(updated);
       return updated;
     });
+
+    // Enhanced celebrations: Combo counter (same as quiz)
+    if (isCorrect) {
+      const newCombo = comboCount + 1;
+      setComboCount(newCombo);
+
+      if (newCombo === 5) {
+        toast.success('5x COMBO! 🔥', { description: "you're on fire!", duration: 2000 });
+      } else if (newCombo === 10) {
+        toast.success('10x COMBO! 🔥', { description: 'no cap, you\'re cooking!', duration: 2000 });
+      } else if (newCombo === 15) {
+        toast.success('15x COMBO! 🔥', { description: 'absolute legend!', duration: 2000 });
+      }
+    } else {
+      setComboCount(0);
+    }
+
+    // Track cards and show encouragement
+    const newCardsReviewed = cardsReviewed + 1;
+    setCardsReviewed(newCardsReviewed);
+
+    if (newCardsReviewed % 10 === 0 && newCardsReviewed > 0) {
+      const messages = ["you're cooking! 🔥", 'big brain energy 🧠', 'locked in fr 💪', 'no cap, you\'re crushing it 🎯', 'keep going bestie! ✨'];
+      toast(messages[Math.floor(Math.random() * messages.length)], { duration: 2000 });
+    }
+
+    const progress = newCardsReviewed / reviewItems.length;
+    if (progress >= 0.5 && progress < 0.55 && !halfwayToastShown) {
+      setHalfwayToastShown(true);
+      toast.success('Halfway there! 💪', { duration: 3000 });
+    }
 
     // Update SM2 in background (non-blocking) - Skip in practice mode
     if (!isPracticeMode) {
@@ -790,6 +916,14 @@ export default function ExamReviewPage() {
               }`}>
                 {scorePercentage}% SCORE
               </div>
+              {/* Comparison Badge */}
+              {previousScore !== undefined && (
+                <ComparisonBadge 
+                  currentScore={scorePercentage} 
+                  previousScore={previousScore}
+                  className="-top-4 -right-4"
+                />
+              )}
             </div>
 
             {/* Stats Grid */}

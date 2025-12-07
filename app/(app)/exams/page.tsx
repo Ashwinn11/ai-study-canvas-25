@@ -179,9 +179,9 @@ export default function ExamsPage() {
               <BookOpen className="h-16 w-16 text-gray-500" />
             </div>
           </div>
-          <h3 className="text-xl font-semibold text-white mb-2">No exams yet</h3>
+          <h3 className="text-xl font-semibold text-white mb-2">no exams yet 👀</h3>
           <p className="text-gray-400 mb-6 max-w-md mx-auto">
-            Create your first exam to organize your study materials and track your progress
+            add your first exam to get started 📚
           </p>
           <Button onClick={handleCreateExam}>
             <Plus className="h-4 w-4 mr-2" />
@@ -249,7 +249,7 @@ export default function ExamsPage() {
                       )}
                       {!hasDue && stats.upcoming > 0 && (
                         <div className="flex items-center gap-1.5 text-green-500">
-                          <span className="text-sm font-medium">All caught up!</span>
+                          <span className="text-sm font-medium">all caught up! 🎉</span>
                         </div>
                       )}
                     </div>

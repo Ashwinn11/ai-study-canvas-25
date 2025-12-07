@@ -3,6 +3,9 @@ import { chatCompletion } from "./openAIClient";
 import { configService } from "./configService";
 import { TIMEOUTS } from "@/constants/config";
 import { logger } from "@/utils/logger";
+import { elevenLabsService } from "./elevenLabsService";
+import { getSupabaseClient } from "@/lib/supabase/client";
+import { BRAINBOT_VOICES } from "@/config/brainbotVoices";
 
 export interface ChatMessage {
     id: string;
@@ -289,6 +292,275 @@ Remember: Your goal is to help the student understand and master this material.`
 
         const lowerMessage = message.toLowerCase();
         return stressKeywords.some(keyword => lowerMessage.includes(keyword));
+    }
+
+    /**
+     * Generate full podcast with audio using ElevenLabs
+     * Caches audio segments in Supabase for reuse
+     */
+    async generatePodcastWithAudio(
+        materialId: string,
+        content: string,
+        onSegmentGenerated?: (segment: { speaker: 'Alex' | 'Jordan'; url: string; text: string }) => void
+    ): Promise<{ script: Array<{ speaker: 'Alex' | 'Jordan'; text: string; audioUrl: string }>; duration: number }> {
+        try {
+            logger.info('[BrainBot] Generating podcast with audio:', { materialId });
+
+            // Check cache first
+            const cached = await this.getCachedPodcast(materialId);
+            if (cached) {
+                logger.info('[BrainBot] Using cached podcast');
+                // Don't use streaming callback for cached data - just return it
+                return cached;
+            }
+
+            // Generate script
+            const scriptLines = await this.generatePodcastScript(content, 'viral');
+
+            // Generate audio for each line
+            const scriptWithAudio: Array<{ speaker: 'Alex' | 'Jordan'; text: string; audioUrl: string }> = [];
+            let totalDuration = 0;
+
+            for (const line of scriptLines) {
+                const voiceId = line.speaker === 'Alex'
+                    ? BRAINBOT_VOICES.host1VoiceId
+                    : BRAINBOT_VOICES.host2VoiceId;
+
+                // Generate audio
+                const audioUrl = await elevenLabsService.textToSpeech({
+                    text: line.text,
+                    voice_id: voiceId,
+                });
+
+                const segment = {
+                    speaker: line.speaker,
+                    text: line.text,
+                    audioUrl,
+                };
+
+                scriptWithAudio.push(segment);
+
+                // Estimate duration (~150 words per minute)
+                const wordCount = line.text.split(' ').length;
+                totalDuration += Math.ceil((wordCount / 150) * 60);
+
+                // Stream segment if callback provided
+                if (onSegmentGenerated) {
+                    onSegmentGenerated({
+                        speaker: segment.speaker,
+                        url: segment.audioUrl,
+                        text: segment.text,
+                    });
+                }
+            }
+
+            const result = { script: scriptWithAudio, duration: totalDuration };
+
+            // Cache the podcast
+            await this.cachePodcast(materialId, result);
+
+            return result;
+        } catch (error: any) {
+            logger.error('[BrainBot] Error generating podcast with audio:', error);
+            throw new ServiceError(
+                'Failed to generate podcast audio',
+                'brainBotService',
+                'PODCAST_AUDIO_FAILED',
+                error.message,
+                true
+            );
+        }
+    }
+
+    /**
+     * Cache podcast in database
+     */
+    private async cachePodcast(
+        materialId: string,
+        podcast: { script: Array<{ speaker: 'Alex' | 'Jordan'; text: string; audioUrl: string }>; duration: number }
+    ): Promise<void> {
+        try {
+            const supabase = getSupabaseClient();
+
+            // Convert script array to iOS format for compatibility
+            const audioSegments = podcast.script.map(s => `${s.speaker}::${s.audioUrl}`).join('|||');
+            const scriptText = podcast.script.map(s => `${s.speaker}: ${s.text}`).join('\n');
+
+            const { error } = await supabase
+                .from('brainbot_podcasts')
+                .upsert({
+                    material_id: materialId,
+                    personality_id: 'viral', // Default personality
+                    audio_url: audioSegments,
+                    script: scriptText,
+                    duration: podcast.duration,
+                    created_at: new Date().toISOString(),
+                } as any, {
+                    onConflict: 'material_id,personality_id' // Composite key matching iOS
+                });
+
+            if (error) {
+                logger.error('[BrainBot] Error caching podcast:', error);
+            }
+        } catch (error) {
+            logger.error('[BrainBot] Error caching podcast:', error);
+        }
+    }
+
+    /**
+     * Get cached podcast
+     */
+    private async getCachedPodcast(
+        materialId: string
+    ): Promise<{ script: Array<{ speaker: 'Alex' | 'Jordan'; text: string; audioUrl: string }>; duration: number } | null> {
+        try {
+            const supabase = getSupabaseClient();
+            const { data, error } = await supabase
+                .from('brainbot_podcasts')
+                .select('*')
+                .eq('material_id', materialId)
+                .maybeSingle();
+
+            if (error || !data) return null;
+
+            // Handle iOS format: audio_url contains "Speaker::URL|||Speaker::URL"
+            // and script is plain text "Alex: text\nJordan: text"
+            if ((data as any).audio_url && typeof (data as any).audio_url === 'string') {
+                const audioSegments = (data as any).audio_url.split('|||');
+                const scriptLines = ((data as any).script || '').split('\n').filter((line: string) => line.trim());
+
+                const script: Array<{ speaker: 'Alex' | 'Jordan'; text: string; audioUrl: string }> = [];
+
+                for (let i = 0; i < audioSegments.length; i++) {
+                    const [speaker, url] = audioSegments[i].split('::');
+                    const scriptLine = scriptLines[i] || '';
+                    const match = scriptLine.match(/^(Alex|Jordan):\s*(.+)$/);
+                    const text = match ? match[2] : scriptLine;
+
+                    script.push({
+                        speaker: speaker as 'Alex' | 'Jordan',
+                        text,
+                        audioUrl: url,
+                    });
+                }
+
+                return {
+                    script,
+                    duration: (data as any).duration || 0,
+                };
+            }
+
+            // Handle new format: script is JSON array
+            try {
+                return {
+                    script: JSON.parse((data as any).script),
+                    duration: (data as any).duration,
+                };
+            } catch (parseError) {
+                logger.error('[BrainBot] Error parsing cached script:', parseError);
+                return null;
+            }
+        } catch (error) {
+            logger.error('[BrainBot] Error fetching cached podcast:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Generate a podcast-style script for study material
+     * Creates a viral-style conversation between two hosts: Alex and Jordan
+     * 
+     * @param content - Study material content (Feynman explanation)
+     * @param personality - Podcast personality (viral, chill, academic)
+     * @returns Array of script lines with speaker attribution
+     */
+    async generatePodcastScript(
+        content: string,
+        personality: 'viral' | 'chill' | 'academic' = 'viral'
+    ): Promise<Array<{ speaker: 'Alex' | 'Jordan'; text: string }>> {
+        try {
+            // Get BrainBot config from backend
+            const config = await configService.getAIConfig('brainbot');
+
+            const personalityPrompts = {
+                viral: `You're creating a VIRAL podcast that Gen Z would share with friends. High energy, lots of "no cap", "fr", "lowkey", "highkey". Make it feel like two best friends geeking out.`,
+                chill: `You're creating a chill, laid-back podcast. Conversational and friendly, like study buddies chatting over coffee.`,
+                academic: `You're creating an educational podcast. Professional but engaging, like two professors making complex topics accessible.`
+            };
+
+            const systemPrompt = `You are a podcast script writer creating a dual-host educational podcast.
+
+HOSTS:
+- Alex: Enthusiastic, asks great questions, represents the learner. Uses Gen Z slang naturally.
+- Jordan: Knowledgeable, explains concepts clearly, breaks things down. Also uses Gen Z slang.
+
+STYLE: ${personalityPrompts[personality]}
+
+CRITICAL RULES:
+1. Express emotions PHONETICALLY, not literally:
+   - GOOD: "Yooo that's wild" or "Haha yeah exactly"
+   - BAD: "*laughs*" or "[excited]" or "(sighs)"
+2. Use Gen Z slang naturally: "no cap", "fr" (for real), "lowkey", "highkey", "that's fire", "cooking"
+3. Keep each line SHORT (1-2 sentences max) for natural conversation flow
+4. Make it ENGAGING - use questions, reactions, build-ups
+5. Break down complex topics into digestible chunks
+6. Each speaker should have distinct personality
+
+FORMAT: Return ONLY a JSON array of objects with "speaker" ("Alex" or "Jordan") and "text" fields.
+Example: [{"speaker":"Alex","text":"Yo Jordan, you gotta explain this one"},{"speaker":"Jordan","text":"Bet, so basically..."}]`;
+
+            const userPrompt = `Create a 2-3 minute podcast script (about 15-20 exchanges) about this topic:
+
+${content}
+
+Make it viral-worthy and engaging. Start with Alex asking Jordan to explain the topic.`;
+
+            const response = await chatCompletion({
+                model: config.model,
+                systemPrompt,
+                userPrompt,
+                temperature: config.temperature,
+                timeoutMs: config.timeoutMs,
+            });
+
+            // Parse JSON response
+            const scriptText = response.trim();
+            let script: Array<{ speaker: 'Alex' | 'Jordan'; text: string }>;
+
+            try {
+                // Try to parse as JSON
+                script = JSON.parse(scriptText);
+            } catch (parseError) {
+                // Fallback: extract JSON from markdown code blocks
+                const jsonMatch = scriptText.match(/```(?:json)?\s*([\s\S]*?)```/);
+                if (jsonMatch) {
+                    script = JSON.parse(jsonMatch[1]);
+                } else {
+                    throw new Error('Failed to parse podcast script JSON');
+                }
+            }
+
+            // Validate script format
+            if (!Array.isArray(script) || script.length === 0) {
+                throw new Error('Invalid podcast script format');
+            }
+
+            logger.info('[BrainBotService] Generated podcast script:', {
+                lineCount: script.length,
+                personality,
+            });
+
+            return script;
+        } catch (error: any) {
+            logger.error('[BrainBotService] Error generating podcast script:', error);
+            throw new ServiceError(
+                'Failed to generate podcast script',
+                'brainBotService',
+                'PODCAST_GENERATION_FAILED',
+                error.message,
+                true
+            );
+        }
     }
 }
 

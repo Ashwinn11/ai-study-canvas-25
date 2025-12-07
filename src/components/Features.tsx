@@ -92,8 +92,8 @@ export const Features = () => {
         />
 
         <FeatureRow
-          title="A personal tutor in your pocket."
-          description="Stuck on a concept? Chat with your personal AI tutor 24/7."
+          title="Learn like you're listening to a podcast."
+          description="Turn your notes into engaging AI podcasts with Alex & Jordan. Study on the go."
           icon={Mic}
           animationData={thinkingAnimation}
           imageSide="left"

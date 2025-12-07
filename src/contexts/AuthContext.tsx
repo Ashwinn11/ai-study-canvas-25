@@ -63,14 +63,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 
   const signOut = async () => {
+    setLoading(true);
     const supabase = getSupabaseClient();
     const { error } = await supabase.auth.signOut();
-
     if (error) {
-      throw error;
+      console.error('Error signing out:', error);
     }
-
-    router.push('/');
+    setUser(null);
+    setLoading(false);
+    // Use window.location for immediate redirect to landing page
+    // This bypasses Next.js routing and middleware
+    window.location.href = '/';
   };
 
   return (

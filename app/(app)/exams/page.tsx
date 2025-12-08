@@ -37,6 +37,11 @@ export default function ExamsPage() {
 
       setExams(data || []);
 
+      // Initialize Supabase client for spacedRepetitionService
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
+      spacedRepetitionService.setSupabase(supabase);
+
       // Load review stats for each exam (matching iOS)
       if (data && data.length > 0) {
         const statsPromises = data.map(async (exam) => {

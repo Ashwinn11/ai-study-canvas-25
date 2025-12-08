@@ -136,6 +136,11 @@ export default function DashboardPage() {
         return;
       }
 
+      // Initialize Supabase client for spacedRepetitionService
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
+      spacedRepetitionService.setSupabase(supabase);
+
       // Load review stats and average grades for each exam
       const examsWithStats = await Promise.all(
         loadedExams.map(async (exam) => {

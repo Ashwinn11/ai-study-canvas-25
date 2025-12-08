@@ -6,6 +6,13 @@ import { logger } from "@/utils/logger";
 import { elevenLabsService } from "./elevenLabsService";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { BRAINBOT_VOICES } from "@/config/brainbotVoices";
+import {
+    getBrainBotPodcastSystemPrompt,
+    getBrainBotPodcastUserTemplate,
+    getBrainBotQASystemPrompt,
+    getBrainBotQAUserTemplate,
+    renderPromptTemplate
+} from './prompts';
 
 export interface ChatMessage {
     id: string;
@@ -78,7 +85,7 @@ export class BrainBotService {
             const history = this.conversationHistories.get(convId) || [];
 
             // Build system prompt
-            const systemPrompt = this.buildSystemPrompt(context);
+            const systemPrompt = await this.buildSystemPrompt(context);
 
             // Build messages array with conversation history
             const messages = this.buildMessages(systemPrompt, question, history, context);
@@ -178,70 +185,56 @@ export class BrainBotService {
         return this.conversationHistories.get(conversationId) || [];
     }
 
-    private buildSystemPrompt(context: BrainBotContext): string {
-        const titleContext = context.seedTitle
-            ? `The study material is titled: "${context.seedTitle}"\n\n`
-            : "";
+    private async buildSystemPrompt(context: BrainBotContext): Promise<string> {
+        try {
+            // Fetch system prompt from backend
+            const systemPrompt = await getBrainBotQASystemPrompt();
 
-        // Mode-specific instructions
-        const modeInstructions = this.getModeInstructions(context.explanationMode || "simple");
+            const titleContext = context.seedTitle
+                ? `The study material is titled: "${context.seedTitle}"\n\n`
+                : "";
 
-        return `You are BrainBot, a friendly and helpful AI study assistant. Your role is to help students understand their study materials better.
+            // Determine personality tone based on explanation mode
+            const personalityTone = this.getPersonalityTone(context.explanationMode || "simple");
 
-${titleContext}You have access to the following study notes (Feynman explanation) that the student is learning.
-IMPORTANT: These notes are already a simplified explanation of the original source material.
+            // Combine system prompt with material context and personality instructions
+            return `${systemPrompt}
 
----
+${titleContext}Study Material:
 ${context.feynmanExplanation}
----
 
-${modeInstructions}
+Personality Tone: ${personalityTone}`;
+        } catch (error) {
+            logger.error("[BrainBot] Error fetching Q&A prompts:", error);
+            // Fallback to a basic system prompt if backend prompts unavailable
+            return `You are Jordan, a knowledgeable and helpful study assistant.
 
-General Guidelines:
-- Answer questions based on the study notes provided above
-- If asked about something not in the study notes, politely say you can only help with the current material
-- Encourage learning by asking follow-up questions when appropriate
-- Be friendly and supportive - you're here to help students succeed!
-- Format your responses using markdown for better readability (use **bold**, *italic*, lists, etc.)
+Your role: Answer student questions about their study materials conversationally.
+Your goal: Provide clear, accurate answers that help students understand the material.
 
-Remember: Your goal is to help the student understand and master this material.`;
+Study Material:
+${context.feynmanExplanation}
+
+Output: Conversational answer text suitable for text-to-speech conversion.`;
+        }
     }
 
-    private getModeInstructions(mode: ExplanationMode): string {
+    private getPersonalityTone(mode: ExplanationMode): string {
         switch (mode) {
             case "simple":
-                return `**Explanation Style: Ultra-Simple (ELI5)**
-- The provided notes might still be too complex. Simplify them FURTHER.
-- Explain like the student is 5 years old.
-- Use extremely simple analogies (e.g., "Imagine a pizza...").
-- Avoid ALL jargon. If a technical term is necessary, define it using everyday words first.
-- Short, punchy sentences.`;
+                return "Ultra-simple (ELI5). Explain like the student is 5 years old with extremely simple analogies.";
 
             case "analogy":
-                return `**Explanation Style: Analogies & Examples**
-- The notes might already use analogies. Try to provide *different* or *fresh* ones.
-- Connect concepts to completely unrelated fields (e.g., explaining coding using cooking).
-- Focus on the "mental model" - how should the student picture this in their head?
-- Use "It's like when..." phrasing.`;
+                return "Use analogies & examples. Connect concepts to unrelated fields with fresh mental models.";
 
             case "technical":
-                return `**Explanation Style: Technical & Formal**
-- The provided notes are simplified. Your job is to *re-formalize* them where appropriate.
-- Use precise academic terminology and definitions.
-- If the notes gloss over a technical detail for simplicity, bring it back (if you can infer it safely).
-- Structure your answer like a textbook or technical documentation.
-- Focus on rigor, precision, and the "why" behind the mechanics.`;
+                return "Technical & formal. Use precise academic terminology and rigorous explanations.";
 
             case "fun":
-                return `**Explanation Style: Fun & Engaging**
-- The notes are educational; you are the "fun study buddy".
-- Use humor, pop culture references, or light sarcasm (friendly).
-- Gamify the explanation (e.g., "Level 1: The Basics").
-- Use emojis to break up text (but don't overdo it).
-- Make the student smile while they learn.`;
+                return "Fun & engaging. Use humor, pop culture references, and gamification.";
 
             default:
-                return "";
+                return "Clear and conversational.";
         }
     }
 
@@ -315,7 +308,7 @@ Remember: Your goal is to help the student understand and master this material.`
             }
 
             // Generate script
-            const scriptLines = await this.generatePodcastScript(content, 'viral');
+            const scriptLines = await this.generatePodcastScript(content, 'supportive');
 
             // Generate audio for each line
             const scriptWithAudio: Array<{ speaker: 'Alex' | 'Jordan'; text: string; audioUrl: string }> = [];
@@ -390,7 +383,7 @@ Remember: Your goal is to help the student understand and master this material.`
                 .from('brainbot_podcasts')
                 .upsert({
                     material_id: materialId,
-                    personality_id: 'viral', // Default personality
+                    personality_id: 'supportive', // Default personality
                     audio_url: audioSegments,
                     script: scriptText,
                     duration: podcast.duration,
@@ -468,52 +461,27 @@ Remember: Your goal is to help the student understand and master this material.`
 
     /**
      * Generate a podcast-style script for study material
-     * Creates a viral-style conversation between two hosts: Alex and Jordan
+     * Creates a supportive conversation between two hosts: Alex and Jordan
      * 
-     * @param content - Study material content (Feynman explanation)
-     * @param personality - Podcast personality (viral, chill, academic)
-     * @returns Array of script lines with speaker attribution
+     * @param content - The educational content to discuss
+     * @param personality - Podcast personality (supportive, hype, zen, professor)
      */
     async generatePodcastScript(
         content: string,
-        personality: 'viral' | 'chill' | 'academic' = 'viral'
+        personality: 'supportive' | 'hype' | 'zen' | 'professor' = 'supportive'
     ): Promise<Array<{ speaker: 'Alex' | 'Jordan'; text: string }>> {
         try {
             // Get BrainBot config from backend
             const config = await configService.getAIConfig('brainbot');
 
-            const personalityPrompts = {
-                viral: `You're creating a VIRAL podcast that Gen Z would share with friends. High energy, lots of "no cap", "fr", "lowkey", "highkey". Make it feel like two best friends geeking out.`,
-                chill: `You're creating a chill, laid-back podcast. Conversational and friendly, like study buddies chatting over coffee.`,
-                academic: `You're creating an educational podcast. Professional but engaging, like two professors making complex topics accessible.`
-            };
+            // Fetch prompts from backend
+            const systemPrompt = await getBrainBotPodcastSystemPrompt();
+            const userTemplate = await getBrainBotPodcastUserTemplate();
 
-            const systemPrompt = `You are a podcast script writer creating a dual-host educational podcast.
-
-HOSTS:
-- Alex: Enthusiastic, asks great questions, represents the learner. Uses Gen Z slang naturally.
-- Jordan: Knowledgeable, explains concepts clearly, breaks things down. Also uses Gen Z slang.
-
-STYLE: ${personalityPrompts[personality]}
-
-CRITICAL RULES:
-1. Express emotions PHONETICALLY, not literally:
-   - GOOD: "Yooo that's wild" or "Haha yeah exactly"
-   - BAD: "*laughs*" or "[excited]" or "(sighs)"
-2. Use Gen Z slang naturally: "no cap", "fr" (for real), "lowkey", "highkey", "that's fire", "cooking"
-3. Keep each line SHORT (1-2 sentences max) for natural conversation flow
-4. Make it ENGAGING - use questions, reactions, build-ups
-5. Break down complex topics into digestible chunks
-6. Each speaker should have distinct personality
-
-FORMAT: Return ONLY a JSON array of objects with "speaker" ("Alex" or "Jordan") and "text" fields.
-Example: [{"speaker":"Alex","text":"Yo Jordan, you gotta explain this one"},{"speaker":"Jordan","text":"Bet, so basically..."}]`;
-
-            const userPrompt = `Create a 2-3 minute podcast script (about 15-20 exchanges) about this topic:
-
-${content}
-
-Make it viral-worthy and engaging. Start with Alex asking Jordan to explain the topic.`;
+            // Render user template with content
+            const userPrompt = renderPromptTemplate(userTemplate, {
+                content
+            });
 
             const response = await chatCompletion({
                 model: config.model,

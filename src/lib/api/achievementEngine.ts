@@ -8,10 +8,32 @@ import { getSupabaseClient } from '@/lib/supabase/client';
 import { evaluateBadges, getBadgeTiers, type BadgeState, type BadgeId } from './badges';
 import { profileStatsService } from './profileStatsService';
 
+/**
+ * Valid achievement types as defined by database CHECK constraint
+ * Updated to include 'grades', 'xp', and 'surprise' after database migration
+ */
+export type AchievementType = 'streak' | 'cards' | 'mastery' | 'accuracy' | 'sessions' | 'seeds' | 'study_time' | 'grades' | 'xp' | 'surprise';
+
+/**
+ * Map badge IDs to database achievement types
+ * Database constraint now allows: 'streak', 'cards', 'mastery', 'accuracy', 'sessions', 'seeds', 'study_time', 'grades', 'xp'
+ */
+function getBadgeAchievementType(badgeId: BadgeId): AchievementType {
+  const mapping: Record<BadgeId, AchievementType> = {
+    seeds: 'seeds',
+    streak: 'streak',
+    mastery: 'mastery',
+    accuracy: 'accuracy',
+    grades: 'grades', // Now uses correct semantic type
+    xp: 'xp', // Now uses correct semantic type
+  };
+  return mapping[badgeId] || 'sessions'; // Default fallback
+}
+
 export interface Achievement {
   id?: string;
   user_id?: string;
-  achievement_type: string;
+  achievement_type: AchievementType; // Changed from string for type safety
   achievement_key: string;
   name: string;
   description: string;
@@ -126,7 +148,7 @@ class AchievementEngine {
       const tier_obj = tierData as any;
       const achievement: Achievement = {
         user_id: userId,
-        achievement_type: badge.id,
+        achievement_type: getBadgeAchievementType(badge.id as BadgeId), // Map badge ID to DB achievement type
         achievement_key: `${badge.id}_${tier_obj.threshold}`,
         name: badge.name,
         description: tier_obj.label || badge.currentLabel || '',
@@ -137,6 +159,7 @@ class AchievementEngine {
         metadata: {
           threshold: tier_obj.threshold,
           auto_unlocked: true,
+          badge_id: badge.id, // Store the actual badge ID in metadata
         } as Record<string, unknown>,
       };
 

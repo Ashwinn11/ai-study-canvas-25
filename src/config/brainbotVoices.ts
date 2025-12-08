@@ -7,13 +7,13 @@ export interface VoicePersonality {
     tone: string;
 }
 
-// ElevenLabs voice IDs (you'll need to set these to actual voice IDs from your ElevenLabs account)
+// ElevenLabs voice IDs matching iOS supportive personality
 export const BRAINBOT_VOICES: VoicePersonality = {
-    id: 'viral',
-    name: 'Viral Edutainment',
+    id: 'supportive',
+    name: 'Supportive Bestie',
     host1VoiceId: 'EXAVITQu4vr4xnSDxMaL', // Rachel (for Alex) - warm female voice
     host2VoiceId: 'pNInz6obpgDQGcFmaJgB', // Adam (for Jordan) - friendly male voice
-    tone: 'High energy, conversational, Gen Z slang',
+    tone: 'encouraging and sweet, using phrases like "bestie", "you got this", with lots of positive energy',
 };
 
 export const DEFAULT_PERSONALITY = BRAINBOT_VOICES.id;

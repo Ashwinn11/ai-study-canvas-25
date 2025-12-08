@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { brainBotService } from '@/lib/api/brainBotService';
 import { toast } from 'sonner';
 import Image from 'next/image';
+import { logger } from '@/utils/logger';
 
 interface BrainBotPlayerProps {
   materialId: string;
@@ -123,7 +124,7 @@ export default function BrainBotPlayer({ materialId, content, title }: BrainBotP
         audioRef.current.play().catch((error) => {
           // Suppress AbortError - it's expected when switching segments
           if (error.name !== 'AbortError') {
-            console.error('Audio playback error:', error);
+            logger.error('[BrainBot] Audio playback error:', error);
           }
         });
       }
@@ -164,14 +165,14 @@ export default function BrainBotPlayer({ materialId, content, title }: BrainBotP
         }
       } catch (audioError) {
         // If audio generation fails, fall back to script-only mode
-        console.warn('[BrainBot] Audio generation failed, using script-only mode:', audioError);
-        const scriptLines = await brainBotService.generatePodcastScript(content, 'viral');
+        logger.warn('[BrainBot] Audio generation failed, using script-only mode:', audioError);
+        const scriptLines = await brainBotService.generatePodcastScript(content, 'supportive');
         setScript(scriptLines);
       }
       
       setIsLoading(false);
     } catch (error) {
-      console.error('[BrainBot] Error generating podcast:', error);
+      logger.error('[BrainBot] Error generating podcast:', error);
       toast.error('Failed to generate podcast. Please try again.');
       setIsLoading(false);
     }
@@ -183,7 +184,7 @@ export default function BrainBotPlayer({ materialId, content, title }: BrainBotP
     if (isPlaying) {
       audioRef.current.pause();
     } else {
-      audioRef.current.play().catch(console.error);
+      audioRef.current.play().catch((error) => logger.error('[BrainBot] Play error:', error));
     }
     setIsPlaying(!isPlaying);
   };

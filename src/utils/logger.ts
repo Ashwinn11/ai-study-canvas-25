@@ -163,15 +163,23 @@ class Logger {
       return;
     }
 
-    // Web: Sentry breadcrumbs disabled for now (use @sentry/nextjs in production)
-    // The addBreadcrumb function is a no-op on web
-    if (typeof window === "undefined") {
-      // Server-side: skip Sentry
-      return;
+    // Try to use Sentry if available
+    if (typeof window !== 'undefined') {
+      // Client-side: use Sentry browser SDK
+      try {
+        const Sentry = (window as any).Sentry;
+        if (Sentry && Sentry.addBreadcrumb) {
+          const message = args.map(stringifyArg).join(' ');
+          Sentry.addBreadcrumb({
+            message: truncate(message, 500),
+            level: SENTRY_LEVEL_MAP[levelName],
+            timestamp: Date.now() / 1000,
+          });
+        }
+      } catch (error) {
+        // Silently fail if Sentry is not available
+      }
     }
-
-    // Client-side: could integrate with Sentry here if available
-    // For now, this is a stub
   }
 
   private handle(levelName: LogLevelName, args: any[]): void {
@@ -204,7 +212,32 @@ class Logger {
 
   error(...args: any[]): void {
     this.handle("ERROR", args);
+
+    // Send errors to Sentry
     if (!this.isDevelopment) {
+      try {
+        if (typeof window !== 'undefined') {
+          const Sentry = (window as any).Sentry;
+          if (Sentry && Sentry.captureException) {
+            // Find the first Error object in args
+            const error = args.find(arg => arg instanceof Error);
+            if (error) {
+              Sentry.captureException(error, {
+                extra: {
+                  args: args.filter(arg => !(arg instanceof Error)).map(serializeArg),
+                },
+              });
+            } else {
+              // If no Error object, capture as message
+              const message = args.map(stringifyArg).join(' ');
+              Sentry.captureMessage(message, 'error');
+            }
+          }
+        }
+      } catch (sentryError) {
+        // Silently fail if Sentry is not available
+      }
+
       originalConsole.error("[ERROR]", ...args);
     }
   }

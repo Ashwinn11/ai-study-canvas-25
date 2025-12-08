@@ -49,6 +49,11 @@ export interface PromptsConfig {
   quizUserTemplate_Procedural?: string;
   conditionalSystemPrompt: string;
   feynmanUserTemplate: string;
+  // BrainBot prompts
+  brainbotPodcastSystemPrompt?: string;
+  brainbotPodcastUserTemplate?: string;
+  brainbotQASystemPrompt?: string;
+  brainbotQAUserTemplate?: string;
 }
 
 export interface MediaLimitsConfig {

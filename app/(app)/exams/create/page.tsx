@@ -85,7 +85,8 @@ export default function CreateExamPage() {
     if (user) {
       loadSeeds();
     }
-  }, [user, loadSeeds]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const isSeedDisabled = (seed: Seed): boolean => {
     // Seed is disabled if it's processing or already associated with another exam

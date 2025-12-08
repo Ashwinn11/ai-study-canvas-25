@@ -61,7 +61,8 @@ export default function SeedsPage() {
     if (user) {
       loadSeeds();
     }
-  }, [user, loadSeeds]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);

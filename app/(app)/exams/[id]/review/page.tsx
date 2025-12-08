@@ -220,7 +220,8 @@ export default function ExamReviewPage() {
     if (user && examId) {
       loadReviewItems();
     }
-  }, [user, examId, loadReviewItems]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, examId]);
 
   useEffect(() => {
     if (!user) return;

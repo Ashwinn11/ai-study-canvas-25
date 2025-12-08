@@ -123,7 +123,8 @@ export default function SeedDetailPage() {
     if (user && seedId) {
       loadSeed();
     }
-  }, [user, seedId, loadSeed]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, seedId]);
 
   const handleDeleteSeed = useCallback(async () => {
     setShowDeleteDialog(true);

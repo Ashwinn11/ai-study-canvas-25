@@ -491,26 +491,107 @@ Output: Conversational answer text suitable for text-to-speech conversion.`;
                 timeoutMs: config.timeoutMs,
             });
 
-            // Parse JSON response
+            // Parse response - iOS expects plain text format: "Alex: text\nJordan: text"
+            // NOT JSON! The backend prompt returns text format.
             const scriptText = response.trim();
             let script: Array<{ speaker: 'Alex' | 'Jordan'; text: string }>;
 
-            try {
-                // Try to parse as JSON
-                script = JSON.parse(scriptText);
-            } catch (parseError) {
-                // Fallback: extract JSON from markdown code blocks
-                const jsonMatch = scriptText.match(/```(?:json)?\s*([\s\S]*?)```/);
-                if (jsonMatch) {
-                    script = JSON.parse(jsonMatch[1]);
-                } else {
-                    throw new Error('Failed to parse podcast script JSON');
+            // Try text-based parsing first (matching iOS lines 149-170)
+            const lines = scriptText.split('\n').filter(line => line.trim());
+            const parsedLines: Array<{ speaker: 'Alex' | 'Jordan'; text: string }> = [];
+
+            for (const line of lines) {
+                // Match both "Alex:" and "**Alex:**" formats (matching iOS regex)
+                const match = line.match(/^\*?\*?(Alex|Jordan)\*?\*?:\s*(.+)$/);
+                if (!match) {
+                    // Skip stage directions and non-dialogue lines
+                    if (!line.includes('[') && !line.includes('**[')) {
+                        logger.warn('[BrainBotService] Line did not match pattern:', line.substring(0, 100));
+                    }
+                    continue;
+                }
+
+                const [, speaker, rawText] = match;
+
+                // Remove any bracketed stage directions e.g. [laughs]
+                const text = rawText.replace(/\[.*?\]/g, '').trim();
+
+                if (!text) continue;
+
+                parsedLines.push({
+                    speaker: speaker as 'Alex' | 'Jordan',
+                    text
+                });
+            }
+
+            if (parsedLines.length > 0) {
+                script = parsedLines;
+                logger.info('[BrainBotService] Successfully parsed text-based script (iOS format):', {
+                    lineCount: script.length
+                });
+            } else {
+                // Fallback: Try JSON parsing (for backward compatibility)
+                logger.warn('[BrainBotService] No text lines found, trying JSON fallback...');
+
+                try {
+                    // Try to parse as JSON
+                    script = JSON.parse(scriptText);
+                } catch (parseError) {
+                    // Fallback 1: Extract JSON from markdown code blocks
+                    const jsonMatch = scriptText.match(/```(?:json)?\s*([\s\S]*?)```/);
+                    if (jsonMatch) {
+                        try {
+                            script = JSON.parse(jsonMatch[1].trim());
+                            logger.info('[BrainBotService] Successfully parsed JSON from markdown code block');
+                        } catch (e) {
+                            logger.error('[BrainBotService] Failed to parse JSON from code block:', {
+                                extracted: jsonMatch[1].substring(0, 200)
+                            });
+                            throw new Error(`Failed to parse podcast script: ${e instanceof Error ? e.message : 'Unknown error'}`);
+                        }
+                    } else {
+                        // Fallback 2: Try to find JSON array in the response
+                        const arrayMatch = scriptText.match(/\[[\s\S]*\]/);
+                        if (arrayMatch) {
+                            try {
+                                script = JSON.parse(arrayMatch[0]);
+                                logger.info('[BrainBotService] Successfully parsed JSON array from response');
+                            } catch (e) {
+                                logger.error('[BrainBotService] Failed to parse extracted array:', {
+                                    extracted: arrayMatch[0].substring(0, 200)
+                                });
+                                throw new Error(`Failed to parse podcast script: ${e instanceof Error ? e.message : 'Unknown error'}`);
+                            }
+                        } else {
+                            // Log the full response for debugging
+                            logger.error('[BrainBotService] No valid format found in response:', {
+                                responsePreview: scriptText.substring(0, 500),
+                                responseLength: scriptText.length,
+                                parseError: parseError instanceof Error ? parseError.message : 'Unknown error'
+                            });
+                            throw new Error('Failed to parse podcast script - expected text format (Alex: text) or JSON array');
+                        }
+                    }
                 }
             }
 
             // Validate script format
             if (!Array.isArray(script) || script.length === 0) {
-                throw new Error('Invalid podcast script format');
+                logger.error('[BrainBotService] Invalid script format:', { script });
+                throw new Error('Invalid podcast script format - expected non-empty array');
+            }
+
+            // Validate each script item
+            for (let i = 0; i < script.length; i++) {
+                const item = script[i];
+                if (!item.speaker || !item.text) {
+                    logger.error('[BrainBotService] Invalid script item at index', i, ':', item);
+                    throw new Error(`Invalid script item at index ${i} - missing speaker or text`);
+                }
+                if (item.speaker !== 'Alex' && item.speaker !== 'Jordan') {
+                    logger.error('[BrainBotService] Invalid speaker at index', i, ':', item.speaker);
+                    throw new Error(`Invalid speaker at index ${i} - expected 'Alex' or 'Jordan', got '${item.speaker}'`);
+                }
             }
 
             logger.info('[BrainBotService] Generated podcast script:', {

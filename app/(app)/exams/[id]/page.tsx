@@ -60,7 +60,8 @@ export default function ExamDetailPage() {
     if (user && examId) {
       loadExamData();
     }
-  }, [user, examId, loadExamData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, examId]);
 
   const handleStartReview = (isPracticeMode: boolean) => {
     router.push(`/exams/${examId}/review?mode=${isPracticeMode ? 'practice' : 'review'}`);

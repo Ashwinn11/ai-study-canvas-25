@@ -81,7 +81,8 @@ export default function EditProfilePage() {
     if (user) {
       loadProfileData();
     }
-  }, [user, loadProfileData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};

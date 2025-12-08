@@ -76,7 +76,8 @@ export default function ExamsPage() {
     if (user) {
       loadExams();
     }
-  }, [user, loadExams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const handleCreateExam = () => {
     router.push('/exams/create');

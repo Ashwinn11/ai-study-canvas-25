@@ -97,7 +97,8 @@ export default function QuizPage() {
     if (user && seedId) {
       loadQuizQuestions();
     }
-  }, [user, seedId, loadQuizQuestions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, seedId]);
 
   // Handle background generation polling
   useEffect(() => {
@@ -127,8 +128,6 @@ export default function QuizPage() {
           setQuestions(questionStates);
           setIsGenerating(false);
           setGenerationMessage('');
-          clearInterval(intervalId);
-          setPollIntervalId(null);
         }
       } catch (err) {
         console.error('Error polling quiz questions:', err);
@@ -137,12 +136,20 @@ export default function QuizPage() {
 
     setPollIntervalId(intervalId);
 
+    // Cleanup function
     return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
+      clearInterval(intervalId);
+      setPollIntervalId(null);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isGenerating, user, seedId]);
+
+  // Auto-redirect when quiz is completed
+  useEffect(() => {
+    if (sessionStats.completed) {
+      router.push(`/seeds/${seedId}`);
+    }
+  }, [sessionStats.completed, router, seedId]);
 
   const handleSelectAnswer = useCallback(
     async (answerIndex: number) => {
@@ -345,14 +352,6 @@ export default function QuizPage() {
   };
 
   const scoreColor = getScoreColor(scorePercentage);
-
-  // Auto-redirect to seed material when quiz is completed
-  // Auto-redirect when quiz is completed
-  useEffect(() => {
-    if (sessionStats.completed) {
-      router.push(`/seeds/${seedId}`);
-    }
-  }, [sessionStats.completed, router, seedId]);
 
   if (sessionStats.completed) {
     return null; // Render nothing while redirecting

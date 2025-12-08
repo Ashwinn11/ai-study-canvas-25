@@ -82,7 +82,8 @@ export default function FlashcardsPracticePage() {
     if (user && seedId) {
       loadFlashcards();
     }
-  }, [user, seedId, loadFlashcards]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, seedId]);
 
   // Handle background generation polling
   useEffect(() => {

@@ -27,6 +27,5 @@ dist-ssr
 .env.local
 .env*
 
-# iOS reference codebase
-/tmp/masterly-ios
-/masterly
+
+masterly/

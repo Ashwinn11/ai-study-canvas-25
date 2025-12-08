@@ -1,6 +1,5 @@
 import { ServiceError } from "./serviceError";
-import { Flashcard, QuizQuestion, ReviewStats, ExamReviewStats } from "@/types";
-export type { ExamReviewStats, ReviewStats };
+import { Flashcard, QuizQuestion, ReviewStats } from "@/types";
 import { recordEvent, recordError } from "@/utils/telemetry";
 import {
   getLocalDate,
@@ -11,6 +10,9 @@ import {
 import { ReviewItemRPC } from "@/types/rpc";
 
 import { logger } from "@/utils/logger";
+
+// Re-export types for convenience
+export type { ReviewStats };
 export interface SM2Result {
   interval: number;
   repetitions: number;
@@ -65,14 +67,6 @@ export class SpacedRepetitionService {
 
   setSupabase(supabaseClient: any) {
     this.supabase = supabaseClient;
-  }
-
-  private getSupabase() {
-    if (!this.supabase) {
-      const { supabase: client } = require('./supabaseWithTimeout');
-      this.supabase = client;
-    }
-    return this.supabase;
   }
 
   /**
@@ -197,8 +191,18 @@ export class SpacedRepetitionService {
     qualityRating: number,
   ): Promise<{ data?: Flashcard; error?: string }> {
     try {
+      if (!this.supabase) {
+        throw new ServiceError(
+          "Supabase client not initialized",
+          "spacedRepetitionService",
+          "SUPABASE_NOT_INITIALIZED",
+          "Database connection not available",
+          false,
+        );
+      }
+
       // Get current flashcard data
-      const { data: currentCard, error: fetchError } = await this.getSupabase()
+      const { data: currentCard, error: fetchError } = await this.supabase
         .from("flashcards")
         .select("*")
         .eq("id", flashcardId)
@@ -241,7 +245,7 @@ export class SpacedRepetitionService {
             : currentCard.lapses || 0,
       };
 
-      const { data, error } = await this.getSupabase()
+      const { data, error } = await this.supabase
         .from("flashcards")
         .update(updateData)
         .eq("id", flashcardId)
@@ -305,8 +309,19 @@ export class SpacedRepetitionService {
     questionId: string,
     isCorrect: boolean,
   ): Promise<{ data?: QuizQuestion; error?: string }> {
-    try {// Get current quiz question data
-      const { data: currentQuestion, error: fetchError } = await this.getSupabase()
+    try {
+      if (!this.supabase) {
+        throw new ServiceError(
+          "Supabase client not initialized",
+          "spacedRepetitionService",
+          "SUPABASE_NOT_INITIALIZED",
+          "Database connection not available",
+          false,
+        );
+      }
+
+      // Get current quiz question data
+      const { data: currentQuestion, error: fetchError } = await this.supabase
         .from("quiz_questions")
         .select("*")
         .eq("id", questionId)
@@ -351,7 +366,7 @@ export class SpacedRepetitionService {
           : currentQuestion.lapses || 0,
       };
 
-      const { data, error } = await this.getSupabase()
+      const { data, error } = await this.supabase
         .from("quiz_questions")
         .update(updateData)
         .eq("id", questionId)
@@ -418,13 +433,23 @@ export class SpacedRepetitionService {
     quizQuestionIds?: string[],
   ): Promise<{ success: boolean; error?: string }> {
     try {
+      if (!this.supabase) {
+        throw new ServiceError(
+          "Supabase client not initialized",
+          "spacedRepetitionService",
+          "SUPABASE_NOT_INITIALIZED",
+          "Database connection not available",
+          false,
+        );
+      }
+
       logger.info(
         "[SpacedRepetitionService] Initializing SM2 for specific content",
       );
 
       // Initialize specific flashcards
       if (flashcardIds && flashcardIds.length > 0) {
-        const { error: flashcardError } = await this.getSupabase()
+        const { error: flashcardError } = await this.supabase
           .from("flashcards")
           .update({
             interval: 1,
@@ -449,7 +474,7 @@ export class SpacedRepetitionService {
 
       // Initialize specific quiz questions
       if (quizQuestionIds && quizQuestionIds.length > 0) {
-        const { error: quizError } = await this.getSupabase()
+        const { error: quizError } = await this.supabase
           .from("quiz_questions")
           .update({
             interval: 1,
@@ -497,11 +522,22 @@ export class SpacedRepetitionService {
   async initializeSM2Fields(
     userId: string,
   ): Promise<{ success: boolean; error?: string }> {
-    try {// Ensure auth context is ready to satisfy RLS
+    try {
+      if (!this.supabase) {
+        throw new ServiceError(
+          "Supabase client not initialized",
+          "spacedRepetitionService",
+          "SUPABASE_NOT_INITIALIZED",
+          "Database connection not available",
+          false,
+        );
+      }
+
+      // Ensure auth context is ready to satisfy RLS
       let retries = 0;
       const maxRetries = 3;
       while (retries < maxRetries) {
-        const { data: authData, error } = await this.getSupabase().auth.getUser();
+        const { data: authData, error } = await this.supabase.auth.getUser();
         const user = authData?.user;
         if (error) {
           if (retries === maxRetries - 1)
@@ -530,7 +566,7 @@ export class SpacedRepetitionService {
       );
 
       // Initialize flashcards without SM2 data
-      const { error: flashcardError } = await this.getSupabase()
+      const { error: flashcardError } = await this.supabase
         .from("flashcards")
         .update({
           interval: 1,
@@ -552,7 +588,7 @@ export class SpacedRepetitionService {
       }
 
       // Backfill next_due_date if missing but interval exists (older rows)
-      const { error: flashcardDateBackfillError } = await this.getSupabase()
+      const { error: flashcardDateBackfillError } = await this.supabase
         .from("flashcards")
         .update({
           next_due_date: new Date().toISOString().split("T")[0],
@@ -569,7 +605,7 @@ export class SpacedRepetitionService {
       }
 
       // Initialize quiz questions without SM2 data
-      const { error: quizError } = await this.getSupabase()
+      const { error: quizError } = await this.supabase
         .from("quiz_questions")
         .update({
           interval: 1,
@@ -591,7 +627,7 @@ export class SpacedRepetitionService {
       }
 
       // Backfill quiz next_due_date if missing but interval exists
-      const { error: quizDateBackfillError } = await this.getSupabase()
+      const { error: quizDateBackfillError } = await this.supabase
         .from("quiz_questions")
         .update({
           next_due_date: new Date().toISOString().split("T")[0],
@@ -638,19 +674,29 @@ export class SpacedRepetitionService {
     error?: string;
   }> {
     try {
+      if (!this.supabase) {
+        throw new ServiceError(
+          "Supabase client not initialized",
+          "spacedRepetitionService",
+          "SUPABASE_NOT_INITIALIZED",
+          "Database connection not available",
+          false,
+        );
+      }
+
       if (seedIds.length === 0) {
         return { flashcardIds: [], quizQuestionIds: [] };
       }
 
       // Get flashcard IDs
-      const { data: flashcards, error: flashcardError } = await this.getSupabase()
+      const { data: flashcards, error: flashcardError } = await this.supabase
         .from("flashcards")
         .select("id")
         .eq("user_id", userId)
         .in("seed_id", seedIds);
 
       // Get quiz question IDs
-      const { data: quizQuestions, error: quizError } = await this.getSupabase()
+      const { data: quizQuestions, error: quizError } = await this.supabase
         .from("quiz_questions")
         .select("id")
         .eq("user_id", userId)
@@ -701,9 +747,20 @@ export class SpacedRepetitionService {
     quizQuestions: any[];
     error?: string;
   }> {
-    try {// OPTIMIZED: Single RPC call replaces 2 complex queries with joins and filters
+    try {
+      if (!this.supabase) {
+        throw new ServiceError(
+          "Supabase client not initialized",
+          "spacedRepetitionService",
+          "SUPABASE_NOT_INITIALIZED",
+          "Database connection not available",
+          false,
+        );
+      }
+
+      // OPTIMIZED: Single RPC call replaces 2 complex queries with joins and filters
       // Returns all due flashcards and quiz questions in single database round-trip
-      const { data: reviewItems, error: reviewError } = await this.getSupabase().rpc(
+      const { data: reviewItems, error: reviewError } = await this.supabase.rpc(
         "get_review_items",
         { p_exam_id: examId, p_user_id: userId, p_limit: limit },
       );
@@ -785,10 +842,20 @@ export class SpacedRepetitionService {
     error?: string;
   }> {
     try {
+      if (!this.supabase) {
+        throw new ServiceError(
+          "Supabase client not initialized",
+          "spacedRepetitionService",
+          "SUPABASE_NOT_INITIALIZED",
+          "Database connection not available",
+          false,
+        );
+      }
+
       const today = getLocalDate();
 
       // OPTIMIZED: Get seed IDs first, then fetch content with simpler queries
-      const { data: examSeeds, error: seedsError } = await this.getSupabase()
+      const { data: examSeeds, error: seedsError } = await this.supabase
         .from("exam_seeds")
         .select("seed_id")
         .eq("exam_id", examId)
@@ -820,7 +887,7 @@ export class SpacedRepetitionService {
 
       // OPTIMIZED: Parallel queries with indexed lookups instead of complex joins
       const [flashcardsResult, quizQuestionsResult] = await Promise.all([
-        this.getSupabase()
+        this.supabase
           .from("flashcards")
           .select(
             "id, seed_id, next_due_date, interval, repetitions, easiness_factor",
@@ -829,7 +896,7 @@ export class SpacedRepetitionService {
           .in("seed_id", seedIds)
           .not("interval", "is", null),
 
-        this.getSupabase()
+        this.supabase
           .from("quiz_questions")
           .select(
             "id, seed_id, next_due_date, interval, repetitions, easiness_factor",
@@ -952,52 +1019,6 @@ export class SpacedRepetitionService {
 
       const today = getLocalDate();
 
-      // Fetch average grade from exam_reports for this exam (matching iOS)
-      const { data: reports, error: reportsError } = await this.supabase
-        .from('exam_reports')
-        .select('letter_grade')
-        .eq('user_id', userId)
-        .eq('exam_id', examId)
-        .not('letter_grade', 'is', null);
-
-      let averageGrade: string | undefined;
-      if (!reportsError && reports && reports.length > 0) {
-        // Calculate numeric average of grades (matching iOS implementation)
-        // iOS uses 1-9 scale: A+=9, A=8, B+=7, B=6, C+=5, C=4, D+=3, D=2, F=1
-        const grades = reports.map((r: any) => r.letter_grade);
-        const gradeToNumber = (grade: string): number => {
-          // Convert letter grades to numeric values (matching iOS gradeToNumber)
-          switch (grade?.toUpperCase()) {
-            case 'A+': return 9;
-            case 'A': return 8;
-            case 'B+': return 7;
-            case 'B': return 6;
-            case 'C+': return 5;
-            case 'C': return 4;
-            case 'D+': return 3;
-            case 'D': return 2;
-            case 'F': return 1;
-            default: return 0;
-          }
-        };
-
-        const numberToGrade = (avg: number): string => {
-          // Convert numeric average back to letter grade (matching iOS numberToGrade)
-          if (avg >= 8.5) return 'A+';
-          if (avg >= 7.5) return 'A';
-          if (avg >= 6.5) return 'B+';
-          if (avg >= 5.5) return 'B';
-          if (avg >= 4.5) return 'C+';
-          if (avg >= 3.5) return 'C';
-          if (avg >= 2.5) return 'D+';
-          if (avg >= 1.5) return 'D';
-          return 'F';
-        };
-
-        const avgNumeric = grades.reduce((sum: number, grade: string) => sum + gradeToNumber(grade), 0) / grades.length;
-        averageGrade = numberToGrade(avgNumeric);
-      }
-
       return {
         examId,
         totalItems: contentStatus.totalItems,
@@ -1005,8 +1026,7 @@ export class SpacedRepetitionService {
         overdue: contentStatus.overdueItems,
         upcoming: contentStatus.availableItems,
         nextReviewDate: contentStatus.nextDueDate,
-        averageScore: undefined,
-        averageGrade, // Add grade from exam_reports (matching iOS)
+        averageScore: undefined, // Can be calculated from quality_rating if needed
       };
     } catch (err) {
       logger.error(
@@ -1031,11 +1051,21 @@ export class SpacedRepetitionService {
     error?: string;
   }> {
     try {
+      if (!this.supabase) {
+        throw new ServiceError(
+          "Supabase client not initialized",
+          "spacedRepetitionService",
+          "SUPABASE_NOT_INITIALIZED",
+          "Database connection not available",
+          false,
+        );
+      }
+
       const today = getLocalDate();
 
       // Get flashcard statistics
       const { data: flashcardStats, error: flashcardError } =
-        await this.getSupabase()
+        await this.supabase
           .from("flashcards")
           .select("interval, repetitions, easiness_factor, next_due_date")
           .eq("user_id", userId)
@@ -1046,7 +1076,7 @@ export class SpacedRepetitionService {
       }
 
       // Get quiz question statistics
-      const { data: quizStats, error: quizError } = await this.getSupabase()
+      const { data: quizStats, error: quizError } = await this.supabase
         .from("quiz_questions")
         .select("interval, repetitions, easiness_factor, next_due_date")
         .eq("user_id", userId)
@@ -1112,7 +1142,18 @@ export class SpacedRepetitionService {
       interval: number;
     }>,
   ): Promise<{ success: boolean; error?: string; updatedCount?: number }> {
-    try {// Transform to RPC format
+    try {
+      if (!this.supabase) {
+        throw new ServiceError(
+          "Supabase client not initialized",
+          "spacedRepetitionService",
+          "SUPABASE_NOT_INITIALIZED",
+          "Database connection not available",
+          false,
+        );
+      }
+
+      // Transform to RPC format
       const updatePayload = updates.map((u) => ({
         item_id: u.itemId,
         item_type: u.itemType,
@@ -1123,7 +1164,7 @@ export class SpacedRepetitionService {
       }));
 
       // Call RPC to update all SM2 fields in a single transaction
-      const { data: updatedCount, error: batchError } = await this.getSupabase().rpc(
+      const { data: updatedCount, error: batchError } = await this.supabase.rpc(
         "batch_update_sm2",
         { p_updates: updatePayload },
       );

@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { examsService, type ExamWithSeeds } from '@/lib/api/examsService';
-import { spacedRepetitionService, type ReviewStats } from '@/lib/api/spacedRepetitionService';
+import { spacedRepetitionService } from '@/lib/api/spacedRepetitionService';
 import { ArrowLeft, Loader2, Pencil, Trash2, PlayCircle, BookOpen, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { showDeleteConfirm } from '@/lib/utils/confirmationUtils';
@@ -17,7 +17,7 @@ export default function ExamDetailPage() {
   const examId = params.id as string;
 
   const [exam, setExam] = useState<ExamWithSeeds | null>(null);
-  const [reviewStats, setReviewStats] = useState<ReviewStats | null>(null);
+  const [reviewStats, setReviewStats] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,6 +40,11 @@ export default function ExamDetailPage() {
       setExam(examWithSeeds);
 
       // Load review stats
+      // Initialize Supabase client (required for React Native-based service)
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
+      spacedRepetitionService.setSupabase(supabase);
+      
       const stats = await spacedRepetitionService.getReviewStatsForExam(user.id, examId);
       setReviewStats(stats);
 

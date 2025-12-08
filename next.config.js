@@ -11,8 +11,22 @@ const nextConfig = {
       },
     ],
   },
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
     config.resolve.alias.canvas = false;
+    
+    // Suppress webpack cache serialization warnings
+    if (!isServer) {
+      config.cache = {
+        ...config.cache,
+        compression: 'gzip',
+      };
+    }
+    
+    // Suppress infrastructure logging warnings
+    config.infrastructureLogging = {
+      level: 'error',
+    };
+    
     return config;
   },
 };

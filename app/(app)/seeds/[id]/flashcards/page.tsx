@@ -159,16 +159,13 @@ export default function FlashcardsPracticePage() {
         try {
           const timeSpentSeconds = Math.round((Date.now() - sessionStartTime) / 1000);
 
-          // Save learning session (for tracking only, does not affect XP/streaks)
-          await flashcardsService.createLearningSession(seedId, user.id, {
-            totalItems: flashcards.length,
-            correctItems: newReviewedCount,
-            timeSpent: timeSpentSeconds,
-            metadata: {
-              sessionType: 'flashcards-practice',
-              source: 'individual-practice',
-            },
-          });
+          // NOTE: Individual practice does NOT create learning_sessions
+          // Only exam reviews create learning_sessions records
+          // Individual practice is purely for learning without affecting stats
+
+          // Removed: flashcardsService.createLearningSession()
+          // This was causing database errors because learning_sessions
+          // should only track exam-level sessions, not individual practice
 
           // NOTE: Individual practice does NOT:
           // - Update streaks

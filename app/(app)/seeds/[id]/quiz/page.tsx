@@ -210,18 +210,13 @@ export default function QuizPage() {
         try {
           const timeSpentSeconds = Math.round((Date.now() - sessionStartTime) / 1000);
 
-          // Save quiz session (for tracking only, does not affect XP/streaks)
-          await quizService.createLearningSession(seedId, user.id, {
-            totalItems: questions.length,
-            correctItems: sessionStats.correct,
-            timeSpent: timeSpentSeconds,
-            attempts: attempts,
-            metadata: {
-              incorrect: sessionStats.incorrect,
-              sessionType: 'quiz',
-              source: 'individual-practice',
-            },
-          });
+          // NOTE: Individual practice does NOT create learning_sessions
+          // Only exam reviews create learning_sessions records
+          // Individual practice is purely for learning without affecting stats
+
+          // Removed: quizService.createLearningSession()
+          // This was causing database errors because learning_sessions
+          // should only track exam-level sessions, not individual practice
 
           // NOTE: Individual practice does NOT:
           // - Update streaks
@@ -352,8 +347,14 @@ export default function QuizPage() {
   const scoreColor = getScoreColor(scorePercentage);
 
   // Auto-redirect to seed material when quiz is completed
+  // Auto-redirect when quiz is completed
+  useEffect(() => {
+    if (sessionStats.completed) {
+      router.push(`/seeds/${seedId}`);
+    }
+  }, [sessionStats.completed, router, seedId]);
+
   if (sessionStats.completed) {
-    router.push(`/seeds/${seedId}`);
     return null; // Render nothing while redirecting
   }
 

@@ -128,20 +128,32 @@ export default function ExamReviewPage() {
       // Fetch previous exam report score for comparison badge
       const { data: previousReports } = await supabaseRef.current
         .from('exam_reports')
-        .select('score_percentage')
+        .select('score')
         .eq('user_id', user.id)
         .eq('exam_id', examId)
-        .order('created_at', { ascending: false })
+        .order('completed_at', { ascending: false })
         .limit(1);
 
       if (previousReports && previousReports.length > 0) {
-        setPreviousScore((previousReports[0] as any).score_percentage);
+        const report = previousReports[0] as any;
+        // score is stored as 0-1 decimal, convert to percentage
+        setPreviousScore(Math.round(report.score * 100));
       }
+
+      // Initialize Supabase client for spacedRepetitionService
+      spacedRepetitionService.setSupabase(supabaseRef.current);
 
       const { flashcards, quizQuestions, error: fetchError } =
         await spacedRepetitionService.getExamReviewItems(user.id, examId, 50);
 
+      console.log('[ExamReview] Fetched review items:', {
+        flashcardsCount: flashcards.length,
+        quizQuestionsCount: quizQuestions.length,
+        error: fetchError,
+      });
+
       if (fetchError) {
+        console.error('[ExamReview] Error fetching review items:', fetchError);
         setError(fetchError);
         setIsLoading(false);
         return;
@@ -341,25 +353,6 @@ export default function ExamReviewPage() {
             const scorePercentage = Math.round(score * 100);
             const letterGrade = scoreToGrade(scorePercentage);
 
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            await supabase.from('exam_reports').insert({
-              user_id: user.id,
-              exam_id: examId,
-              letter_grade: letterGrade,
-              score_percentage: scorePercentage,
-              total_items: totalItems,
-              correct_items: correctItems,
-              metadata: {
-                flashcard_count: stats.flashcardTotal,
-                flashcard_correct: stats.flashcardCorrect,
-                quiz_count: stats.quizTotal,
-                quiz_correct: stats.quizCorrect,
-                time_spent: timeSpentSeconds,
-              },
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            } as any);
-
             // NOTE: XP is now awarded per-card, so we don't award it here anymore.
 
             // Fetch fresh daily goal from database (matching iOS implementation)
@@ -381,6 +374,31 @@ export default function ExamReviewPage() {
             const streakResult = await streakService.updateStreakAfterSession(user.id, finalDailyGoal);
             console.log('[DailyGoal] Streak update result:', streakResult);
             setCompletionStreak(streakResult.currentStreak);
+
+            // Create exam report (matching iOS - this contributes to average grade)
+            // NOTE: A database trigger automatically creates a learning_sessions record from this exam_report
+            // This learning_sessions record is what's used to calculate cardsReviewedToday and daily goal progress
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            await supabase.from('exam_reports').insert({
+              user_id: user.id,
+              exam_id: examId,
+              score: score, // 0-1 decimal
+              letter_grade: letterGrade,
+              time_spent: timeSpentSeconds,
+              correct_count: correctItems,
+              total_count: totalItems,
+              quiz_correct: stats.quizCorrect,
+              quiz_total: stats.quizTotal,
+              flashcard_correct: stats.flashcardCorrect,
+              flashcard_total: stats.flashcardTotal,
+              mastery_percentage: scorePercentage,
+              current_streak: streakResult.currentStreak,
+              breakdown_json: {
+                time_spent: timeSpentSeconds,
+              },
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any);
 
             // Check for achievement unlocks
             const newAchievements = await achievementEngine.checkAndUnlockAchievements(user.id);

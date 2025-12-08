@@ -24,3 +24,6 @@ Sentry.init({
         }),
     ],
 });
+
+// Instrument client-side navigation transitions
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

@@ -7,12 +7,13 @@ export interface VoicePersonality {
     tone: string;
 }
 
-// ElevenLabs voice IDs matching iOS supportive personality
+// Gemini 2.5 Flash multi-speaker voice names
+// Using Gemini's native multi-speaker support for podcast-style conversations
 export const BRAINBOT_VOICES: VoicePersonality = {
     id: 'supportive',
     name: 'Supportive Bestie',
-    host1VoiceId: 'EXAVITQu4vr4xnSDxMaL', // Rachel (for Alex) - warm female voice
-    host2VoiceId: 'pNInz6obpgDQGcFmaJgB', // Adam (for Jordan) - friendly male voice
+    host1VoiceId: 'Zephyr', // Female voice (for Alex) - bright, warm, and engaging
+    host2VoiceId: 'Charon', // Male voice (for Jordan) - informative, calm, and friendly
     tone: 'encouraging and sweet, using phrases like "bestie", "you got this", with lots of positive energy',
 };
 

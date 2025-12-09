@@ -35,6 +35,9 @@ export default function BrainBotPlayer({ materialId, content, title }: BrainBotP
   // Ref to track current audio source URL (prevents restart on script updates)
   const currentSourceUrlRef = useRef<string | null>(null);
 
+  // Ref to prevent double generation (React StrictMode)
+  const isGeneratingRef = useRef(false);
+
   // Cycle loading messages
   useEffect(() => {
     if (!isLoading) return;
@@ -132,42 +135,54 @@ export default function BrainBotPlayer({ materialId, content, title }: BrainBotP
   }, [currentSegmentIndex, script, isPlaying]);
 
   const generatePodcast = async () => {
+    // Prevent double generation (React StrictMode or multiple calls)
+    if (isGeneratingRef.current) {
+      logger.warn('[BrainBot] Generation already in progress, skipping duplicate call');
+      return;
+    }
+    isGeneratingRef.current = true;
+
     try {
       setIsLoading(true);
+      setScript([]); // Reset script before generating
       let segmentCount = 0;
-      
+
       // Try to use audio generation with streaming
       try {
+        const streamedSegments: Array<{ speaker: 'Alex' | 'Jordan'; text: string; audioUrl: string }> = [];
+
         const result = await brainBotService.generatePodcastWithAudio(
           materialId,
           content,
           (segment) => {
             // Stream segments as they're generated (only for new podcasts)
             segmentCount++;
-            setScript(prev => [...prev, {
+            streamedSegments.push({
               speaker: segment.speaker,
               text: segment.text,
               audioUrl: segment.url,
-            }]);
-            
-            // Start playing after first 4 segments (buffered playback)
+            });
+            setScript([...streamedSegments]);
+
+            // Mark as ready after first 4 segments (don't auto-play due to browser restrictions)
             if (segmentCount === 4) {
               setIsLoading(false);
-              setIsPlaying(true);
+              // User must click play button - browsers block auto-play
             }
           }
         );
-        
-        // If we got a result with script (cached), set it directly
+
+        // Replace with final clean script from cache (iOS also does this)
         if (result.script && result.script.length > 0) {
           setScript(result.script);
           setIsLoading(false);
         }
       } catch (audioError) {
-        // If audio generation fails, fall back to script-only mode
-        logger.warn('[BrainBot] Audio generation failed, using script-only mode:', audioError);
-        const scriptLines = await brainBotService.generatePodcastScript(content, 'supportive');
-        setScript(scriptLines);
+        // If audio generation fails, log the error but don't regenerate script
+        logger.error('[BrainBot] Audio generation failed:', audioError);
+        // The script should already be set from streaming callbacks
+        // If not, display error to user instead of regenerating
+        toast.error('Failed to generate audio for podcast. Please try again.');
       }
       
       setIsLoading(false);
@@ -175,6 +190,8 @@ export default function BrainBotPlayer({ materialId, content, title }: BrainBotP
       logger.error('[BrainBot] Error generating podcast:', error);
       toast.error('Failed to generate podcast. Please try again.');
       setIsLoading(false);
+    } finally {
+      isGeneratingRef.current = false; // Reset flag when done
     }
   };
 

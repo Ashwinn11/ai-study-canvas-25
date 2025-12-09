@@ -3,7 +3,7 @@ import { chatCompletion } from "./openAIClient";
 import { configService } from "./configService";
 import { TIMEOUTS } from "@/constants/config";
 import { logger } from "@/utils/logger";
-import { elevenLabsService } from "./elevenLabsService";
+import { geminiTextToSpeechService } from "./googleTextToSpeechService";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { BRAINBOT_VOICES } from "@/config/brainbotVoices";
 import {
@@ -288,7 +288,7 @@ Output: Conversational answer text suitable for text-to-speech conversion.`;
     }
 
     /**
-     * Generate full podcast with audio using ElevenLabs
+     * Generate full podcast with audio using Google Cloud Text-to-Speech
      * Caches audio segments in Supabase for reuse
      */
     async generatePodcastWithAudio(
@@ -319,10 +319,10 @@ Output: Conversational answer text suitable for text-to-speech conversion.`;
                     ? BRAINBOT_VOICES.host1VoiceId
                     : BRAINBOT_VOICES.host2VoiceId;
 
-                // Generate audio
-                const audioUrl = await elevenLabsService.textToSpeech({
+                // Generate audio using Gemini 2.5 Flash TTS
+                const audioUrl = await geminiTextToSpeechService.textToSpeech({
                     text: line.text,
-                    voice_id: voiceId,
+                    voiceId: voiceId,
                 });
 
                 const segment = {

@@ -19,7 +19,6 @@ import {
   Brain,
   Trophy,
   Send,
-  Sparkles,
   ArrowUpRight,
   Lightbulb,
   Gamepad2,
@@ -30,7 +29,6 @@ import {
   Mic
 } from 'lucide-react';
 import { useChat, ExplanationMode } from '@/hooks/useChat';
-import { brainBotService } from '@/lib/api/brainBotService';
 import { Button } from '@/components/ui/button';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 
@@ -269,24 +267,6 @@ export default function SeedDetailPage() {
                 <h3 className="font-semibold text-gray-800 mb-1">Quiz</h3>
                 <p className="text-sm text-gray-600">
                   Test your knowledge
-                </p>
-              </div>
-            </button>
-          </div>
-
-          <div className="flex justify-center">
-            <button
-              onClick={() => router.push(`/brainbot/${seed.id}`)}
-              disabled={!seed.feynman_explanation}
-              className="flex items-center gap-4 p-6 rounded-xl border-2 border-pink-300 bg-gradient-to-r from-pink-100 via-purple-100 to-blue-100 transition-colors shadow-lg hover:border-pink-400 hover:from-pink-200 hover:via-purple-200 hover:to-blue-200 disabled:opacity-60 disabled:cursor-not-allowed w-full max-w-md"
-            >
-              <div className="p-3 rounded-lg bg-gradient-to-br from-pink-300 to-purple-300">
-                <Sparkles className="h-6 w-6 text-white" />
-              </div>
-              <div className="text-left">
-                <h3 className="font-semibold text-gray-800 mb-1">BrainBot Podcast</h3>
-                <p className="text-sm text-gray-600">
-                  Listen to Alex & Jordan discuss this material
                 </p>
               </div>
             </button>

@@ -1091,8 +1091,8 @@ export default function ExamReviewPage() {
       {currentItem.type === 'quiz' && (
         <div className="space-y-6">
           {/* Question Card */}
-          <div className="rounded-2xl border-2 border-blue-300 bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 shadow-lg p-8 min-h-[300px] flex items-center justify-center">
-            <p className="text-xl text-gray-800 text-center leading-relaxed font-semibold">
+          <div className="rounded-2xl border-2 shadow-lg p-8 min-h-[300px] flex items-center justify-center" style={{ backgroundColor: '#eac4d0', borderColor: '#eac4d0' }}>
+            <p className="text-xl text-black text-center leading-relaxed font-semibold">
               {(currentItem.content as QuizQuestion).question}
             </p>
           </div>
@@ -1196,26 +1196,27 @@ export default function ExamReviewPage() {
                 >
                   {/* Front - Question */}
                   <div
-                    className={`absolute inset-0 backface-hidden rounded-2xl border-2 border-purple-300 bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 shadow-lg p-8 ${
+                    className={`absolute inset-0 backface-hidden rounded-2xl border-2 shadow-lg p-8 ${
                       !isFlipped ? 'opacity-100' : 'opacity-0'
                     }`}
                     style={{
+                      backgroundColor: '#b8e0d2',
                       backfaceVisibility: 'hidden',
                       WebkitBackfaceVisibility: 'hidden',
                       minHeight: '400px',
-                      borderColor: swipeStyle.borderColor,
+                      borderColor: swipeStyle.borderColor || '#b8e0d2',
                       borderWidth: `${getBorderWidth()}px`,
                       transition: 'border-color 0.1s',
                     }}
                   >
                     <div className="flex flex-col h-full">
-                      <div className="text-sm text-purple-600 mb-4 font-medium">Question</div>
+                      <div className="text-sm text-black mb-4 font-medium">Question</div>
                       <div className="flex-1 flex items-center justify-center">
-                        <p className="text-xl text-gray-800 text-center leading-relaxed font-medium">
+                        <p className="text-xl text-black text-center leading-relaxed font-medium">
                           {(currentItem.content as Flashcard).question}
                         </p>
                       </div>
-                      <div className="flex items-center justify-center gap-2 text-sm text-purple-500 mt-4 font-medium">
+                      <div className="flex items-center justify-center gap-2 text-sm text-black mt-4 font-medium">
                         <RotateCw className="h-4 w-4" />
                         <span>Tap to flip</span>
                       </div>
@@ -1244,23 +1245,24 @@ export default function ExamReviewPage() {
 
                   {/* Back - Answer */}
                   <div
-                    className={`absolute inset-0 backface-hidden rounded-2xl border-2 border-purple-300 bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 shadow-lg p-8 ${
+                    className={`absolute inset-0 backface-hidden rounded-2xl border-2 shadow-lg p-8 ${
                       isFlipped ? 'opacity-100' : 'opacity-0'
                     }`}
                     style={{
+                      backgroundColor: '#b8e0d2',
                       backfaceVisibility: 'hidden',
                       WebkitBackfaceVisibility: 'hidden',
                       transform: 'rotateY(180deg)',
                       minHeight: '400px',
-                      borderColor: swipeStyle.borderColor,
+                      borderColor: swipeStyle.borderColor || '#b8e0d2',
                       borderWidth: `${getBorderWidth()}px`,
                       transition: 'border-color 0.1s',
                     }}
                   >
                     <div className="flex flex-col h-full">
-                      <div className="text-sm text-purple-600 mb-4 font-medium">Answer</div>
+                      <div className="text-sm text-black mb-4 font-medium">Answer</div>
                       <div className="flex-1 flex items-center justify-center">
-                        <p className="text-xl text-gray-800 text-center leading-relaxed font-medium">
+                        <p className="text-xl text-black text-center leading-relaxed font-medium">
                           {(currentItem.content as Flashcard).answer}
                         </p>
                       </div>

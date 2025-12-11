@@ -307,8 +307,8 @@ export default function QuizPage() {
         <p className="text-gray-400 text-center">{generationMessage}</p>
         <div className="w-64 h-1 bg-gray-700 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-blue-400 to-purple-400 transition-all"
-            style={{ width: `${generationProgress}%` }}
+            className="h-full transition-all"
+            style={{ backgroundColor: '#eac4d0', width: `${generationProgress}%` }}
           />
         </div>
       </div>
@@ -388,10 +388,10 @@ export default function QuizPage() {
       </div>
 
       {/* Question Card */}
-      <div className="rounded-2xl border-2 border-blue-300 bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 shadow-lg p-8 min-h-[300px] flex items-center justify-center">
+      <div className="rounded-2xl border-2 shadow-lg p-8 min-h-[300px] flex items-center justify-center" style={{ backgroundColor: '#eac4d0', borderColor: '#eac4d0' }}>
         <div className="text-center">
-          <div className="text-sm text-purple-600 mb-4 font-medium">Question {currentIndex + 1}</div>
-          <h2 className="text-xl text-gray-800 font-semibold leading-relaxed">
+          <div className="text-sm mb-4 font-medium text-black">Question {currentIndex + 1}</div>
+          <h2 className="text-xl text-black font-semibold leading-relaxed">
             {currentQuestion.question}
           </h2>
         </div>

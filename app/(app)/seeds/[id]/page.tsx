@@ -243,14 +243,15 @@ export default function SeedDetailPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <button
               onClick={() => router.push(`/seeds/${seed.id}/flashcards`)}
-              className="flex items-center gap-4 p-6 rounded-lg border-2 border-purple-300 bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 hover:from-purple-200 hover:via-pink-200 hover:to-blue-200 transition-colors shadow-lg group"
+              className="flex items-center gap-4 p-6 rounded-lg border-2 transition-colors shadow-lg group"
+              style={{ backgroundColor: '#b8e0d2', borderColor: '#b8e0d2' }}
             >
-              <div className="p-3 rounded-lg bg-purple-400 group-hover:bg-purple-500 transition-colors">
+              <div className="p-3 rounded-lg transition-colors" style={{ backgroundColor: '#2d6a56' }}>
                 <Brain className="h-6 w-6 text-white" />
               </div>
               <div className="flex-1 text-left">
-                <h3 className="font-semibold text-gray-800 mb-1">Flashcards</h3>
-                <p className="text-sm text-gray-600">
+                <h3 className="font-semibold text-black mb-1">Flashcards</h3>
+                <p className="text-sm text-black">
                   Practice with spaced repetition
                 </p>
               </div>
@@ -258,14 +259,15 @@ export default function SeedDetailPage() {
 
             <button
               onClick={() => router.push(`/seeds/${seed.id}/quiz`)}
-              className="flex items-center gap-4 p-6 rounded-lg border-2 border-blue-300 bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 hover:from-blue-200 hover:via-purple-200 hover:to-pink-200 transition-colors shadow-lg group"
+              className="flex items-center gap-4 p-6 rounded-lg border-2 transition-colors shadow-lg group"
+              style={{ backgroundColor: '#eac4d0', borderColor: '#eac4d0' }}
             >
-              <div className="p-3 rounded-lg bg-blue-400 group-hover:bg-blue-500 transition-colors">
+              <div className="p-3 rounded-lg transition-colors" style={{ backgroundColor: '#c68399' }}>
                 <Trophy className="h-6 w-6 text-white" />
               </div>
               <div className="flex-1 text-left">
-                <h3 className="font-semibold text-gray-800 mb-1">Quiz</h3>
-                <p className="text-sm text-gray-600">
+                <h3 className="font-semibold text-black mb-1">Quiz</h3>
+                <p className="text-sm text-black">
                   Test your knowledge
                 </p>
               </div>

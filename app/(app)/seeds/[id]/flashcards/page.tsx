@@ -246,8 +246,8 @@ export default function FlashcardsPracticePage() {
         <p className="text-gray-400 text-center">{generationMessage}</p>
         <div className="w-64 h-1 bg-gray-700 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-purple-400 to-pink-400 transition-all"
-            style={{ width: `${generationProgress * 100}%` }}
+            className="h-full transition-all"
+            style={{ backgroundColor: '#b8e0d2', width: `${generationProgress * 100}%` }}
           />
         </div>
       </div>
@@ -285,27 +285,30 @@ export default function FlashcardsPracticePage() {
         style={{ perspective: '1000px' }}
       >
         <div
-          className={`relative h-80 rounded-lg border-2 border-purple-300 bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 p-6 flex items-center justify-center transition-transform duration-500 shadow-lg ${
+          className={`relative h-80 rounded-lg border-2 p-6 flex items-center justify-center transition-transform duration-500 shadow-lg ${
             currentCard.isFlipped ? 'scale-95' : ''
           }`}
           style={{
+            backgroundColor: '#b8e0d2',
+            borderColor: '#b8e0d2',
             transform: currentCard.isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
             transformStyle: 'preserve-3d',
           }}
         >
-          <div 
-            className="text-center absolute inset-0 flex flex-col items-center justify-center p-6 bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 rounded-lg"
+          <div
+            className="text-center absolute inset-0 flex flex-col items-center justify-center p-6 rounded-lg"
             style={{
+              backgroundColor: '#b8e0d2',
               transform: currentCard.isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
             }}
           >
-            <p className="text-xs text-purple-600 mb-2 font-medium">
+            <p className="text-xs mb-2 font-medium text-black">
               {currentCard.isFlipped ? 'Answer' : 'Question'}
             </p>
-            <p className="text-xl text-gray-800 leading-relaxed font-medium">
+            <p className="text-xl text-black leading-relaxed font-medium">
               {currentCard.isFlipped ? currentCard.answer : currentCard.question}
             </p>
-            <p className="text-xs text-purple-500 mt-4">Click to flip</p>
+            <p className="text-xs mt-4 text-black">Click to flip</p>
           </div>
         </div>
       </div>
@@ -314,7 +317,8 @@ export default function FlashcardsPracticePage() {
       <div className="flex gap-2 justify-center">
         <Button
           onClick={nextCard}
-          className="bg-gradient-to-r from-purple-400 to-pink-400 hover:from-purple-500 hover:to-pink-500 text-white"
+          className="text-black"
+          style={{ backgroundColor: '#b8e0d2' }}
         >
           Next Card
         </Button>
@@ -323,8 +327,9 @@ export default function FlashcardsPracticePage() {
       {/* Progress */}
       <div className="w-full h-1 bg-gray-700 rounded-full overflow-hidden">
         <div
-          className="h-full bg-gradient-to-r from-purple-400 to-pink-400 transition-all"
+          className="h-full transition-all"
           style={{
+            backgroundColor: '#b8e0d2',
             width: `${((sessionStats.reviewed + 1) / sessionStats.total) * 100}%`,
           }}
         />

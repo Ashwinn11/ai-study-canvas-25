@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Profile - Masterly',
+  title: 'Profile - Masterly AI',
   description: 'View your profile, statistics, achievements, and manage your preferences',
 };
 

@@ -9,8 +9,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 
 export const metadata: Metadata = {
-  title: 'Sign In - Masterly',
-  description: 'Sign in to your Masterly account',
+  title: 'Sign In - Masterly AI',
+  description: 'Sign in to your Masterly AI account',
 };
 
 export default function LoginPage() {
@@ -72,7 +72,7 @@ export default function LoginPage() {
               Study less. <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Learn more.</span>
             </h1>
             <p className="text-lg text-muted-foreground max-w-md mx-auto leading-relaxed">
-              Say goodbye to burnout. Masterly turns your overwhelming notes into fun, interactive quizzes and flashcards that actually stick.
+              Say goodbye to burnout. Masterly AI turns your overwhelming notes into fun, interactive quizzes and flashcards that actually stick.
             </p>
           </div>
         </div>
@@ -95,7 +95,7 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <h2 className="text-4xl font-bold text-primary tracking-tight">Masterly</h2>
+              <h2 className="text-4xl font-bold text-primary tracking-tight">Masterly AI</h2>
               <p className="text-lg text-muted-foreground">Ready to ace your next exam?</p>
             </div>
           </div>

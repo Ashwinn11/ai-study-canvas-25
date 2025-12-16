@@ -1,10 +1,9 @@
 import { cn } from "@/lib/utils";
-import { Brain, FileText, LineChart, Mic, Upload } from "lucide-react";
+import { Brain, FileText, LineChart, Upload } from "lucide-react";
 import { LottieAnimation } from "@/components/ui/LottieAnimation";
 import booksAnimation from "@/assets/animations/Books-stack.json";
 import finishingStudiesAnimation from "@/assets/animations/finish_study.json";
 import quizAnimation from "@/assets/animations/quiz.json";
-import thinkingAnimation from "@/assets/animations/thinking.json";
 import examAnimation from "@/assets/animations/exam.json";
 
 const FeatureRow = ({ 
@@ -91,22 +90,15 @@ export const Features = () => {
           bgColor="bg-transparent"
         />
 
-        <FeatureRow
-          title="Learn like you're listening to a podcast."
-          description="Turn your notes into engaging AI podcasts with Alex & Jordan. Study on the go."
-          icon={Mic}
-          animationData={thinkingAnimation}
-          imageSide="left"
-          bgColor="bg-white/5"
-        />
+
 
         <FeatureRow
           title="Watch your grades soar."
           description="Daily exam practice & detailed report cards to track your success."
           icon={LineChart}
           animationData={examAnimation}
-          imageSide="right"
-          bgColor="bg-transparent"
+          imageSide="left"
+          bgColor="bg-white/5"
         />
       </div>
     </section>

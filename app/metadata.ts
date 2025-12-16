@@ -2,29 +2,69 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://masterlyapp.in'),
-  title: 'Masterly - Your AI Study Coach for Smarter Learning',
-  description: 'Transform your study materials into AI-powered flashcards, quizzes, and summaries. Master any exam with spaced repetition, adaptive learning, and intelligent study analytics.',
-  keywords: 'AI study coach, smart flashcards, spaced repetition, exam prep, upload study materials, adaptive quizzes, Feynman technique, study analytics',
-  authors: [{ name: 'Masterly' }],
+  title: 'Masterly AI: Flashcards & Quiz - AI Study App for Exam Prep',
+  description: 'Masterly AI is the #1 AI-powered study app. Create flashcards, quizzes & summaries from PDFs, notes, and lectures. Beat exams with spaced repetition. Free AI study coach for students.',
+  keywords: [
+    // Brand keywords
+    'Masterly AI',
+    'Masterly app',
+    'Masterly study app',
+    'masterlyapp',
+    // Core features
+    'AI flashcard maker',
+    'AI flashcards',
+    'AI quiz generator',
+    'AI study app',
+    'AI study coach',
+    // Use cases
+    'exam preparation app',
+    'study app for students',
+    'PDF to flashcards',
+    'notes to quiz',
+    'lecture to flashcards',
+    // Learning techniques
+    'spaced repetition app',
+    'Feynman technique app',
+    'active recall app',
+    // Competitor alternatives
+    'Anki alternative',
+    'Quizlet alternative',
+    'Brainscape alternative',
+    'AI Anki',
+    // General study terms
+    'best study app',
+    'free flashcard app',
+    'smart flashcards',
+    'exam prep app',
+    'study helper AI',
+  ].join(', '),
+  authors: [{ name: 'Masterly AI' }],
+  applicationName: 'Masterly AI',
+  creator: 'Masterly AI',
+  publisher: 'Masterly AI',
+  category: 'Education',
   openGraph: {
-    title: 'Masterly - Your AI Study Coach',
-    description: 'Transform your study materials into AI-powered flashcards, quizzes, and summaries. Master any exam with spaced repetition and adaptive learning.',
+    title: 'Masterly AI: Flashcards & Quiz - #1 AI Study App',
+    description: 'Create flashcards, quizzes & study guides from any material. AI-powered exam prep with spaced repetition. Join thousands of students acing their exams.',
     type: 'website',
+    siteName: 'Masterly AI',
     url: 'https://masterlyapp.in',
+    locale: 'en_US',
     images: [
       {
-        url: '/hero-study-ai.jpg',
+        url: '/favicon.png',
         width: 1200,
         height: 630,
-        alt: 'Masterly AI Study Coach',
+        alt: 'Masterly AI - AI Study App for Flashcards and Quizzes',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Masterly - Your AI Study Coach',
-    description: 'Transform your study materials into AI-powered flashcards, quizzes, and summaries.',
-    images: ['/hero-study-ai.jpg'],
+    title: 'Masterly AI: Flashcards & Quiz - AI Study App',
+    description: 'Create flashcards & quizzes with AI. The smartest way to prepare for exams. Free for students.',
+    images: ['/favicon.png'],
+    creator: '@masterlyai',
   },
   robots: {
     index: true,
@@ -37,7 +77,7 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
-  verification: {
-    google: 'your-google-verification-code',
+  alternates: {
+    canonical: 'https://masterlyapp.in',
   },
 }

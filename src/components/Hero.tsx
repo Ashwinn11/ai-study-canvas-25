@@ -23,7 +23,7 @@ export const Hero = () => {
             </h1>
 
             <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed text-balance animate-fade-in-up delay-100">
-              Ditch the boring textbooks. Masterly turns your notes into bite-sized lessons, quizzes, and flashcards instantly.
+              Ditch the boring textbooks. Masterly AI turns your notes into bite-sized lessons, quizzes, and flashcards instantly.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center gap-4 animate-fade-in-up delay-200 justify-center lg:justify-start">

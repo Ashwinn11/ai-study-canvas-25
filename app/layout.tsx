@@ -4,6 +4,7 @@ import { Providers } from './providers'
 import { metadata } from './metadata'
 import { GlobalConfirmationDialog } from '@/components/GlobalConfirmationDialog'
 import { OnboardingRedirect } from '@/components/OnboardingRedirect'
+import { JsonLd } from '@/components/seo/JsonLd'
 
 export { metadata }
 
@@ -23,6 +24,9 @@ export default function RootLayout({
         <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png" />
         <link rel="icon" type="image/png" sizes="192x192" href="/favicon.png" />
         <link rel="shortcut icon" href="/favicon.png" />
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#8b5cf6" />
+        <JsonLd />
       </head>
       <body className="font-sans">
         <Providers>

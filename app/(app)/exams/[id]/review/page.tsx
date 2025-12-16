@@ -684,7 +684,9 @@ export default function ExamReviewPage() {
       );
     }
 
-    // Trigger exit animation
+    // Trigger exit animation - reset drag state immediately so transition is smooth
+    setDragOffset({ x: 0, y: 0 });
+    setSwipeDirection(null);
     setExitAnimation(direction);
 
     // Move to next after animation

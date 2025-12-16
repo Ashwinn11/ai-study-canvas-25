@@ -1,0 +1,29 @@
+{
+    "name": "Masterly AI: Flashcards & Quiz",
+    "short_name": "Masterly AI",
+    "description": "Transform your study materials into AI-powered flashcards, quizzes, and summaries. Master any exam with spaced repetition and adaptive learning.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0a0a0a",
+    "theme_color": "#8b5cf6",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/favicon.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/favicon.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": [
+        "education",
+        "productivity"
+    ],
+    "lang": "en"
+}

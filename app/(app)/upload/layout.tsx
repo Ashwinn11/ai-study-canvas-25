@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Upload Study Material - Masterly',
+  title: 'Upload Study Material - Masterly AI',
   description: 'Upload PDFs, images, audio, video, or paste text to transform into AI-powered flashcards and quizzes',
 };
 

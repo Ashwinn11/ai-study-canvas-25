@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 const faqs = [
   {
     question: "What types of files can I upload?",
-    answer: "Masterly supports documents (PDF, Word, PowerPoint), images (JPG, PNG), audio files (MP3, M4A), and youtube links. You can upload materials in any language, and our AI will process them into study-ready content.",
+    answer: "Masterly AI supports documents (PDF, Word, PowerPoint), images (JPG, PNG), audio files (MP3, M4A), and youtube links. You can upload materials in any language, and our AI will process them into study-ready content.",
   },
   {
     question: "How accurate are the AI-generated study materials?",
@@ -24,7 +24,7 @@ const faqs = [
     answer: "Absolutely. All your uploads and study data are encrypted end-to-end. We never share your personal information or study materials with third parties.",
   },
   {
-    question: "Can I use Masterly for multiple exams at once?",
+    question: "Can I use Masterly AI for multiple exams at once?",
     answer: "Yes! Exam Workspaces let you organize study materials by exam type (SAT, ACT, AP, etc.). Each workspace has its own progress tracking, dedicated exam report cards, and countdown timers.",
   },
 ];

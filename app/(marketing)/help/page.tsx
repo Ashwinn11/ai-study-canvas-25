@@ -26,7 +26,7 @@ export default function HelpPage() {
             Back
           </button>
           <h1 className="text-4xl font-bold mb-4 text-gray-800">Help & Support</h1>
-          <p className="text-sm text-gray-600 mb-8">Get answers to common questions about Masterly</p>
+          <p className="text-sm text-gray-600 mb-8">Get answers to common questions about Masterly AI</p>
 
           <div className="prose prose-lg max-w-none text-gray-400 space-y-8">
 
@@ -37,7 +37,7 @@ export default function HelpPage() {
                 <div>
                   <h3 className="text-lg font-medium text-gray-800">How do I sign in?</h3>
                   <p className="text-gray-600 mt-2">
-                    Masterly uses OAuth for secure authentication. You can sign in using:
+                    Masterly AI uses OAuth for secure authentication. You can sign in using:
                   </p>
                   <ul className="list-disc pl-6 mt-2 text-gray-800/70">
                     <li><strong>Sign in with Apple</strong> - Use your Apple ID (recommended)</li>
@@ -51,7 +51,7 @@ export default function HelpPage() {
                 <div>
                   <h3 className="text-lg font-medium text-gray-800">What study materials can I upload?</h3>
                   <p className="text-gray-800/70 mt-2">
-                    Masterly supports a wide variety of formats:
+                    Masterly AI supports a wide variety of formats:
                   </p>
                   <ul className="list-disc pl-6 mt-2 text-gray-800/70">
                     <li><strong>Documents:</strong> PDFs, Word docs, PowerPoint slides</li>
@@ -65,7 +65,7 @@ export default function HelpPage() {
                 <div>
                   <h3 className="text-lg font-medium text-gray-800">How does the AI work?</h3>
                   <p className="text-gray-800/70 mt-2">
-                    Masterly uses advanced AI (powered by OpenAI) to:
+                    Masterly AI uses advanced AI (powered by OpenAI) to:
                   </p>
                   <ul className="list-disc pl-6 mt-2 text-gray-800/70">
                     <li>Extract key concepts from your materials</li>
@@ -85,7 +85,7 @@ export default function HelpPage() {
                 <div>
                   <h3 className="text-lg font-medium text-gray-800">What are the subscription plans?</h3>
                   <p className="text-gray-800/70 mt-2">
-                    Masterly offers flexible subscription options:
+                    Masterly AI offers flexible subscription options:
                   </p>
                   <ul className="list-disc pl-6 mt-2 text-gray-800/70">
                     <li><strong>Weekly Study Pass:</strong> $7.99/week - Perfect for quick exam prep</li>
@@ -101,7 +101,7 @@ export default function HelpPage() {
                     You can cancel anytime through multiple methods:
                   </p>
                   <ul className="list-disc pl-6 mt-2 text-gray-800/70">
-                    <li>In the Masterly app: Go to <strong>Profile → Subscription → Manage in App Store</strong></li>
+                    <li>In the Masterly AI app: Go to <strong>Profile → Subscription → Manage in App Store</strong></li>
                     <li>In iOS Settings: Visit <strong><a href="https://apps.apple.com/account/subscriptions" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">Apple's Manage Subscriptions page</a></strong></li>
                   </ul>
                   <p className="text-gray-800/70 mt-2">
@@ -119,7 +119,7 @@ export default function HelpPage() {
             </div>
 
             <div className="border-b border-border pb-6">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-3">Using Masterly</h2>
+              <h2 className="text-2xl font-semibold text-gray-800 mb-3">Using Masterly AI</h2>
 
               <div className="space-y-4 ml-4">
                 <div>
@@ -128,7 +128,7 @@ export default function HelpPage() {
                     1. Tap the <strong>+ button</strong> on the Home screen<br/>
                     2. Choose your upload method (document, image, audio, video, or text)<br/>
                     3. Give your material a title<br/>
-                    4. Masterly's AI will automatically generate flashcards and quizzes<br/>
+                    4. Masterly AI will automatically generate flashcards and quizzes<br/>
                     5. Review and customize the generated content
                   </p>
                 </div>
@@ -145,7 +145,7 @@ export default function HelpPage() {
                     <li>Proven to improve long-term memory by 50%+</li>
                   </ul>
                   <p className="text-gray-800/70 mt-2">
-                    Masterly automatically schedules your reviews using a scientifically-proven algorithm.
+                    Masterly AI automatically schedules your reviews using a scientifically-proven algorithm.
                   </p>
                 </div>
 

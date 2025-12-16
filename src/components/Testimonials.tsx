@@ -41,7 +41,7 @@ export const Testimonials = () => {
             Loved by Students Everywhere
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Join thousands of students who are crushing their exams with Masterly.
+            Join thousands of students who are crushing their exams with Masterly AI.
           </p>
         </div>
 

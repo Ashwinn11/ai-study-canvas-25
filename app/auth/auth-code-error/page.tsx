@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { AlertCircle } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Authentication Error - Masterly',
+  title: 'Authentication Error - Masterly AI',
   description: 'Authentication error',
 };
 

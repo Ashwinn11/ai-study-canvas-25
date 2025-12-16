@@ -16,7 +16,7 @@ export const Footer = () => {
         <div className="grid md:grid-cols-4 gap-12 mb-12">
           {/* Brand */}
           <div className="md:col-span-2 space-y-6">
-            <h3 className="text-3xl font-black tracking-tight">Masterly</h3>
+            <h3 className="text-3xl font-black tracking-tight">Masterly AI</h3>
             <p className="text-white/90 max-w-sm text-lg font-medium leading-relaxed">
               The free, fun, and effective way to learn anything.
             </p>
@@ -74,7 +74,7 @@ export const Footer = () => {
 
         <div className="border-t border-white/20 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm font-medium text-white/60">
-            <p>© 2025 Masterly. All rights reserved.</p>
+            <p>© 2025 Masterly AI. All rights reserved.</p>
             <p className="text-center md:text-right flex items-center gap-1">
               Made with <Heart className="w-4 h-4 text-red-500 fill-current" /> for students everywhere.
             </p>

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Dashboard - Masterly',
+  title: 'Dashboard - Masterly AI',
   description: 'Your personal study dashboard with progress tracking, exam overview, and daily goals',
 };
 

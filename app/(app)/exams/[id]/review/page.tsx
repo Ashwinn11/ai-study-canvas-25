@@ -684,13 +684,13 @@ export default function ExamReviewPage() {
       );
     }
 
-    // Trigger exit animation - reset drag state immediately so transition is smooth
-    setDragOffset({ x: 0, y: 0 });
+    // Trigger exit animation - keep dragOffset as-is, CSS will handle exit
     setSwipeDirection(null);
     setExitAnimation(direction);
 
-    // Move to next after animation
+    // Move to next after animation - reset drag state here
     setTimeout(() => {
+      setDragOffset({ x: 0, y: 0 });
       setExitAnimation(null);
       moveToNext();
     }, 300);
@@ -1154,31 +1154,30 @@ export default function ExamReviewPage() {
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
-              className={`relative w-full max-w-2xl select-none ${
-                exitAnimation
-                  ? 'transition-all duration-300'
-                  : isDragging
-                  ? ''
-                  : 'transition-all duration-200'
-              } ${
-                exitAnimation === 'left'
-                  ? '-translate-x-[120%] opacity-0 -rotate-12'
-                  : exitAnimation === 'right'
-                  ? 'translate-x-[120%] opacity-0 rotate-12'
-                  : exitAnimation === 'up'
-                  ? '-translate-y-[120%] opacity-0'
-                  : ''
-              }`}
-              style={
-                !exitAnimation && (isDragging || dragOffset.x !== 0 || dragOffset.y !== 0)
-                  ? {
-                      transform: `translate(${dragOffset.x}px, ${dragOffset.y}px) rotate(${
-                        (dragOffset.x / 20) * (isDragging ? 1 : 0)
-                      }deg)`,
-                      transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                    }
-                  : undefined
-              }
+              className="relative w-full max-w-2xl select-none"
+              style={(() => {
+                // Exit animation - slide off screen from current position
+                if (exitAnimation) {
+                  const exitTransform = exitAnimation === 'left' 
+                    ? 'translateX(-120vw) rotate(-15deg)' 
+                    : exitAnimation === 'right'
+                    ? 'translateX(120vw) rotate(15deg)'
+                    : 'translateY(-120vh)';
+                  return {
+                    transform: exitTransform,
+                    opacity: 0,
+                    transition: 'transform 0.3s ease-out, opacity 0.25s ease-out',
+                  };
+                }
+                // Dragging - follow finger/mouse
+                if (isDragging || dragOffset.x !== 0 || dragOffset.y !== 0) {
+                  return {
+                    transform: `translate(${dragOffset.x}px, ${dragOffset.y}px) rotate(${(dragOffset.x / 20) * (isDragging ? 1 : 0)}deg)`,
+                    transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                  };
+                }
+                return undefined;
+              })()}
             >
               {/* Card container with flip animation */}
               <div

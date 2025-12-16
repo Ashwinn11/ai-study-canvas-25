@@ -19,7 +19,7 @@ export const Hero = () => {
           <div className="flex-1 text-center lg:text-left space-y-8 max-w-2xl mx-auto lg:mx-0">
             
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-foreground text-balance animate-fade-in-up">
-              The free, fun, and effective way to <span className="text-duolingo-green">master your studies.</span>
+              <span className="text-primary">Masterly AI</span> — The free, fun, and effective way to <span className="text-duolingo-green">master your studies.</span>
             </h1>
 
             <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed text-balance animate-fade-in-up delay-100">

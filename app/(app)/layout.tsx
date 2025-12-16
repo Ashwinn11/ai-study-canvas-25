@@ -58,7 +58,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {/* Logo */}
           <div className="flex h-16 shrink-0 items-center">
             <div className="text-2xl font-bold text-primary">
-              Masterly
+              Masterly AI
             </div>
           </div>
 
@@ -127,7 +127,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 {/* Logo */}
                 <div className="flex h-16 shrink-0 items-center">
                   <div className="text-2xl font-bold text-primary">
-                    Masterly
+                    Masterly AI
                   </div>
                 </div>
 
@@ -178,7 +178,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </Sheet>
 
           <div className="flex-1 text-sm font-semibold leading-6">
-            Masterly
+            Masterly AI
           </div>
         </div>
       </div>

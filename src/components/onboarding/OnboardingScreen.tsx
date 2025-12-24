@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useOnboarding } from '@/hooks/useOnboarding';
-import { Lightbulb, Zap, Clock, TrendingUp, ChevronLeft, ChevronRight, ArrowRight, Brain, Hourglass, AlertCircle, HelpCircle } from 'lucide-react';
+import { Sparkles, ChevronLeft, ArrowRight, Brain, Hourglass, AlertCircle, HelpCircle, Rocket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import OnboardingFlashcardDemo from './OnboardingFlashcardDemo';
+import OnboardingCelebration from './OnboardingCelebration';
 
 const PAIN_POINTS = [
   {
@@ -27,29 +29,6 @@ const PAIN_POINTS = [
     value: 'start',
     label: "I don't know where to start",
     icon: HelpCircle,
-  },
-];
-
-const BENEFITS = [
-  {
-    icon: Lightbulb,
-    title: '90% Retention Rate',
-    desc: 'Spaced repetition ensures you remember what matters',
-  },
-  {
-    icon: Zap,
-    title: '10 Minutes Daily',
-    desc: 'Short, focused sessions that actually stick',
-  },
-  {
-    icon: Clock,
-    title: 'Smart Scheduling',
-    desc: 'We remind you exactly when to review',
-  },
-  {
-    icon: TrendingUp,
-    title: 'Track Your Progress',
-    desc: 'See your memory improve day by day',
   },
 ];
 
@@ -84,10 +63,11 @@ export default function OnboardingScreen({ userId }: OnboardingScreenProps) {
 
   // Validation
   const canProceedStep1 = !!painPoint;
+  const canProceedStep2 = true; // Demo step, always can proceed
   const canProceedStep3 = !!currentGrade && dailyCardsGoal > 0;
 
   const handleNext = () => {
-    if (currentStep < 3) {
+    if (currentStep < 4) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -104,6 +84,7 @@ export default function OnboardingScreen({ userId }: OnboardingScreenProps) {
 
     try {
       const success = await completeOnboarding({
+        painPoint: painPoint as 'forget' | 'time' | 'overwhelm' | 'start',
         currentGrade: currentGrade || 'B',
         dailyCardsGoal: dailyCardsGoal,
       });
@@ -142,7 +123,7 @@ export default function OnboardingScreen({ userId }: OnboardingScreenProps) {
 
         {/* Progress Bar */}
         <div className="flex gap-2 flex-1 mx-4">
-          {[1, 2, 3].map((step) => (
+          {[1, 2, 3, 4].map((step) => (
             <div
               key={step}
               className={cn(
@@ -159,18 +140,29 @@ export default function OnboardingScreen({ userId }: OnboardingScreenProps) {
       {/* Content Area */}
       <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 py-8 overflow-y-auto">
         <div className="w-full max-w-2xl mx-auto">
-          {/* Step 1: Pain Points */}
+          {/* Step 1: Welcome & Pain Points */}
           {currentStep === 1 && (
             <div className="space-y-8 animate-in fade-in duration-300 relative z-10">
               <div>
-                <h2 className="text-sm font-semibold text-muted-foreground mb-1">
-                  Let's be real.
-                </h2>
-                <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-4">
-                  Studying is hard.
-                </h1>
-                <p className="text-lg text-muted-foreground">
-                  Tell us what's holding you back. We'll fix it.
+                <div className="flex items-center gap-2 mb-2">
+                  <h1 className="text-4xl sm:text-5xl font-bold text-foreground">
+                    Welcome to Masterly!
+                  </h1>
+                  <Sparkles className="w-8 h-8 text-primary" />
+                </div>
+                <p className="text-lg text-muted-foreground mb-4">
+                  You just made a smart choice for your academic success.
+                </p>
+                <div className="inline-flex items-center gap-2 bg-primary/20 px-4 py-2 rounded-lg mb-6">
+                  <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center">
+                    <span className="text-xs text-white">✓</span>
+                  </div>
+                  <span className="text-sm font-semibold text-foreground">
+                    AI study tools unlocked
+                  </span>
+                </div>
+                <p className="text-lg text-muted-foreground font-semibold">
+                  What's your biggest challenge?
                 </p>
               </div>
 
@@ -200,57 +192,23 @@ export default function OnboardingScreen({ userId }: OnboardingScreenProps) {
             </div>
           )}
 
-          {/* Step 2: Benefits */}
+          {/* Step 2: Interactive Flashcard Demo */}
           {currentStep === 2 && (
-            <div className="space-y-8 animate-in fade-in duration-300 relative z-10">
-              <div>
-                <h2 className="text-sm font-semibold text-muted-foreground mb-1">
-                  Here's How
-                </h2>
-                <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-4">
-                  You'll Remember Everything.
-                </h1>
-                <p className="text-lg text-muted-foreground">
-                  Ready to make it happen? Let's set your goals.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                {BENEFITS.map((item, index) => {
-                  const Icon = item.icon;
-                  return (
-                    <div
-                      key={index}
-                      className="flex items-start gap-4 p-4 rounded-xl bg-white/5 border border-white/10"
-                    >
-                      <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center mt-1">
-                        <Icon className="w-6 h-6 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-foreground mb-1">
-                          {item.title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">{item.desc}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+            <OnboardingFlashcardDemo painPoint={painPoint as 'forget' | 'time' | 'overwhelm' | 'start'} />
           )}
 
           {/* Step 3: Commitment */}
           {currentStep === 3 && (
             <div className="space-y-8 animate-in fade-in duration-300 relative z-10">
               <div>
-                <h2 className="text-sm font-semibold text-muted-foreground mb-1">
-                  Let's Make
-                </h2>
-                <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-4">
-                  A Deal.
-                </h1>
+                <div className="flex items-center gap-2 mb-2">
+                  <h1 className="text-4xl sm:text-5xl font-bold text-foreground">
+                    Let's Get You to A+!
+                  </h1>
+                  <Rocket className="w-8 h-8 text-primary" />
+                </div>
                 <p className="text-lg text-muted-foreground">
-                  You commit to the goal. We handle the rest.
+                  Set your current grade and daily commitment.
                 </p>
               </div>
 
@@ -301,23 +259,34 @@ export default function OnboardingScreen({ userId }: OnboardingScreenProps) {
               </div>
             </div>
           )}
+
+          {/* Step 4: Celebration */}
+          {currentStep === 4 && (
+            <OnboardingCelebration
+              currentGrade={currentGrade}
+              dailyCardsGoal={dailyCardsGoal}
+              painPoint={painPoint as 'forget' | 'time' | 'overwhelm' | 'start'}
+              onCreateDeck={handleComplete}
+            />
+          )}
         </div>
       </div>
 
       {/* Footer Actions */}
-      <div className="px-4 sm:px-6 py-6 sm:py-8 bg-white/5 backdrop-blur-sm border-t border-white/10 relative z-10">
-        <div className="w-full max-w-2xl mx-auto">
-          {currentStep < 3 ? (
+      {currentStep < 4 && (
+        <div className="px-4 sm:px-6 py-6 sm:py-8 bg-white/5 backdrop-blur-sm border-t border-white/10 relative z-10">
+          <div className="w-full max-w-2xl mx-auto">
             <div className="flex justify-end">
               <button
                 onClick={handleNext}
                 disabled={
                   (currentStep === 1 && !canProceedStep1) ||
-                  (currentStep === 2 && false)
+                  (currentStep === 3 && !canProceedStep3)
                 }
                 className={cn(
                   'w-16 h-16 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg',
-                  (currentStep === 1 && !canProceedStep1)
+                  ((currentStep === 1 && !canProceedStep1) ||
+                   (currentStep === 3 && !canProceedStep3))
                     ? 'bg-white/10 text-white/40 cursor-not-allowed'
                     : 'bg-primary text-white hover:shadow-xl hover:scale-105'
                 )}
@@ -325,17 +294,9 @@ export default function OnboardingScreen({ userId }: OnboardingScreenProps) {
                 <ArrowRight className="w-7 h-7" />
               </button>
             </div>
-          ) : (
-            <Button
-              onClick={handleComplete}
-              disabled={!canProceedStep3 || completing}
-              className="w-full py-6 sm:py-8 text-lg font-semibold"
-            >
-              {completing ? 'Setting up...' : 'Start My Transformation'}
-            </Button>
-          )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

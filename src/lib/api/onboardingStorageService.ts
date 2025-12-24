@@ -3,6 +3,7 @@ import { getSupabaseClient } from '@/lib/supabase/client';
 export interface OnboardingData {
   completed: boolean;
   completedAt?: string;
+  painPoint?: 'forget' | 'time' | 'overwhelm' | 'start';
   currentGrade?: string;
   targetGrade?: string;
   targetExamDate?: string;
@@ -34,6 +35,7 @@ export const onboardingStorageService = {
             return {
               completed: (parsed.completed as boolean) || false,
               completedAt: (parsed.completedAt as string | undefined),
+              painPoint: (parsed.painPoint as 'forget' | 'time' | 'overwhelm' | 'start' | undefined),
               currentGrade: (parsed.currentGrade as string | undefined),
               targetGrade: (parsed.targetGrade as string | undefined),
               targetExamDate: (parsed.targetExamDate as string | undefined),
@@ -51,7 +53,7 @@ export const onboardingStorageService = {
       const { data, error } = await supabase
         .from('profiles')
         .select(
-          'onboarding_completed, onboarding_completed_at, current_grade, target_grade, target_exam_date, daily_cards_goal, focus_area'
+          'onboarding_completed, onboarding_completed_at, pain_point, current_grade, target_grade, target_exam_date, daily_cards_goal, focus_area'
         )
         .eq('id', userId)
         .maybeSingle();
@@ -73,6 +75,7 @@ export const onboardingStorageService = {
       const dbData: OnboardingData = {
         completed: (dataRecord.onboarding_completed as boolean) || false,
         completedAt: (dataRecord.onboarding_completed_at as string | undefined),
+        painPoint: (dataRecord.pain_point as 'forget' | 'time' | 'overwhelm' | 'start' | undefined),
         currentGrade: (dataRecord.current_grade as string | undefined),
         targetGrade: (dataRecord.target_grade as string | undefined),
         targetExamDate: (dataRecord.target_exam_date as string | undefined),
@@ -118,6 +121,7 @@ export const onboardingStorageService = {
         id: userId,
         onboarding_completed: data.completed,
         onboarding_completed_at: completedAt,
+        pain_point: data.painPoint ?? null,
         current_grade: data.currentGrade ?? null,
         target_grade: data.targetGrade ?? null,
         target_exam_date: data.targetExamDate ?? null,

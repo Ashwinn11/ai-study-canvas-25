@@ -61,7 +61,7 @@ export const FAQ = () => {
 
         {/* Secondary CTA */}
         <div className="bg-primary rounded-[2.5rem] p-8 md:p-12 text-center text-white shadow-xl relative overflow-hidden group">
-          <div className="absolute inset-0 bg-[url('/brand-assets/masterly.png')] opacity-10 mix-blend-overlay"></div>
+          <div className="absolute inset-0 bg-[url('/icon.png')] opacity-10 mix-blend-overlay"></div>
           <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/20 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
           
           <div className="relative z-10">

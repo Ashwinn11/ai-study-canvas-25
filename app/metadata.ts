@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     locale: 'en_US',
     images: [
       {
-        url: '/icon-512x512.png',
+        url: '/icon.png',
         width: 1200,
         height: 630,
         alt: 'Masterly AI - AI Study App for Flashcards and Quizzes',
@@ -63,7 +63,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Masterly AI: Flashcards & Quiz - AI Study App',
     description: 'Create flashcards & quizzes with AI. The smartest way to prepare for exams. Free for students.',
-    images: ['/icon-512x512.png'],
+    images: ['/icon.png'],
     creator: '@masterlyai',
   },
   robots: {

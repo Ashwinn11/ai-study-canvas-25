@@ -87,11 +87,11 @@ export default function LoginPage() {
           {/* Branding Text Above Card */}
           <div className="text-center space-y-4 animate-fade-in-up flex flex-col items-center mb-8">
             <div className="relative w-32 h-32 mb-2">
-              <Image 
-                src="/brand-assets/icon.png" 
-                alt="Masterly Logo" 
-                fill 
-                className="object-contain" 
+              <Image
+                src="/icon.png"
+                alt="Masterly Logo"
+                fill
+                className="object-contain"
               />
             </div>
             <div className="space-y-2">

@@ -14,7 +14,7 @@ import { Menu, User, LogOut, LayoutDashboard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
-const backgroundImage = "/brand-assets/background.png";
+const backgroundImage = "/background1.png";
 
 interface NavigationProps {
   className?: string;

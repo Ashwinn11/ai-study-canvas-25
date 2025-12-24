@@ -4,7 +4,7 @@ export function JsonLd() {
     "@type": "Organization",
     "name": "Masterly AI",
     "url": "https://masterlyapp.in",
-    "logo": "https://masterlyapp.in/favicon.png",
+    "logo": "https://masterlyapp.in/icon.png",
     "description": "AI-powered study coach for smarter learning",
     "sameAs": []
   };

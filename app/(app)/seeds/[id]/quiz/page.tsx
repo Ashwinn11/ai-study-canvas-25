@@ -277,7 +277,7 @@ export default function QuizPage() {
         </Button>
 
         <img
-          src="/brand-assets/icon.png"
+          src="/icon.png"
           alt="Masterly"
           className="h-20 w-20 animate-bounce"
         />
@@ -300,7 +300,7 @@ export default function QuizPage() {
         </Button>
 
         <img
-          src="/brand-assets/icon.png"
+          src="/icon.png"
           alt="Masterly"
           className="h-20 w-20 animate-bounce"
         />

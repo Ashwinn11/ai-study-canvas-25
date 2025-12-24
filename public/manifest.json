@@ -1,7 +1,7 @@
 {
-    "name": "Masterly AI: Flashcards & Quiz",
+    "name": "Masterly AI - Free AI Flashcard & Quiz Maker",
     "short_name": "Masterly AI",
-    "description": "Transform your study materials into AI-powered flashcards, quizzes, and summaries. Master any exam with spaced repetition and adaptive learning.",
+    "description": "Free AI study app. Create flashcards, quizzes & summaries from PDFs, notes & lectures. Features spaced repetition & AI study coach.",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#0a0a0a",

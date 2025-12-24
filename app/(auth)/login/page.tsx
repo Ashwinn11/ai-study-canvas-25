@@ -1,19 +1,29 @@
+'use client';
 
-import { Metadata } from 'next';
+import React from 'react';
 import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 import { LottieAnimation } from "@/components/ui/LottieAnimation";
 import girlStudyingAnimation from "@/assets/animations/Great_knowledge.json";
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Flame, Trophy, Star } from 'lucide-react';
+import { ArrowLeft, Flame, Trophy } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
-
-export const metadata: Metadata = {
-  title: 'Sign In - Masterly AI',
-  description: 'Sign in to your Masterly AI account',
-};
 
 export default function LoginPage() {
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+
+  React.useEffect(() => {
+    const video = videoRef.current;
+    if (video) {
+      const handleTimeUpdate = () => {
+        if (video.currentTime >= 2) {
+          video.currentTime = 0; // Restart from beginning
+        }
+      };
+      video.addEventListener('timeupdate', handleTimeUpdate);
+      return () => video.removeEventListener('timeupdate', handleTimeUpdate);
+    }
+  }, []);
+
   return (
     <div className="min-h-screen w-full flex bg-background relative overflow-hidden">
       {/* Global Ambient Background Effects */}
@@ -86,13 +96,17 @@ export default function LoginPage() {
         <div className="w-full max-w-md space-y-6">
           {/* Branding Text Above Card */}
           <div className="text-center space-y-4 animate-fade-in-up flex flex-col items-center mb-8">
-            <div className="relative w-32 h-32 mb-2">
-              <Image
-                src="/icon.png"
-                alt="Masterly Logo"
-                fill
-                className="object-contain"
-              />
+            <div className="relative w-48 h-48 mb-2 rounded-3xl overflow-hidden">
+              <video
+                ref={videoRef}
+                src="/icon-video.mp4"
+                autoPlay
+                muted
+                playsInline
+                className="w-full h-full object-contain"
+              >
+                Your browser does not support the video tag.
+              </video>
             </div>
             <div className="space-y-2">
               <h2 className="text-4xl font-bold text-primary tracking-tight">Masterly AI</h2>

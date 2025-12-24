@@ -1,16 +1,45 @@
+# Masterly AI robots.txt
+# https://masterlyapp.in
+
+# Google
 User-agent: Googlebot
 Allow: /
+Crawl-delay: 1
 
+# Bing
 User-agent: Bingbot
 Allow: /
+Crawl-delay: 1
 
+# Twitter/X
 User-agent: Twitterbot
 Allow: /
 
+# Facebook
 User-agent: facebookexternalhit
 Allow: /
 
-User-agent: *
+# LinkedIn
+User-agent: LinkedInBot
 Allow: /
 
+# All other bots
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /_next/
+Disallow: /monitoring
+
+# Landing Pages - Explicitly allow for SEO
+Allow: /ai-flashcard-maker
+Allow: /pdf-to-flashcards
+Allow: /anki-alternative
+Allow: /quizlet-alternative
+Allow: /spaced-repetition
+
+# Sitemap location
 Sitemap: https://masterlyapp.in/sitemap.xml
+
+# Host
+Host: https://masterlyapp.in
+

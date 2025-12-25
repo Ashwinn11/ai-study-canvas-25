@@ -10,14 +10,11 @@ import { BlobBackground } from '@/components/ui/BlobBackground';
 import { Footer } from '@/components/Footer';
 import {
   Sparkles,
-  FileText,
   Brain,
-  Zap,
+  BookOpen,
   Clock,
-  CheckCircle2,
   ArrowRight,
   Upload,
-  BookOpen,
   Repeat,
 } from 'lucide-react';
 
@@ -29,19 +26,19 @@ const breadcrumbs = [
 const faqs = [
   {
     question: 'How does the AI flashcard maker work?',
-    answer: 'Simply upload your study materials (PDFs, notes, or text), and our AI analyzes the content to extract key concepts. It then automatically generates flashcards with questions on one side and answers on the other, optimized for effective studying.',
+    answer: 'Upload your study materials (PDFs, images, audio, video, YouTube links, or text), and our AI automatically generates high-quality flashcards, summaries, and quizzes. Organize them into exams and study with spaced repetition that provides daily reports with grades.',
   },
   {
     question: 'Is the AI flashcard maker free?',
-    answer: 'Yes! Masterly AI offers a generous free plan that allows you to create AI-generated flashcards from your study materials. Premium plans offer additional features like unlimited uploads and advanced analytics.',
+    answer: 'Masterly AI offers 3 free uploads to try the platform. After that, subscribe to one of our three-tier plans for unlimited uploads and full access to all features including spaced repetition, exam organization, and daily progress reports.',
   },
   {
     question: 'What file formats are supported?',
-    answer: 'Our AI flashcard maker supports PDFs, images (photos of notes or textbooks), audio recordings, video lectures, and plain text. Just upload your content and let AI do the rest.',
+    answer: 'We support PDFs, images (photos of notes or textbooks), audio recordings, video files, YouTube links, and plain text. Upload any study material and get instant flashcards, summaries, and quizzes.',
   },
   {
-    question: 'How accurate are the AI-generated flashcards?',
-    answer: 'Our AI is trained on educational content and achieves high accuracy in identifying key concepts. You can always edit or customize the generated flashcards to match your study needs.',
+    question: 'How accurate are the AI-generated content?',
+    answer: 'Our AI generates high-quality flashcards, summaries, and quiz questions from your materials. You can review and edit all generated content. The platform is available on both iOS and Web with the same features.',
   },
 ];
 
@@ -55,22 +52,22 @@ const features = [
   {
     icon: Upload,
     title: 'Upload Any Format',
-    description: 'PDFs, images, audio, video, or text - we handle it all',
+    description: 'PDFs, images, audio, video, YouTube links, or text',
   },
   {
     icon: Brain,
     title: 'AI-Powered Generation',
-    description: 'Advanced AI extracts key concepts automatically',
+    description: 'Get flashcards, summaries, AND quizzes automatically',
+  },
+  {
+    icon: BookOpen,
+    title: 'Organize into Exams',
+    description: 'Group your materials into exams for structured studying',
   },
   {
     icon: Repeat,
     title: 'Spaced Repetition',
-    description: 'Built-in SRS for optimal memory retention',
-  },
-  {
-    icon: Clock,
-    title: 'Save Hours',
-    description: 'Create flashcards in seconds, not hours',
+    description: 'Daily exam reports with grades track your progress',
   },
 ];
 
@@ -78,17 +75,17 @@ const steps = [
   {
     number: '01',
     title: 'Upload Your Materials',
-    description: 'Drop in your PDF, notes, or any study content',
+    description: 'PDFs, images, audio, video, YouTube links, or text',
   },
   {
     number: '02',
-    title: 'AI Generates Cards',
-    description: 'Our AI extracts key concepts and creates flashcards',
+    title: 'AI Generates Everything',
+    description: 'Get flashcards, summaries, and quizzes instantly',
   },
   {
     number: '03',
-    title: 'Start Studying',
-    description: 'Review with spaced repetition for lasting memory',
+    title: 'Organize & Study',
+    description: 'Create exams and study with spaced repetition',
   },
 ];
 
@@ -99,7 +96,7 @@ export default function AIFlashcardMakerPage() {
         data={[
           schemas.product({
             name: 'AI Flashcard Maker',
-            description: 'Create flashcards automatically with AI from your study materials',
+            description: 'Create flashcards, summaries, and quizzes automatically with AI from your study materials',
             price: '0',
             rating: 4.8,
             reviewCount: 1250,
@@ -133,18 +130,18 @@ export default function AIFlashcardMakerPage() {
               
               <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
                 AI Flashcard Maker
-                <span className="block text-primary mt-2">Create Cards in Seconds</span>
+                <span className="block text-primary mt-2">Flashcards, Summaries & Quizzes</span>
               </h1>
               
               <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-                Stop wasting hours making flashcards manually. Upload your notes, PDFs, or lectures 
-                and let AI create perfect study cards instantly. Free for students.
+                Upload PDFs, images, audio, video, or YouTube links and get AI-generated flashcards, summaries, and quizzes. 
+                Organize into exams and study with spaced repetition that tracks your progress daily. Available on iOS and Web.
               </p>
               
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Button size="lg" className="h-14 px-8 text-lg" asChild>
                   <Link href="/login">
-                    Start Creating Free <ArrowRight className="ml-2 h-5 w-5" />
+                    Get Started Free <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
                 <Link 
@@ -156,7 +153,7 @@ export default function AIFlashcardMakerPage() {
               </div>
               
               <p className="text-sm text-muted-foreground mt-4">
-                ✓ No credit card required &nbsp; ✓ Free forever plan &nbsp; ✓ 10,000+ students
+                ✓ 3 free uploads to try &nbsp; ✓ iOS & Web app &nbsp; ✓ 10,000+ students
               </p>
             </div>
           </div>
@@ -167,10 +164,10 @@ export default function AIFlashcardMakerPage() {
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-                Why Use Our AI Flashcard Maker?
+                Complete AI Study Platform
               </h2>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                The smartest way to create and study flashcards
+                Flashcards, summaries, quizzes, exam organization, and spaced repetition - all in one platform
               </p>
             </div>
             
@@ -276,10 +273,10 @@ export default function AIFlashcardMakerPage() {
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center">
               <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-                Ready to Create Smarter Flashcards?
+                Ready to Transform Your Studying?
               </h2>
               <p className="text-xl text-muted-foreground mb-8">
-                Join thousands of students using AI to study more effectively.
+                Try 3 free uploads. Then subscribe for unlimited access to AI-powered study tools.
               </p>
               <Button size="lg" className="h-14 px-8 text-lg" asChild>
                 <Link href="/login">

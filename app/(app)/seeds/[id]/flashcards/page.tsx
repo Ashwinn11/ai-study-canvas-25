@@ -205,9 +205,9 @@ export default function FlashcardsPracticePage() {
         </Button>
 
         <img
-          src="/icon.png"
+          src="/background1.png"
           alt="Masterly"
-          className="h-20 w-20 animate-bounce"
+          className="h-64 w-64 animate-bounce"
         />
         <p className="text-gray-400 text-center">Loading flashcards...</p>
       </div>
@@ -239,9 +239,9 @@ export default function FlashcardsPracticePage() {
         </Button>
 
         <img
-          src="/icon.png"
+          src="/background1.png"
           alt="Masterly"
-          className="h-20 w-20 animate-bounce"
+          className="h-64 w-64 animate-bounce"
         />
         <p className="text-gray-400 text-center">{generationMessage}</p>
         <div className="w-64 h-1 bg-gray-700 rounded-full overflow-hidden">

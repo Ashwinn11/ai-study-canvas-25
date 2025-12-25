@@ -28,19 +28,19 @@ const breadcrumbs = [
 const faqs = [
   {
     question: 'Why is Masterly AI better than Quizlet?',
-    answer: 'Masterly AI offers AI-powered flashcard creation (Quizlet charges extra for this), true spaced repetition algorithms, no distracting ads, and a modern learning experience focused on retention.',
+    answer: 'Masterly AI offers AI-powered flashcard, summary, and quiz generation (no extra charge), true spaced repetition algorithms with daily progress reports, no distracting ads, and exam organization features. Try 3 uploads free, then subscribe for unlimited access on iOS and Web.',
   },
   {
     question: 'Is Masterly AI free like Quizlet used to be?',
-    answer: 'Yes! Masterly AI offers a generous free plan with core features. Unlike Quizlet, we dont lock essential study features behind a paywall or show disruptive ads.',
+    answer: 'Masterly AI offers 3 free uploads to try the platform. After that, subscribe to one of our three-tier plans for unlimited uploads. Unlike Quizlet, we don\'t lock essential study features behind paywalls or show disruptive ads.',
   },
   {
     question: 'Does Masterly have spaced repetition like Quizlet?',
-    answer: 'Actually, Masterly has BETTER spaced repetition than Quizlet. Quizlet Learn uses a simplified algorithm, while Masterly uses proven SM-2 based algorithms for optimal memory retention.',
+    answer: 'Masterly has BETTER spaced repetition than Quizlet. Quizlet Learn uses a simplified algorithm, while Masterly uses proven SM-2 based algorithms for optimal memory retention. Plus, you get daily exam reports with grades.',
   },
   {
     question: 'Can I create quizzes like on Quizlet?',
-    answer: 'Absolutely! Masterly AI automatically generates both flashcards AND quizzes from your study materials. Plus, our AI creates questions tailored to your content.',
+    answer: 'Absolutely! Masterly AI automatically generates both flashcards AND quizzes from your study materials (PDFs, images, audio, video, YouTube links, or text). Our AI creates questions tailored to your content.',
   },
 ];
 

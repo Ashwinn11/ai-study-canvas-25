@@ -27,19 +27,19 @@ const breadcrumbs = [
 const faqs = [
   {
     question: 'How do I convert a PDF to flashcards?',
-    answer: 'Simply upload your PDF to Masterly AI, and our AI will automatically extract key concepts, definitions, and important information to create flashcards. The process takes just seconds.',
+    answer: 'Upload your PDF to Masterly AI, and our AI automatically extracts key concepts to create flashcards, summaries, and quizzes. You can then organize these into exams and study with spaced repetition. The process takes just seconds.',
   },
   {
     question: 'What types of PDFs work best?',
-    answer: 'Our AI works great with textbooks, lecture slides, study guides, research papers, and notes. Any PDF with readable text can be converted to flashcards.',
+    answer: 'Our AI works great with textbooks, lecture slides, study guides, research papers, and notes. Any PDF with readable text can be converted. We also support images, audio, video, YouTube links, and plain text.',
   },
   {
     question: 'Is the PDF conversion free?',
-    answer: 'Yes! You can convert PDFs to flashcards for free with our basic plan. Premium plans offer unlimited conversions and additional features.',
+    answer: 'Masterly AI offers 3 free uploads to try the platform. After that, subscribe to one of our three-tier plans for unlimited conversions and full access to all features on both iOS and Web.',
   },
   {
     question: 'How accurate is the AI extraction?',
-    answer: 'Our AI achieves over 95% accuracy in extracting key concepts from academic content. You can always edit or refine the generated flashcards.',
+    answer: 'Our AI generates high-quality flashcards, summaries, and quizzes from your PDFs. You can review and edit all generated content. The platform is available on both iOS and Web with the same features.',
   },
 ];
 
@@ -127,8 +127,9 @@ export default function PDFToFlashcardsPage() {
               </h1>
               
               <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-                Transform any PDF into study flashcards instantly. Textbooks, lecture slides, 
-                notes - our AI extracts the key concepts for you. Free and easy to use.
+                Transform any PDF into flashcards, summaries, and quizzes instantly. Our AI extracts key concepts 
+                and creates comprehensive study materials. Organize into exams and track your progress with daily reports. 
+                Available on iOS and Web.
               </p>
               
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -141,7 +142,7 @@ export default function PDFToFlashcardsPage() {
               </div>
               
               <p className="text-sm text-muted-foreground mt-4">
-                ✓ No sign-up required to try &nbsp; ✓ Instant results &nbsp; ✓ Free plan available
+                ✓ 3 free uploads to try &nbsp; ✓ iOS & Web app &nbsp; ✓ Instant results
               </p>
             </div>
           </div>

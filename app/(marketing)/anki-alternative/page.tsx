@@ -28,19 +28,19 @@ const breadcrumbs = [
 const faqs = [
   {
     question: 'Is Masterly AI really a better Anki alternative?',
-    answer: 'For most students, yes. Masterly AI offers automatic flashcard generation with AI, a modern mobile-first design, and requires zero setup. While Anki is powerful for advanced users, Masterly makes flashcard studying accessible to everyone.',
+    answer: 'For most students, yes. Masterly AI offers automatic flashcard, summary, and quiz generation with AI, a modern mobile-first design on both iOS and Web, and requires zero setup. While Anki is powerful for advanced users, Masterly makes studying accessible to everyone with 3 free uploads to try.',
   },
   {
     question: 'Does Masterly AI have spaced repetition like Anki?',
-    answer: 'Yes! Masterly AI uses scientifically-proven spaced repetition algorithms similar to Anki. Your cards are automatically scheduled for review at optimal intervals to maximize retention.',
+    answer: 'Yes! Masterly AI uses scientifically-proven spaced repetition algorithms similar to Anki. Your cards are automatically scheduled for review at optimal intervals. Plus, you get daily exam reports with grades to track your progress.',
   },
   {
     question: 'Can I import my Anki decks to Masterly?',
-    answer: 'We are working on Anki import functionality. Currently, you can easily recreate your decks by uploading source materials and letting AI generate the flashcards.',
+    answer: 'Currently, you can recreate your decks by uploading source materials (PDFs, images, audio, video, YouTube links, or text) and letting AI generate the flashcards, summaries, and quizzes. We support all major formats.',
   },
   {
     question: 'Is Masterly AI free like Anki?',
-    answer: 'Masterly AI offers a generous free plan with core features. Unlike Anki, you dont need to pay separately for a mobile app - Masterly works seamlessly across devices.',
+    answer: 'Masterly AI offers 3 free uploads to try the platform. After that, subscribe to one of our three-tier plans for unlimited uploads. Unlike Anki, you get the same features on both iOS and Web with automatic cloud sync.',
   },
 ];
 

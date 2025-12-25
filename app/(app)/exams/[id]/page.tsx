@@ -129,6 +129,9 @@ export default function ExamDetailPage() {
         </Button>
 
         <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => router.push(`/exams/${examId}/edit`)}>
+            <Pencil className="h-5 w-5" />
+          </Button>
           <Button variant="ghost" size="icon" onClick={handleDeleteExam}>
             <Trash2 className="h-5 w-5" />
           </Button>

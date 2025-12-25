@@ -3,7 +3,7 @@ import { generatePageMetadata } from '@/lib/seo/metadata';
 
 export const metadata: Metadata = generatePageMetadata({
   title: 'PDF to Flashcards - Convert PDFs Instantly | Masterly AI',
-  description: 'Convert any PDF to study flashcards automatically with AI. Upload PDFs, textbooks, or lecture slides and get instant flashcards with spaced repetition. Free PDF converter for students.',
+  description: 'Convert PDFs to flashcards, summaries, and quizzes automatically with AI. Upload textbooks or lecture slides and get comprehensive study materials. 3 free uploads. iOS & Web.',
   path: '/pdf-to-flashcards',
   keywords: [
     'PDF to flashcards',
@@ -22,3 +22,4 @@ export default function PDFToFlashcardsLayout({
 }) {
   return children;
 }
+

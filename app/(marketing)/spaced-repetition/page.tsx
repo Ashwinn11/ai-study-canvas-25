@@ -28,19 +28,19 @@ const breadcrumbs = [
 const faqs = [
   {
     question: 'What is spaced repetition?',
-    answer: 'Spaced repetition is a learning technique that involves reviewing information at increasing intervals. Instead of cramming, you review material just before you are likely to forget it, which dramatically improves long-term retention.',
+    answer: 'Spaced repetition is a learning technique that involves reviewing information at increasing intervals. Masterly AI uses this to schedule your flashcard reviews optimally and provides daily exam reports with grades to track your progress.',
   },
   {
     question: 'How does spaced repetition work in Masterly AI?',
-    answer: 'When you review a flashcard, Masterly AI asks you how well you remembered it. Based on your response, the algorithm calculates the optimal time for your next review. Easy cards are shown less frequently, while difficult cards appear more often.',
+    answer: 'When you study with Masterly AI, our algorithm schedules reviews at optimal intervals. You can organize your flashcards into exams and get daily reports showing your progress with grades. The system adapts to how well you know each card.',
   },
   {
     question: 'Is spaced repetition scientifically proven?',
-    answer: 'Yes! Dozens of peer-reviewed studies have shown that spaced repetition can improve long-term retention by 200-300% compared to traditional studying methods. It is based on the psychological concept of the "forgetting curve."',
+    answer: 'Yes! Dozens of peer-reviewed studies show that spaced repetition can improve long-term retention by 200-300% compared to traditional studying. Masterly AI implements these proven algorithms and adds daily progress tracking.',
   },
   {
     question: 'How long until I see results?',
-    answer: 'Most students notice improved recall within 1-2 weeks of consistent use. The real benefits compound over time - after a month of daily practice, youll retain significantly more information than with traditional study methods.',
+    answer: 'Most students notice improved recall within 1-2 weeks of consistent use. With Masterly AI\'s daily exam reports, you can track your progress from day one. Try 3 free uploads to get started on iOS or Web.',
   },
 ];
 

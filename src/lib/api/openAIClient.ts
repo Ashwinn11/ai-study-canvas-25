@@ -6,13 +6,16 @@ import { getSupabaseClient } from '@/lib/supabase/client';
  * All OpenAI calls route through backend proxy (keeps API key secure on server)
  */
 
+import { API_ENDPOINTS } from '@/constants/config';
+
 // Backend proxy URL (matching iOS EXPO_PUBLIC_OPENAI_PROXY_URL)
 const getBackendProxyUrl = () => {
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
-  if (!baseUrl || baseUrl.trim().length === 0) {
+  const rawBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+  const normalizedBase = rawBaseUrl.replace(/\/$/, '');
+  if (!normalizedBase || normalizedBase.trim().length === 0) {
     throw new Error('API base URL not configured. Set NEXT_PUBLIC_API_BASE_URL.');
   }
-  return `${baseUrl.replace(/\/$/, '')}/api/ai/chat`;
+  return `${normalizedBase}${API_ENDPOINTS.AI_CHAT_PROXY}`;
 };
 
 // In-flight request deduplication

@@ -1,8 +1,12 @@
 import { ServiceError } from './serviceError';
 import { fetchWithTimeout } from './timeoutUtils';
 import { supabase } from './supabaseClient';
+import { API_ENDPOINTS } from '@/constants/config';
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || '';
+const BASE_URL =
+  process.env.EXPO_PUBLIC_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  '';
 
 function getBaseUrl(): string {
   if (!BASE_URL) {
@@ -39,7 +43,7 @@ export async function extractDocument(
     );
   }
 
-  const url = `${getBaseUrl()}/api/document/extract`;
+  const url = `${getBaseUrl()}${API_ENDPOINTS.DOCUMENT_EXTRACT}`;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${session.access_token}`,

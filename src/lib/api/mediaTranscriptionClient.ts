@@ -3,8 +3,12 @@ import { fetchWithTimeout } from './timeoutUtils';
 import { recordEvent, recordError } from '@/utils/telemetry';
 import { supabase } from './supabaseClient';
 import { configService } from './configService';
+import { API_ENDPOINTS } from '@/constants/config';
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || '';
+const BASE_URL =
+  process.env.EXPO_PUBLIC_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  '';
 
 function getBaseUrl(): string {
   if (!BASE_URL) {
@@ -12,7 +16,7 @@ function getBaseUrl(): string {
       'Backend URL not configured',
       'mediaTranscriptionClient',
       'BACKEND_NOT_CONFIGURED',
-      'Audio/Video transcription requires server configuration.',
+      'Audio transcription requires server configuration.',
       false
     );
   }
@@ -45,7 +49,7 @@ export async function transcribeAudio(
     );
   }
 
-  const url = `${getBaseUrl()}/api/audio/transcribe`;
+  const url = `${getBaseUrl()}${API_ENDPOINTS.AUDIO_TRANSCRIBE}`;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${session.access_token}`,

@@ -4,14 +4,28 @@
  * Handles communication with the backend server for:
  * - PDF/Image OCR (Document AI, Vision API)
  * - Audio transcription (Speech-to-Text)
- * - Video transcription (Speech-to-Text)
  * - Document text extraction (DOC, DOCX, TXT)
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+import { API_ENDPOINTS } from '@/constants/config';
 
-if (!API_BASE_URL) {
+const RAW_API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+const EDGE_API_BASE_URL = RAW_API_BASE_URL.replace(/\/$/, '');
+
+if (!RAW_API_BASE_URL) {
   console.warn('NEXT_PUBLIC_API_BASE_URL not configured');
+}
+
+function requireEdgeApiBaseUrl(): string {
+  if (!EDGE_API_BASE_URL) {
+    throw new Error('Backend URL not configured');
+  }
+  return EDGE_API_BASE_URL;
+}
+
+function buildEdgeFunctionUrl(path: string): string {
+  const baseUrl = requireEdgeApiBaseUrl();
+  return `${baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
 }
 
 export interface ExtractionResult {
@@ -46,11 +60,7 @@ export async function processPdfOrImage(
   mimeType: string,
   accessToken: string
 ): Promise<ExtractionResult> {
-  if (!API_BASE_URL) {
-    throw new Error('Backend URL not configured');
-  }
-
-  const url = `${API_BASE_URL}/api/documentai/process`;
+  const url = buildEdgeFunctionUrl(API_ENDPOINTS.DOCUMENT_AI_PROCESS);
 
   const response = await fetch(url, {
     method: 'POST',
@@ -94,11 +104,7 @@ export async function transcribeAudio(
   accessToken: string,
   languageHints?: string[]
 ): Promise<ExtractionResult> {
-  if (!API_BASE_URL) {
-    throw new Error('Backend URL not configured');
-  }
-
-  const url = `${API_BASE_URL}/api/audio/transcribe`;
+  const url = buildEdgeFunctionUrl(API_ENDPOINTS.AUDIO_TRANSCRIBE);
 
   const response = await fetch(url, {
     method: 'POST',
@@ -135,55 +141,6 @@ export async function transcribeAudio(
 }
 
 /**
- * Transcribe video file using Speech-to-Text
- */
-export async function transcribeVideo(
-  base64Data: string,
-  mimeType: string,
-  accessToken: string,
-  languageHints?: string[]
-): Promise<ExtractionResult> {
-  if (!API_BASE_URL) {
-    throw new Error('Backend URL not configured');
-  }
-
-  const url = `${API_BASE_URL}/api/video/transcribe`;
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify({
-      contentBase64: base64Data,
-      mimeType,
-      languageHints,
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    let errorMessage = 'Failed to transcribe video';
-
-    try {
-      const errorJson = JSON.parse(errorText);
-      errorMessage = errorJson.message || errorMessage;
-    } catch {
-      // Use default error message
-    }
-
-    throw new Error(errorMessage);
-  }
-
-  const result = await response.json();
-  return {
-    content: result.text,
-    metadata: result.metadata,
-  };
-}
-
-/**
  * Extract text from document (DOC, DOCX, TXT)
  */
 export async function extractDocument(
@@ -191,11 +148,7 @@ export async function extractDocument(
   mimeType: string,
   accessToken: string
 ): Promise<ExtractionResult> {
-  if (!API_BASE_URL) {
-    throw new Error('Backend URL not configured');
-  }
-
-  const url = `${API_BASE_URL}/api/document/extract`;
+  const url = buildEdgeFunctionUrl(API_ENDPOINTS.DOCUMENT_EXTRACT);
 
   const response = await fetch(url, {
     method: 'POST',
@@ -448,11 +401,7 @@ export async function extractYouTubeUrl(
   url: string,
   accessToken: string
 ): Promise<ExtractionResult> {
-  if (!API_BASE_URL) {
-    throw new Error('Backend URL not configured');
-  }
-
-  const backendUrl = `${API_BASE_URL}/api/youtube/captions`;
+  const backendUrl = buildEdgeFunctionUrl(API_ENDPOINTS.YOUTUBE_CAPTIONS);
 
   const response = await fetch(backendUrl, {
     method: 'POST',

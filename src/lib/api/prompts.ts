@@ -103,34 +103,3 @@ export async function getQuizUserTemplate(
   throw new Error(`Quiz template for intent '${selectedIntent}' not found in configuration`);
 }
 
-/**
- * Get BrainBot podcast system prompt
- */
-export async function getBrainBotPodcastSystemPrompt(): Promise<string> {
-  const prompts = await configService.getPrompts();
-  return ensurePromptValue(prompts.brainbotPodcastSystemPrompt, 'brainbotPodcastSystemPrompt');
-}
-
-/**
- * Get BrainBot podcast user template
- */
-export async function getBrainBotPodcastUserTemplate(): Promise<string> {
-  const prompts = await configService.getPrompts();
-  return ensurePromptValue(prompts.brainbotPodcastUserTemplate, 'brainbotPodcastUserTemplate');
-}
-
-/**
- * Get BrainBot Q&A system prompt
- */
-export async function getBrainBotQASystemPrompt(): Promise<string> {
-  const prompts = await configService.getPrompts();
-  return ensurePromptValue(prompts.brainbotQASystemPrompt, 'brainbotQASystemPrompt');
-}
-
-/**
- * Get BrainBot Q&A user template
- */
-export async function getBrainBotQAUserTemplate(): Promise<string> {
-  const prompts = await configService.getPrompts();
-  return ensurePromptValue(prompts.brainbotQAUserTemplate, 'brainbotQAUserTemplate');
-}

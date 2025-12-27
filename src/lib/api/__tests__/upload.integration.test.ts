@@ -63,7 +63,7 @@ describe('Upload Integration Tests', () => {
         },
         expectedBehavior: [
           'Validate YouTube URL format ✓',
-          'Call /api/youtube/captions with JWT ✓',
+          'Call /functions/v1/youtube-captions with JWT ✓',
           'Extract captions from backend ✓',
           'Get video title from metadata ✓',
           'Use video title if no custom title ✓',
@@ -108,7 +108,7 @@ describe('Upload Integration Tests', () => {
           'Check file size: 5MB < 20MB limit ✓',
           'Convert to base64 ✓',
           'Create seed with fileSize ✓',
-          'Call /api/audio/transcribe ✓',
+          'Call /functions/v1/audio-transcribe ✓',
           'Receive transcribed text ✓',
           'Validate transcription length (min 20 words) ✓',
           'Generate Feynman explanation ✓',
@@ -151,7 +151,7 @@ describe('Upload Integration Tests', () => {
           'Check file size: 3MB < 20MB ✓',
           'Convert to base64 ✓',
           'Create initial seed (status: pending) ✓',
-          'Call /api/documentai/process ✓',
+          'Call /functions/v1/document-ocr ✓',
           'Backend performs OCR ✓',
           'Return extracted text + metadata ✓',
           'Detect language from OCR ✓',
@@ -198,7 +198,7 @@ describe('Upload Integration Tests', () => {
           'Check file size: 2MB < 20MB ✓',
           'Convert to base64 ✓',
           'Create seed (status: pending) ✓',
-          'Call /api/documentai/process with image/jpeg ✓',
+          'Call /functions/v1/document-ocr with image/jpeg ✓',
           'Backend uses Vision API ✓',
           'Extract text from image ✓',
           'Validate extracted text length ✓',
@@ -301,7 +301,7 @@ describe('Upload Integration Tests', () => {
         },
         {
           scenario: 'Backend API unavailable',
-          action: 'Return error from /api/* endpoint',
+          action: 'Return error from /functions/v1/* endpoint',
           recovery: 'User can retry later',
         },
         {
@@ -316,7 +316,7 @@ describe('Upload Integration Tests', () => {
         },
         {
           scenario: 'YouTube URL has no captions',
-          action: 'Validation error from /api/youtube/captions',
+          action: 'Validation error from /functions/v1/youtube-captions',
           recovery: 'Delete incomplete seed, show message',
         },
         {
@@ -349,16 +349,16 @@ describe('Upload Integration Tests', () => {
         },
         'API Endpoints': {
           iOS: [
-            '/api/documentai/process',
-            '/api/audio/transcribe',
-            '/api/youtube/captions',
-            '/api/document/extract',
+            '/functions/v1/document-ocr',
+            '/functions/v1/audio-transcribe',
+            '/functions/v1/youtube-captions',
+            '/functions/v1/document-extract',
           ],
           Web: [
-            '/api/documentai/process',
-            '/api/audio/transcribe',
-            '/api/youtube/captions',
-            '/api/document/extract',
+            '/functions/v1/document-ocr',
+            '/functions/v1/audio-transcribe',
+            '/functions/v1/youtube-captions',
+            '/functions/v1/document-extract',
           ],
           Match: '✅ IDENTICAL',
         },

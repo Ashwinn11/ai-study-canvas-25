@@ -107,7 +107,7 @@ class UploadProcessor {
 
     // If audio content is provided directly (recording)
     if (audioContent) {
-      return this.processAudioContent(audioContent, audioMimeType || 'audio/webm', {
+      return this.processAudioContent(audioContent, audioMimeType || 'audio/wav', {
         userId,
         title: title || 'Audio Recording',
         onProgress,

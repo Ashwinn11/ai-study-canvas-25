@@ -5,7 +5,10 @@ import { supabase } from "./supabaseClient";
 import { configService } from "./configService";
 import { API_ENDPOINTS } from "@/constants/config";
 
-const DEFAULT_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || "";
+const DEFAULT_BASE_URL =
+  process.env.EXPO_PUBLIC_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  "";
 
 export interface YouTubeExtractionResult {
     text: string;

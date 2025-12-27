@@ -1,3 +1,6 @@
+import { API_ENDPOINTS } from '@/constants/config';
+import { getSupabaseClient } from '@/lib/supabase/client';
+
 /**
  * App Configuration Service
  * Fetches and caches dynamic configuration from backend
@@ -25,11 +28,6 @@ export interface GenerationConfig extends AIConfig {
   maxQuantity: number;
 }
 
-export interface BrainBotConfig extends AIConfig {
-  bufferSegments: number;  // Number of segments to buffer before playing
-  cacheTtlMs: number;      // Cache TTL for podcast scripts
-}
-
 export interface PromptsConfig {
   version: string;
   timestamp: string;
@@ -49,11 +47,6 @@ export interface PromptsConfig {
   quizUserTemplate_Procedural?: string;
   conditionalSystemPrompt: string;
   feynmanUserTemplate: string;
-  // BrainBot prompts
-  brainbotPodcastSystemPrompt?: string;
-  brainbotPodcastUserTemplate?: string;
-  brainbotQASystemPrompt?: string;
-  brainbotQAUserTemplate?: string;
 }
 
 export interface MediaLimitsConfig {
@@ -76,7 +69,6 @@ export interface AppConfig {
     feynman: FeynmanConfig;
     flashcards: GenerationConfig;
     quiz: GenerationConfig;
-    brainbot?: BrainBotConfig;  // BrainBot podcast configuration
     defaultCacheTtlMs?: number;
   };
   network: {
@@ -101,6 +93,24 @@ export interface AppConfig {
  * 24 hours = 86400000 milliseconds
  */
 const CONFIG_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+const RAW_EDGE_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+const EDGE_FUNCTION_BASE_URL = RAW_EDGE_BASE_URL.replace(/\/$/, '');
+
+function requireEdgeFunctionBaseUrl(): string {
+  if (!EDGE_FUNCTION_BASE_URL) {
+    console.error('[ConfigService] API base URL not configured (NEXT_PUBLIC_API_BASE_URL missing)');
+    throw new Error(
+      'Backend URL not configured. Please set NEXT_PUBLIC_API_BASE_URL environment variable.'
+    );
+  }
+  return EDGE_FUNCTION_BASE_URL;
+}
+
+function buildEdgeFunctionUrl(path: string): string {
+  const baseUrl = requireEdgeFunctionBaseUrl();
+  return `${baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
+}
 
 class ConfigService {
   private config: AppConfig | null = null;
@@ -150,27 +160,14 @@ class ConfigService {
    * Matching iOS lines 278-290
    */
   async getAIConfig(type: 'feynman'): Promise<FeynmanConfig>;
-  async getAIConfig(type: 'brainbot'): Promise<BrainBotConfig>;
   async getAIConfig(type: 'flashcards' | 'quiz'): Promise<GenerationConfig>;
   async getAIConfig(
-    type: 'feynman' | 'flashcards' | 'quiz' | 'brainbot'
-  ): Promise<FeynmanConfig | GenerationConfig | BrainBotConfig> {
+    type: 'feynman' | 'flashcards' | 'quiz'
+  ): Promise<FeynmanConfig | GenerationConfig> {
     const config = await this.getConfig();
 
     if (type === 'feynman') {
       return config.ai.feynman;
-    }
-
-    if (type === 'brainbot') {
-      return config.ai.brainbot || {
-        // Fallback if missing in backend
-        model: 'gpt-4o-mini',
-        temperature: 0.8,
-        maxTokens: 1000,
-        timeoutMs: 90000,
-        bufferSegments: 4,
-        cacheTtlMs: 3600000,  // 1 hour
-      };
     }
 
     return config.ai[type];
@@ -206,19 +203,34 @@ class ConfigService {
    */
   private async fetchConfigFromBackend(): Promise<AppConfig> {
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
-      if (!baseUrl) {
-        console.error('[ConfigService] API base URL not configured (NEXT_PUBLIC_API_BASE_URL missing)');
-        throw new Error(
-          'Backend URL not configured. Please set NEXT_PUBLIC_API_BASE_URL environment variable.'
-        );
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      if (anonKey) {
+        headers['apikey'] = anonKey;
       }
 
-      const response = await fetch(`${baseUrl}/api/config`, {
+      try {
+        const supabase = getSupabaseClient();
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (session?.access_token) {
+          headers['Authorization'] = `Bearer ${session.access_token}`;
+        } else if (anonKey) {
+          headers['Authorization'] = `Bearer ${anonKey}`;
+        }
+      } catch (authError) {
+        if (anonKey && !headers['Authorization']) {
+          headers['Authorization'] = `Bearer ${anonKey}`;
+        }
+        console.warn('[ConfigService] Unable to obtain Supabase session for config fetch:', authError);
+      }
+
+      const response = await fetch(buildEdgeFunctionUrl(API_ENDPOINTS.CONFIG), {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
       });
 
       if (!response.ok) {

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import { uploadProcessor, UploadProgress } from '@/lib/api/upload';
+import { audioRecorder } from '@/lib/api/audioRecorder';
 import { Upload, FileText, Image, Music, Link, CheckCircle2, XCircle, Loader2, Mic } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { useUploadLimit } from '@/hooks/useUploadLimit';
 import { UploadLimitModal } from '@/components/UploadLimitModal';
+import { UploadErrorModal } from '@/components/UploadErrorModal';
 
 type UploadState = 'idle' | 'uploading' | 'success' | 'error';
 
@@ -33,6 +35,7 @@ export default function UploadPage() {
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
   const [showLimitModal, setShowLimitModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -91,6 +94,7 @@ export default function UploadPage() {
       console.error('Upload error:', err);
       setError(err instanceof Error ? err.message : 'Upload failed');
       setUploadState('error');
+      setShowErrorModal(true);
     }
   };
 
@@ -108,12 +112,7 @@ export default function UploadPage() {
       return;
     }
 
-    if (!title.trim()) {
-      toast.error('Title required', {
-        description: 'Please provide a title for your content',
-      });
-      return;
-    }
+    const trimmedTitle = title.trim();
 
     if (!textContent.trim()) {
       toast.error('Content required', {
@@ -134,9 +133,11 @@ export default function UploadPage() {
         throw new Error('Not authenticated');
       }
 
+      const resolvedTitle = trimmedTitle || 'Text Content';
+
       await uploadProcessor.processFile({
         userId: user.id,
-        title,
+        title: resolvedTitle,
         textContent,
         accessToken: session.access_token,
         onProgress: (prog) => {
@@ -157,6 +158,7 @@ export default function UploadPage() {
       console.error('Upload error:', err);
       setError(err instanceof Error ? err.message : 'Upload failed');
       setUploadState('error');
+      setShowErrorModal(true);
     }
   };
 
@@ -216,6 +218,7 @@ export default function UploadPage() {
       console.error('Upload error:', err);
       setError(err instanceof Error ? err.message : 'Upload failed');
       setUploadState('error');
+      setShowErrorModal(true);
     }
   };
 
@@ -331,64 +334,51 @@ export default function UploadPage() {
           type: mediaRecorder.mimeType,
         });
 
-        // Convert to base64
-        const reader = new FileReader();
-        reader.onloadend = async () => {
-          try {
-            const base64 = (reader.result as string).split(',')[1];
+        try {
+          const { audioContent, mimeType } = await audioRecorder.convertToWav(audioBlob);
 
-            await uploadProcessor.processFile({
-              userId: user.id,
-              title: autoTitle,
-              audioContent: base64,
-              audioMimeType: mediaRecorder.mimeType,
-              accessToken: session.access_token,
-              onProgress: (prog) => {
-                setProgress(prog);
-              },
-            });
-
-            // Increment upload count after successful upload
-            await incrementCount();
-
-            setUploadState('success');
-            setIsRecording(false);
-
-            // Redirect to seeds page after 2 seconds
-            setTimeout(() => {
-              router.push('/seeds');
-            }, 2000);
-          } catch (err) {
-            console.error('Upload error:', err);
-            const errorMessage = err instanceof Error ? err.message : 'Upload failed';
-            toast.error('Upload failed', {
-              description: errorMessage,
-            });
-            setUploadState('error');
-            setIsRecording(false);
-          }
-        };
-
-        reader.onerror = () => {
-          toast.error('Conversion failed', {
-            description: 'Failed to convert audio',
+          await uploadProcessor.processFile({
+            userId: user.id,
+            title: autoTitle,
+            audioContent,
+            audioMimeType: mimeType,
+            accessToken: session.access_token,
+            onProgress: (prog) => {
+              setProgress(prog);
+            },
           });
+
+          // Increment upload count after successful upload
+          await incrementCount();
+
+          setUploadState('success');
+          setIsRecording(false);
+
+          // Redirect to seeds page after 2 seconds
+          setTimeout(() => {
+            router.push('/seeds');
+          }, 2000);
+        } catch (err) {
+          console.error('Upload error:', err);
+          const errorMessage = err instanceof Error ? err.message : 'Upload failed';
+          setError(errorMessage);
           setUploadState('error');
           setIsRecording(false);
-        };
-
-        reader.readAsDataURL(audioBlob);
+          setShowErrorModal(true);
+        } finally {
+          setMediaRecorder(null);
+          setAudioChunks([]);
+        }
       };
 
       mediaRecorder.stop();
     } catch (err) {
       console.error('Upload error:', err);
       const errorMessage = err instanceof Error ? err.message : 'Upload failed';
-      toast.error('Upload failed', {
-        description: errorMessage,
-      });
+      setError(errorMessage);
       setUploadState('error');
       setIsRecording(false);
+      setShowErrorModal(true);
     }
   };
 
@@ -728,6 +718,22 @@ export default function UploadPage() {
       <UploadLimitModal
         isOpen={showLimitModal}
         onClose={() => setShowLimitModal(false)}
+      />
+
+      {/* Upload Error Modal */}
+      <UploadErrorModal
+        isOpen={showErrorModal}
+        onClose={() => {
+          setShowErrorModal(false);
+          setError(null);
+          setUploadState('idle');
+        }}
+        error={error}
+        onRetry={() => {
+          // Reset to allow retry
+          setError(null);
+          setUploadState('idle');
+        }}
       />
     </div>
   );

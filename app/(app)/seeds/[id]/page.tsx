@@ -18,17 +18,8 @@ import {
   BookOpen,
   Brain,
   Trophy,
-  Send,
-  ArrowUpRight,
-  Lightbulb,
-  Gamepad2,
-  BookOpenCheck,
-  Trash2,
-  X,
-  MessageCircle,
-  Mic
+  Trash2
 } from 'lucide-react';
-import { useChat, ExplanationMode } from '@/hooks/useChat';
 import { Button } from '@/components/ui/button';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 
@@ -48,36 +39,6 @@ const CONTENT_TYPE_COLORS = {
   video: 'text-green-400',
   youtube: 'text-red-500',
   text: 'text-gray-400',
-};
-
-const EXPLANATION_MODES: Array<{ mode: ExplanationMode; label: string }> = [
-  { mode: 'simple', label: 'Simple' },
-  { mode: 'analogy', label: 'Analogy' },
-  { mode: 'technical', label: 'Technical' },
-  { mode: 'fun', label: 'Fun' },
-];
-
-const SUGGESTED_QUESTIONS_BY_MODE: Record<ExplanationMode, string[]> = {
-  simple: [
-    'Can you explain this in simpler terms?',
-    'What are the key concepts here?',
-    'Can you give me an example?',
-  ],
-  analogy: [
-    'What is this similar to in real life?',
-    'Can you give me an analogy for this?',
-    'How is this like something I already know?',
-  ],
-  technical: [
-    'What are the precise definitions?',
-    'How does this work under the hood?',
-    'What are the technical details?',
-  ],
-  fun: [
-    'Tell me a fun fact about this!',
-    "Explain this like I'm 5 years old",
-    'Make a joke about this topic',
-  ],
 };
 
 export default function SeedDetailPage() {

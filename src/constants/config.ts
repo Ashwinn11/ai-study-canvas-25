@@ -1,9 +1,14 @@
 // iOS-only: motion and iconSize from @/theme removed
 
 export const API_ENDPOINTS = {
-  DOCUMENT_AI_PROCESS: "/api/documentai/process",
-  AI_CHAT_PROXY: "/api/ai/chat",
-  YOUTUBE_CAPTIONS: "/api/youtube/captions",
+  DOCUMENT_AI_PROCESS: "/document-ocr",
+  DOCUMENT_EXTRACT: "/document-extract",
+  AI_CHAT_PROXY: "/ai-chat",
+  YOUTUBE_CAPTIONS: "/youtube-captions",
+  AUDIO_TRANSCRIBE: "/audio-transcribe",
+  CONFIG: "/config",
+  HEALTH: "/health",
+  CLEANUP: "/cleanup",
   GOOGLE_DOCUMENT_AI_BASE: "https://documentai.googleapis.com/v1",
   GOOGLE_VISION_API_ASYNC_BATCH:
     "https://vision.googleapis.com/v1/files:asyncBatchAnnotate",
@@ -18,7 +23,6 @@ export const TIMEOUTS = {
   DEFAULT_API: 30000,
   POLLING_MAX: 10 * 60 * 1000,
   CONFIG_CACHE_TTL: 24 * 60 * 60 * 1000,
-  AI_CACHE_DEFAULT_TTL: 7 * 24 * 60 * 60 * 1000,
   FEYNMAN_CACHE_DEFAULT_TTL: 7 * 24 * 60 * 60 * 1000,
   UPLOAD_STAGE_VALIDATION: 150 + 250, // 400ms
   UPLOAD_STAGE_READING: 250 * 4 + 300, // 1300ms
